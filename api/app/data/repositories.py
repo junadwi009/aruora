@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 
 from .models import (
+    Attempt,
     GeneratedSet,
     Milestone,
     PlacementAttempt,
@@ -253,6 +254,96 @@ class Repository:
                 }
                 for r in rows
             ]
+
+    # ── Attempts (Writing / Speaking history) — Phase 2c ──────────────────────
+
+    def save_attempt(
+        self,
+        type: str,
+        task: str,
+        prompt: str,
+        body: str,
+        bands: dict,
+        criteria: dict,
+        cefr: str,
+        metrics: dict,
+    ) -> int:
+        """Insert an Attempt (writing|speaking) and return its id."""
+        with self._sf() as s:
+            a = Attempt(
+                type=type,
+                task=task or "",
+                prompt=prompt or "",
+                body=body or "",
+                bands=bands or {},
+                criteria=criteria or {},
+                cefr=cefr or "",
+                metrics=metrics or {},
+            )
+            s.add(a)
+            s.commit()
+            s.refresh(a)
+            return a.id
+
+    def list_attempts(self, type: str | None = None) -> list[dict]:
+        """Return attempt summaries, newest first. Optionally filter by type."""
+        with self._sf() as s:
+            stmt = select(Attempt).order_by(Attempt.id.desc())
+            if type:
+                stmt = stmt.where(Attempt.type == type)
+            rows = s.execute(stmt).scalars().all()
+            return [
+                {
+                    "id": r.id,
+                    "type": r.type,
+                    "task": r.task,
+                    "cefr": r.cefr,
+                    "overall": (r.bands or {}).get("overall"),
+                    "createdAt": r.created_at.isoformat() if r.created_at else None,
+                }
+                for r in rows
+            ]
+
+    def get_attempt(self, attempt_id: int) -> dict | None:
+        """Return the full stored eval payload (re-renderable), or None."""
+        with self._sf() as s:
+            r = s.get(Attempt, attempt_id)
+            if r is None:
+                return None
+            return {
+                "id": r.id,
+                "type": r.type,
+                "task": r.task,
+                "prompt": r.prompt,
+                "body": r.body,
+                "bands": r.bands or {},
+                "cefr": r.cefr,
+                "metrics": r.metrics or {},
+                "createdAt": r.created_at.isoformat() if r.created_at else None,
+                # flatten the stored feedback fields (corrections/rewrite/feedback/
+                # modelAnswer/...) so the client renders with the same components
+                **(r.criteria or {}),
+            }
+
+    def trends(self) -> dict:
+        """Per-skill time series (oldest first) for the Progress chart."""
+        with self._sf() as s:
+            rows = s.execute(select(Attempt).order_by(Attempt.id.asc())).scalars().all()
+            out: dict[str, list] = {"writing": [], "speaking": []}
+            for r in rows:
+                bucket = out.get(r.type)
+                if bucket is None:
+                    continue
+                bands = r.bands or {}
+                bucket.append(
+                    {
+                        "id": r.id,
+                        "createdAt": r.created_at.isoformat() if r.created_at else None,
+                        "overall": bands.get("overall"),
+                        "bands": bands,
+                    }
+                )
+            return out
 
     def get_latest_program(self, user_id: int) -> Program | None:
         """Return the most recently created Program for the user, detached, or None."""

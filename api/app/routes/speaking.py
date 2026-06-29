@@ -6,7 +6,7 @@ Speaking routes:
 from flask import Blueprint, jsonify, request
 
 from app.errors import ApiError
-from app.routes._deps import _cfg, _gateway
+from app.routes._deps import _cfg, _gateway, _repo
 from app.services import asr
 
 bp = Blueprint("speaking", __name__)
@@ -22,6 +22,22 @@ def speaking_evaluate():
         question=body.get("question"),
         transcript=body.get("transcript", ""),
     )
+
+    # Persist the attempt for the Progress tab (history + trends).
+    out["savedId"] = _repo().save_attempt(
+        type="speaking",
+        task=body.get("part", ""),
+        prompt=body.get("question", ""),
+        body=body.get("transcript", ""),
+        bands=out.get("bands", {}),
+        cefr=out.get("cefr", ""),
+        metrics=out.get("metrics", {}),
+        criteria={
+            k: v for k, v in out.items()
+            if k not in ("bands", "cefr", "metrics", "stub", "savedId")
+        },
+    )
+
     # gateway-defined shape; passthrough dict — shape validated client-side
     return jsonify(out), 200
 

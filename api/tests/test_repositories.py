@@ -86,3 +86,68 @@ def test_program_and_milestones():
     assert m["dayTarget"] == 45
     assert m["title"] == "x"
     assert m["targets"] == {"reading": "C1"}
+
+
+# ── Phase 2c: attempt persistence ────────────────────────────────────────────
+
+def test_save_and_list_attempts():
+    repo = make_repo()
+    wid = repo.save_attempt(
+        type="writing", task="task2", prompt="Some prompt", body="My essay.",
+        bands={"taskResponse": 6.0, "overall": 6.0}, criteria={"rewrite": "Better."},
+        cefr="B2", metrics={"wordCount": 2},
+    )
+    sid = repo.save_attempt(
+        type="speaking", task="part2", prompt="Describe a place", body="I went...",
+        bands={"fluencyCoherence": 5.0, "overall": 5.0}, criteria={"feedback": "ok"},
+        cefr="B1", metrics={},
+    )
+    assert isinstance(wid, int) and isinstance(sid, int)
+
+    all_rows = repo.list_attempts()
+    assert len(all_rows) == 2
+    # newest first
+    assert all_rows[0]["id"] == sid
+    # summary shape
+    assert all_rows[0]["type"] == "speaking"
+    assert all_rows[0]["overall"] == 5.0
+    assert all_rows[0]["cefr"] == "B1"
+    assert "createdAt" in all_rows[0]
+
+    writing_only = repo.list_attempts(type="writing")
+    assert len(writing_only) == 1 and writing_only[0]["id"] == wid
+
+
+def test_get_attempt_full_payload():
+    repo = make_repo()
+    wid = repo.save_attempt(
+        type="writing", task="task2", prompt="P", body="Essay body.",
+        bands={"taskResponse": 6.0, "overall": 6.0}, criteria={"rewrite": "Better.", "corrections": []},
+        cefr="B2", metrics={"wordCount": 2},
+    )
+    full = repo.get_attempt(wid)
+    assert full["id"] == wid
+    assert full["type"] == "writing"
+    assert full["prompt"] == "P"
+    assert full["body"] == "Essay body."
+    assert full["bands"]["overall"] == 6.0
+    assert full["rewrite"] == "Better."   # criteria flattened into the payload
+    assert full["metrics"]["wordCount"] == 2
+    assert repo.get_attempt(9999) is None
+
+
+def test_trends_groups_by_skill():
+    repo = make_repo()
+    repo.save_attempt(type="writing", task="task2", prompt="P", body="b",
+                      bands={"overall": 5.5}, criteria={}, cefr="B1", metrics={})
+    repo.save_attempt(type="writing", task="task2", prompt="P", body="b",
+                      bands={"overall": 6.5}, criteria={}, cefr="B2", metrics={})
+    repo.save_attempt(type="speaking", task="part2", prompt="P", body="b",
+                      bands={"overall": 5.0}, criteria={}, cefr="B1", metrics={})
+    tr = repo.trends()
+    assert len(tr["writing"]) == 2
+    assert len(tr["speaking"]) == 1
+    # chronological (oldest first) for a trend line
+    assert tr["writing"][0]["overall"] == 5.5
+    assert tr["writing"][1]["overall"] == 6.5
+    assert "createdAt" in tr["writing"][0]

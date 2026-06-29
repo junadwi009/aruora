@@ -3,7 +3,7 @@ POST /api/writing/evaluate — score a writing attempt via the gateway.
 """
 from flask import Blueprint, jsonify, request
 
-from app.routes._deps import _gateway
+from app.routes._deps import _gateway, _repo
 from app.services.essay_metrics import compute_metrics
 
 bp = Blueprint("writing", __name__)
@@ -44,6 +44,21 @@ def writing_evaluate():
 
     # Attach metrics to the response (works in both stub and live mode)
     out["metrics"] = metrics
+
+    # Persist the attempt for the Progress tab (history + trends).
+    out["savedId"] = _repo().save_attempt(
+        type="writing",
+        task=body.get("taskType", ""),
+        prompt=body.get("prompt", ""),
+        body=essay,
+        bands=out.get("bands", {}),
+        cefr=out.get("cefr", ""),
+        metrics=out.get("metrics", {}),
+        criteria={
+            k: v for k, v in out.items()
+            if k not in ("bands", "cefr", "metrics", "stub", "savedId")
+        },
+    )
 
     # gateway-defined shape; passthrough dict — shape validated client-side
     return jsonify(out), 200
