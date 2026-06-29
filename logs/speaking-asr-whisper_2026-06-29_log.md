@@ -36,4 +36,4 @@ Rebuilt the api image (`docker compose build api` → exit 0; image ~1.38 GB →
 ## Commits
 - `3fe16bd` feat(api): local faster-whisper ASR for Speaking transcribe
 - `b73b15d` feat(web): voice recording + local transcription on Speaking
-- _packaging + this log: commit pending below._
+- `2ac0203` build(api): bake faster-whisper base model; docs: ASR update log

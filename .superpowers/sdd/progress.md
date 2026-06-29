@@ -1,0 +1,86 @@
+# IELTS Coach v3 — Phase 1 progress ledger
+
+Plan: docs/superpowers/plans/2026-06-29-ielts-v3-phase1.md
+Execution: subagent-driven development (fresh implementer per task + review).
+
+## Completed
+- Task 1: complete (commit df909d3, scaffold verified by controller — .env untracked, dirs + compose + gitignore correct)
+- Task 2: complete (commit 4d8a34a, review clean — app factory/config/errors/health, 1 test passing, .venv untracked)
+- Task 3: complete (commit 5fbb513, review clean — 12 models, db session, alembic 0001 via metadata.create_all; 2 tests passing)
+- Task 4: complete (commit d0398b2, controller-reviewed repositories.py — all contract signatures correct, camelCase dicts, 6 tests passing)
+- Task 5: complete (commit 9946eea, schema validation tests green; full suite 11/11)
+- Task 6: complete (commit 53d33f5, fixtures valid + seed_all; 14 tests. Stub keys: generate:{reading B1/B2/C1, listening B1/B2}, score:writing/speaking. seed_sets 5/skill. Concern: listening phone-number keys need lenient grading; stub generate has 3 Qs vs seed 4-5 — downstream must tolerate.)
+- Task 7: complete (commit 156d9d9, leveling pure fns; 19 tests. next_band/ielts_to_cefr/cefr_to_ielts/band_params. Note: writing/speaking length mirrors reading — fine.)
+- Task 8: complete (commit f9affa7, scoring.py+placement.py; 25 tests. locator_band monotonic verified by controller; grade_placement returns camelCase perSkill/overallBand/cefr/gapToTarget; serve_combo strips answer keys. Timer reads sections.<skill>.seconds, not item sectionSeconds.)
+- Task 9: complete (commit ebcbbd1, program.py build_milestones; 28 tests. counts 30/90/180->2/4/6, ends at length_days, no downgrade above target.)
+- Task 10: complete (commit 6710114, llm.py stub gateway + prompts.py; 31 tests. generate key "{task}:{skill}:{band}" w/ band fallback; score "score:{task}"; live raises ApiError LLM_UNAVAILABLE; never returns keys. Concern: no vocab/lesson stubs — but those routes are deferred, fine.)
+- Task 11: complete (commit ce67f9f, __init__ wiring + onboarding/placement/skills routes; 34 tests. create_app injects REPO+GATEWAY for tests, else inits engine+seed; verified by controller. answers stripped on start; 422 on bad input; health still works.)
+- Task 12: complete (commit 8510daa, practice/program/tips routes + repo.serve_any_set/get_latest_program; 40 tests. practice/set falls back to any band; program builds 4 milestones for 90d; tips from fixtures.)
+- Task 13: complete (commit 895f751, reading/listening/writing/speaking stub routes; 44 tests. BACKEND COMPLETE — controller re-ran full suite: 44 passed.)
+
+## BACKEND DONE (Tasks 1-13). Frontend in progress (14-21).
+- Frontend = React 19 + Vite 6 (NOT 8 — doesn't exist yet) + Tailwind v4 + in-house ui primitives + lucide + Recharts 2.x. Uses api client (Task 14) -> Flask. VITE_API_BASE env (default http://localhost:5050).
+- Fonts fall back to system-ui (woff2 self-hosting deferred). No runtime CDN.
+- Task 14: complete (commit 242a7af, web scaffold + tokens + typed api client; 2 vitest pass, build compiles. api object in web/src/lib/api/client.ts, types in web/src/lib/types.ts, ApiError class exported.)
+- Task 15: complete (commit 4734cbc, ui primitives in web/src/components/ui/ (index.ts re-exports); 5 vitest pass, build clean. MINOR for final review: Toast dismiss button 24px <44px target.)
+- Task 16: complete (commit 9268da0, journey.tsx (JourneyProvider/useJourney, Step union, placementResult+milestones state) + Welcome + Onboarding; 7 vitest pass. NOTE for Task 22/final: tsconfig.node.json has TS6306/TS6310 project-ref errors (pre-existing from T14) — npm build via esbuild passes but tsc --noEmit fails; fix tsconfig in T22. App renders placeholders for placement/generating/results/program/milestones/app steps.)
+- (Subagent for T16 first paused trying to spawn its own explorer; resumed via SendMessage with 'do not spawn sub-agents' — completed fine. Add this guard to future frontend briefs.)
+- Task 17: complete (commit 790b42f, placement runner: TestFrame/PlacementIntro/4 sections/PlacementRunner + App wires "placement"; 8 vitest pass. Submits comboId+answers+writingSamples+speakingText+durationSec -> setPlacementResult -> go("generating"). Speaking = typed fallback.)
+- Task 18: complete (commit b52beb7, Generating (polls practiceGenerate/status -> go("results")) + Results (Recharts radar + a11y table + skill cards + CTA go("program")); 10 vitest. Added src/test-setup.ts ResizeObserver shim. Recharts bundle ~599kB (fine).)
+- Task 19: complete (commit aab592e, Program (3 RadioCards + gap-based recommendation -> api.program -> setMilestones -> go("milestones")) + Milestones (ordered list of LevelChip targets -> go("app")); 11 vitest.)
+- Task 20: complete (commit 3658428, AppShell+Sidebar+BottomTabs+Home+viewContext + App wires "app"; 12 vitest. viewRegistry map structured so T21 swaps placeholders for real skill screens. levels map from api.skillLevels drives nav LevelChips.)
+- Task 21: complete (commit 346bcf1, QuizRunner (local grade) + Reading/Listening/Writing/Speaking/Tips/Progress + AppShell swap; 14 vitest. ALL UI DONE. Tips lazy-fetch on expand.)
+
+- Task 22: complete (commit 15916a4, smoke.sh + secret_scan.sh + README + tsconfig fix. VERIFIED FOR REAL: pytest 44/44, vitest 14/14, tsc --noEmit exit 0, secret scan clean, DOCKER SMOKE OK on machine. Fixed: postgres:18 volume path -> /var/lib/postgresql; api fixtures bind-mount (./fixtures:/fixtures:ro); web/api .dockerignore.)
+
+## ALL 22 TASKS COMPLETE. Phase 1 DoD met (docker compose up works offline, full journey, 44+14 tests green). Final whole-branch review next.
+
+## FINAL REVIEW (opus, whole-branch): 0 Critical, 2 Important, 4 Minor — READY.
+- Fix commit 3b85cd4: I-1 (route outputs via Pydantic *Out models; PerSkill.assessed; types.ts) + M-1 (toast 44px). Re-verified: api 44/44, web 14/14, tsc clean.
+- ACCEPTED Phase-1 deferrals (documented fast-follows, NOT defects):
+  - I-2 self-hosted fonts (system-ui fallback by design decision; ship woff2 in a later phase).
+  - M-2 web bundle ~630kB (recharts; code-split later).
+  - M-3 lenient phone-number grading (revisit with real ASR).
+  - M-4 web Dockerfile npm install + dev server (pin npm ci + prod build later).
+- tsconfig TS6306/6310 FIXED in T22.
+
+## PHASE 1 COMPLETE & VERIFIED. 23 commits (df909d3..3b85cd4). docker compose up smoke = SMOKE OK on machine.
+
+## PHASE 2a — live LLM wiring (in progress)
+Decisions: provider=OpenRouter (OpenAI SDK, base_url https://openrouter.ai/api/v1, OPENROUTER_API_KEY). MODEL_GENERATE=anthropic/claude-haiku-4-5, MODEL_SCORE=anthropic/claude-sonnet-4-6 (OpenRouter slugs — verify live). User HAS a key, wants live test after wiring.
+- Implement live branch in api/app/services/llm.py only; stub stays default. generate->MODEL_GENERATE, score->MODEL_SCORE; format prompts from prompts.py; robust JSON parse; never return key; ApiError LLM_UNAVAILABLE on failure.
+- Then live verification: user adds OPENROUTER_API_KEY to .env, set LLM_MODE=live, run a real generate + score call.
+- DONE (46ac998 + b3a3cf2 + 43ff495): live verified — generate (Haiku) + score (Sonnet) both 200; fixed gunicorn 30s timeout -> 120s.
+
+## PHASE 2b-1 — Writing essay metrics (DONE)
+- commit e16e4f6 (impl) + 94fc997 (fix). textstat + LexicalRichness + spaCy/TextDescriptives; NO language-tool/Java; spaCy model baked into image. api 57 tests, web 14.
+- Bug fixed: essay_metrics must `import textdescriptives` so its spaCy factories register, else add_pipe E002 -> syntax null in container. Added regression test. Verified live: readability + lexicalDiversity + syntax all populate alongside Sonnet bands.
+- Known limitation: MTLD unreliable on short (<~150w) essays (real IELTS essays are 250+w). Not fixed.
+- Design polish: pass1 73d40ac, pass2 c250f40, cosmetic 30fef9e. Tools: recommended set already installed (superpowers/security-guidance/atomic-commits/taste skills/built-in code-review).
+
+## PHASE 2b-2 — Speaking ASR (faster-whisper) — DONE
+- commits 3fe16bd (api: services/asr.py + POST /api/speaking/transcribe + health asrReady + config ASR_*), b73b15d (web: Recorder component + api.speakingTranscribe multipart + Transcript type), 2ac0203 (requirements faster-whisper==1.1.1 + Dockerfile bakes base model w/ HF_HUB_OFFLINE=1 + log).
+- faster-whisper base/cpu/int8; process-level singleton per (model,device,compute); PyAV decodes webm/wav (no system ffmpeg); failures → ApiError ASR_UNAVAILABLE(502) so typed fallback survives. asr_ready() is a cheap find_spec probe (no model load) for /api/health.
+- Tests: api 65 (8 new, model mocked), web 15 (1 new client multipart). Live-verified in container: asrReady:true; SAPI sample "...nine o'clock..." → transcript "...9 o'clock..." (200, 5.79s audio); missing file → 422.
+- Caveats: per-worker model load (2 gunicorn workers = 2 cold loads, ~9-10s first call each, warm faster); beam_size=5; only transcript feeds examiner (no phoneme/pronunciation scoring yet); .env.example is gitignored (ASR_* documented there locally).
+- NEXT staged piece for 2b: none queued. Candidate follow-ups — pronunciation scoring from audio, warm-up at boot or --workers 1 for uniform latency, larger model option.
+
+## Routes design notes (Tasks 11-13)
+- create_app(overrides): if overrides has REPO+GATEWAY -> use them (tests, skip engine). Else init_engine(DATABASE_URL), sessionmaker, seed_all(factory), Repository -> config["REPO"], LlmGateway -> config["GATEWAY"]. APP_CONFIG already set.
+- __init__ gets modified by T11, T12, T13 each adding their blueprints (sequential).
+- placement/submit: repo.get_combo(comboId) returns FULL items incl. answers (grading); serve_combo (start) strips them. writing_band/speaking_band via GATEWAY.score(...)["bands"]["overall"] when sample present else None. target_band from repo.get_user().target_band. Then set_skill_level per skill + save_placement_attempt.
+- skill-levels: repo.get_skill_levels(user.id) -> [{skill,band}] (empty if no user).
+
+## More decisions
+- Seed wiring: Task 6 implements seed.py (load_fixture + seed_all(Session)) + authors fixtures + tests (SQLite). Wiring seed_all into create_app startup (after init_engine) happens in Task 11 when __init__ is modified to init engine + repo. Do NOT seed inside the migration.
+- Stub gateway keys: generate -> "generate:{skill}:{band}"; score -> "score:{task}". fixtures/stub_responses.json must contain generate:{skill}:{band} for reading+listening at the seeded bands, and score:writing / score:speaking. fixtures/seed_sets.json feeds generated_sets (served via repo.serve_set) — separate from stub_responses.
+
+## Decisions for later tasks
+- Task 3 initial migration: use `Base.metadata.create_all(op.get_bind())` in upgrade() (robust offline, no Postgres needed to autogenerate). Task 6 seeds at app startup (create_app after init_engine), NOT in the migration.
+
+## Notes / carried concerns
+- postgres:18 used verbatim per spec; if image pull fails at compose-up, fall back to postgres:17.
+- Pre-existing logs/ and .claude/launch.json are v1 leftovers, harmless, left in place.
+
+## Remaining
+Tasks 2–22 pending.
