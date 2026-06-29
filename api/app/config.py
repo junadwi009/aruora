@@ -1,5 +1,10 @@
 import os
 
+
+def _truthy(val):
+    return str(val).strip().lower() in ("1", "true", "yes", "on")
+
+
 class Config:
     def __init__(self, overrides=None):
         o = overrides or {}
@@ -13,6 +18,11 @@ class Config:
         self.TESTING = o.get("TESTING", False)
         self.MODEL_GENERATE = o.get("MODEL_GENERATE", os.getenv("MODEL_GENERATE", "anthropic/claude-haiku-4-5"))
         self.MODEL_SCORE = o.get("MODEL_SCORE", os.getenv("MODEL_SCORE", "anthropic/claude-sonnet-4-6"))
+        # Speaking ASR (faster-whisper, fully local/offline). Phase 2b-2.
+        self.ASR_ENABLED = o.get("ASR_ENABLED", _truthy(os.getenv("ASR_ENABLED", "1")))
+        self.ASR_MODEL = o.get("ASR_MODEL", os.getenv("ASR_MODEL", "base"))
+        self.ASR_DEVICE = o.get("ASR_DEVICE", os.getenv("ASR_DEVICE", "cpu"))
+        self.ASR_COMPUTE_TYPE = o.get("ASR_COMPUTE_TYPE", os.getenv("ASR_COMPUTE_TYPE", "int8"))
 
     @property
     def provider_configured(self):

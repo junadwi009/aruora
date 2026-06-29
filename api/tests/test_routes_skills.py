@@ -41,3 +41,32 @@ def test_listening_generate_default_band(client_with_seed):
     r = client_with_seed.post("/api/listening/generate", json={})
     assert r.status_code == 200
     assert body_has_questions(r.get_json())
+
+
+def test_speaking_transcribe_returns_text(client_with_seed, monkeypatch):
+    import io
+
+    from app.services import asr
+
+    monkeypatch.setattr(
+        asr,
+        "transcribe",
+        lambda audio, cfg: {"transcript": "Hello world.", "language": "en",
+                            "durationSec": 3.0, "model": "base", "asr": True},
+    )
+    r = client_with_seed.post(
+        "/api/speaking/transcribe",
+        data={"audio": (io.BytesIO(b"fake-audio"), "speech.webm")},
+        content_type="multipart/form-data",
+    )
+    assert r.status_code == 200
+    body = r.get_json()
+    assert body["transcript"] == "Hello world."
+    assert body["asr"] is True
+
+
+def test_speaking_transcribe_requires_audio(client_with_seed):
+    r = client_with_seed.post("/api/speaking/transcribe", data={},
+                              content_type="multipart/form-data")
+    assert r.status_code == 422
+    assert r.get_json()["error"]["code"] == "VALIDATION"
