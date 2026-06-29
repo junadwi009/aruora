@@ -65,6 +65,13 @@ Decisions: provider=OpenRouter (OpenAI SDK, base_url https://openrouter.ai/api/v
 - Caveats: per-worker model load (2 gunicorn workers = 2 cold loads, ~9-10s first call each, warm faster); beam_size=5; only transcript feeds examiner (no phoneme/pronunciation scoring yet); .env.example is gitignored (ASR_* documented there locally).
 - NEXT staged piece for 2b: none queued. Candidate follow-ups — pronunciation scoring from audio, warm-up at boot or --workers 1 for uniform latency, larger model option.
 
+## PHASE 2c — Attempt persistence + Progress analytics — DONE
+- Spec docs/superpowers/specs/2026-06-29-ielts-v3-phase2c-persistence-progress.md (4514bba). Commits 4f6bc44 (api), 7462e79 (web).
+- Activates the idle `attempts` table — NO schema change. Repo: save_attempt/list_attempts/get_attempt/trends (bands JSON holds criteria incl overall; criteria JSON holds feedback payload so detail re-renders identically). writing/speaking evaluate now persist + return savedId (additive). New read routes: GET /api/history/attempts?type=, /api/history/attempt/<id> (404), /api/stats/trends.
+- web: Progress.tsx = Recharts band-trend (Writing+Speaking overall, sr-only table) + newest-first history → click → Dialog re-renders saved feedback via EXPORTED FeedbackView/SpeakingFeedback (revise/retry now optional). Empty-state kept.
+- Tests: api 73 (8 new), web 16 (1 new client). Live-verified in container (LLM_MODE=live): W+S eval → savedId 1,2; trends grouped per skill; history newest-first; detail full payload; 404 ok. NOTE: 2 real sample attempts now in dev pg volume (no delete endpoint yet).
+- Audit done this session (full): remaining gaps after 2c → Phase 2d candidates = Mock Test L/R (mocks table idle), R/L practice persistence, guided lessons (lessons table idle), flashcards/vocab (cards table idle), pronunciation scoring from audio, e2e Playwright, deploy. Tables still idle: mocks, lessons, cards.
+
 ## Routes design notes (Tasks 11-13)
 - create_app(overrides): if overrides has REPO+GATEWAY -> use them (tests, skip engine). Else init_engine(DATABASE_URL), sessionmaker, seed_all(factory), Repository -> config["REPO"], LlmGateway -> config["GATEWAY"]. APP_CONFIG already set.
 - __init__ gets modified by T11, T12, T13 each adding their blueprints (sequential).
