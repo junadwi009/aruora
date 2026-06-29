@@ -7,6 +7,7 @@ import { Textarea } from "../ui/Textarea";
 import { LevelChip } from "../ui/LevelChip";
 import type { CefrBand } from "../ui/LevelChip";
 import { Badge } from "../ui/Badge";
+import { Recorder } from "./Recorder";
 
 const STATIC_QUESTION =
   "Describe a place you have visited that made a strong impression on you. You should say: where it is, when you went there, what you did there, and explain why it made such a strong impression.";
@@ -66,36 +67,20 @@ export const Speaking: React.FC = () => {
 
         {(phase === "editor" || phase === "loading") && (
           <>
-            {/* ASR notice */}
-            <Card className="bg-[var(--color-surface-2)]">
-              <div className="flex items-center gap-2">
-                <span className="text-sm">🎙</span>
-                <div>
-                  <p className="text-xs font-medium text-[var(--color-text)]">
-                    Typed transcript (ASR deferred)
-                  </p>
-                  <p className="text-xs text-[var(--color-muted)]">
-                    Voice recording is coming soon. For now, type what you would say.
-                  </p>
-                </div>
-              </div>
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled
-                className="mt-3 cursor-not-allowed"
-                aria-disabled="true"
-              >
-                🎙 Record (coming soon)
-              </Button>
-            </Card>
+            {/* Record your answer — transcribed locally, then editable */}
+            <Recorder
+              onTranscript={(text) =>
+                setTranscript((prev) => (prev ? `${prev} ${text}`.trim() : text))
+              }
+              disabled={phase === "loading"}
+            />
 
             <Textarea
-              label="Your spoken response (typed)"
+              label="Your spoken response (transcript)"
               value={transcript}
               onChange={(e) => setTranscript(e.target.value)}
               rows={8}
-              placeholder="Type what you would say…"
+              placeholder="Record above, or type what you would say…"
               disabled={phase === "loading"}
             />
             {apiError && (

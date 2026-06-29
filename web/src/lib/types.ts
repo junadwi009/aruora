@@ -119,3 +119,11 @@ export interface Tips {
   title: string;
   bullets: string[];
 }
+
+export interface Transcript {
+  transcript: string;
+  language?: string | null;
+  durationSec?: number;
+  model?: string;
+  asr?: boolean;
+}

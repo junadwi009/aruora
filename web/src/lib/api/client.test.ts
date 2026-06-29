@@ -15,6 +15,22 @@ describe("api client", () => {
     expect(fetchMock.mock.calls[0][0]).toContain("/api/health");
   });
 
+  it("speakingTranscribe posts multipart audio and returns transcript", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true, status: 200, statusText: "OK",
+      text: async () => JSON.stringify({ transcript: "Hello world.", asr: true }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const blob = new Blob([new Uint8Array([1, 2, 3])], { type: "audio/webm" });
+    const out = await api.speakingTranscribe(blob);
+    expect(out.transcript).toBe("Hello world.");
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toContain("/api/speaking/transcribe");
+    expect(init.body).toBeInstanceOf(FormData);
+    // must NOT force application/json — the browser sets the multipart boundary
+    expect(init.headers?.["Content-Type"]).toBeUndefined();
+  });
+
   it("throws ApiError with code on non-2xx", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       ok: false, status: 422, statusText: "Unprocessable",

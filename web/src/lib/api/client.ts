@@ -10,6 +10,7 @@ import type {
   Tips,
   WritingEval,
   SpeakingEval,
+  Transcript,
 } from "../types";
 
 const BASE = (import.meta as { env?: { VITE_API_BASE?: string } }).env?.VITE_API_BASE ?? "http://localhost:5050";
@@ -42,6 +43,19 @@ const post = <T>(p: string, b: unknown) =>
   request<T>(p, { method: "POST", body: JSON.stringify(b ?? {}) });
 const get = <T>(p: string) => request<T>(p);
 
+// Multipart upload — let the browser set the multipart boundary; do NOT force
+// a JSON Content-Type (that would corrupt the form encoding).
+async function upload<T>(path: string, form: FormData): Promise<T> {
+  const res = await fetch(BASE + path, { method: "POST", body: form });
+  const text = await res.text();
+  const body = text ? (JSON.parse(text) as { error?: { code: string; message: string; details?: unknown } }) : null;
+  if (!res.ok) {
+    const err = body?.error ?? { code: "INTERNAL", message: res.statusText };
+    throw new ApiError(err.code, err.message, (err as { details?: unknown }).details);
+  }
+  return body as T;
+}
+
 export const api = {
   health: () => get<Health>("/api/health"),
   onboarding: (b: OnboardingBody) => post("/api/onboarding", b),
@@ -60,6 +74,11 @@ export const api = {
   tips: (skill: string) => get<Tips>(`/api/tips/${skill}`),
   writingEvaluate: (b: unknown) => post<WritingEval>("/api/writing/evaluate", b),
   speakingEvaluate: (b: unknown) => post<SpeakingEval>("/api/speaking/evaluate", b),
+  speakingTranscribe: (audio: Blob) => {
+    const form = new FormData();
+    form.append("audio", audio, "speech.webm");
+    return upload<Transcript>("/api/speaking/transcribe", form);
+  },
   readingGenerate: (band: string) => post<QuizSet>("/api/reading/generate", { band }),
   listeningGenerate: (band: string) => post<QuizSet>("/api/listening/generate", { band }),
 };
