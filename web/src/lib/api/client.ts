@@ -11,6 +11,9 @@ import type {
   WritingEval,
   SpeakingEval,
   Transcript,
+  AttemptSummary,
+  AttemptDetail,
+  Trends,
 } from "../types";
 
 const BASE = (import.meta as { env?: { VITE_API_BASE?: string } }).env?.VITE_API_BASE ?? "http://localhost:5050";
@@ -81,4 +84,8 @@ export const api = {
   },
   readingGenerate: (band: string) => post<QuizSet>("/api/reading/generate", { band }),
   listeningGenerate: (band: string) => post<QuizSet>("/api/listening/generate", { band }),
+  statsTrends: () => get<Trends>("/api/stats/trends"),
+  historyAttempts: (type?: "writing" | "speaking") =>
+    get<AttemptSummary[]>(`/api/history/attempts${type ? `?type=${type}` : ""}`),
+  historyAttempt: (id: number) => get<AttemptDetail>(`/api/history/attempt/${id}`),
 };

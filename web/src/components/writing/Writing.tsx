@@ -100,7 +100,7 @@ export const Writing: React.FC = () => {
 // ---------------------------------------------------------------------------
 interface FeedbackViewProps {
   result: WritingEval;
-  onRevise: () => void;
+  onRevise?: () => void;
 }
 
 const CRIT_LABELS: Record<string, string> = {
@@ -181,7 +181,7 @@ const MetricsPanel: React.FC<{ metrics: EssayMetrics }> = ({ metrics }) => {
   );
 };
 
-const FeedbackView: React.FC<FeedbackViewProps> = ({ result, onRevise }) => (
+export const FeedbackView: React.FC<FeedbackViewProps> = ({ result, onRevise }) => (
   <div className="flex flex-col gap-4">
     {/* CEFR + band summary */}
     <Card>
@@ -240,8 +240,10 @@ const FeedbackView: React.FC<FeedbackViewProps> = ({ result, onRevise }) => (
     {/* Metrics panel */}
     {result.metrics && <MetricsPanel metrics={result.metrics} />}
 
-    <Button variant="secondary" onClick={onRevise}>
-      ↩ Revise
-    </Button>
+    {onRevise && (
+      <Button variant="secondary" onClick={onRevise}>
+        ↩ Revise
+      </Button>
+    )}
   </div>
 );

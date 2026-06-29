@@ -31,6 +31,20 @@ describe("api client", () => {
     expect(init.headers?.["Content-Type"]).toBeUndefined();
   });
 
+  it("statsTrends and historyAttempts hit the right endpoints", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true, status: 200, statusText: "OK",
+      text: async () => JSON.stringify({ writing: [], speaking: [] }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    await api.statsTrends();
+    expect(fetchMock.mock.calls[0][0]).toContain("/api/stats/trends");
+    await api.historyAttempts("writing");
+    expect(fetchMock.mock.calls[1][0]).toContain("/api/history/attempts?type=writing");
+    await api.historyAttempt(7);
+    expect(fetchMock.mock.calls[2][0]).toContain("/api/history/attempt/7");
+  });
+
   it("throws ApiError with code on non-2xx", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       ok: false, status: 422, statusText: "Unprocessable",

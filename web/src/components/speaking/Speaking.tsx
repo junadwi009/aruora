@@ -109,10 +109,10 @@ export const Speaking: React.FC = () => {
 // ---------------------------------------------------------------------------
 interface SpeakingFeedbackProps {
   result: SpeakingEval;
-  onRetry: () => void;
+  onRetry?: () => void;
 }
 
-const SpeakingFeedback: React.FC<SpeakingFeedbackProps> = ({ result, onRetry }) => (
+export const SpeakingFeedback: React.FC<SpeakingFeedbackProps> = ({ result, onRetry }) => (
   <div className="flex flex-col gap-4">
     <Card>
       <div className="flex items-center gap-3 mb-3">
@@ -159,8 +159,10 @@ const SpeakingFeedback: React.FC<SpeakingFeedbackProps> = ({ result, onRetry }) 
       </Card>
     )}
 
-    <Button variant="secondary" onClick={onRetry}>
-      ↩ Try again
-    </Button>
+    {onRetry && (
+      <Button variant="secondary" onClick={onRetry}>
+        ↩ Try again
+      </Button>
+    )}
   </div>
 );

@@ -127,3 +127,35 @@ export interface Transcript {
   model?: string;
   asr?: boolean;
 }
+
+export interface AttemptSummary {
+  id: number;
+  type: "writing" | "speaking";
+  task: string;
+  cefr: Cefr | "";
+  overall: number | null;
+  createdAt: string | null;
+}
+
+export interface TrendPoint {
+  id: number;
+  createdAt: string | null;
+  overall: number | null;
+  bands: Record<string, number>;
+}
+
+export interface Trends {
+  writing: TrendPoint[];
+  speaking: TrendPoint[];
+}
+
+// Stored attempt detail — superset of WritingEval/SpeakingEval plus meta, so the
+// saved feedback re-renders with the existing skill renderers.
+export type AttemptDetail = (WritingEval | SpeakingEval) & {
+  id: number;
+  type: "writing" | "speaking";
+  task: string;
+  prompt: string;
+  body: string;
+  createdAt: string | null;
+};
