@@ -14,3 +14,6 @@ lexicalrichness==0.5.1
 # Note: spacy 3.8.2 requires numpy from source on Python 3.13; use 3.8.14 (latest 3.8.x)
 spacy==3.8.14
 textdescriptives==2.8.2
+# Phase 2b-2: local Speaking ASR. faster-whisper pulls ctranslate2 + PyAV
+# (bundles ffmpeg, so no system ffmpeg needed) + the tokenizers/onnxruntime stack.
+faster-whisper==1.1.1
