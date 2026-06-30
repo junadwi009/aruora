@@ -12,7 +12,9 @@ logger = logging.getLogger(__name__)
 
 def send_email(cfg, to: str, subject: str, body: str) -> bool:
     if not getattr(cfg, "SMTP_HOST", ""):
-        logger.info(
+        # No SMTP in dev — surface the message (incl. any reset link) at WARNING
+        # so it's visible in the server log. Configure SMTP_* for real delivery.
+        logger.warning(
             "EMAIL (no SMTP configured — not sent) to=%s subject=%s\n%s",
             to, subject, body,
         )
