@@ -94,6 +94,14 @@ export default function App() {
     };
   }, []);
 
+  // Idle session timeout (Phase 3a): the client fires this on a SESSION_EXPIRED
+  // response — reload to return to the sign-in / welcome screen.
+  useEffect(() => {
+    const onExpired = () => window.location.reload();
+    window.addEventListener("ielts:session-expired", onExpired);
+    return () => window.removeEventListener("ielts:session-expired", onExpired);
+  }, []);
+
   if (unlocked === null) {
     return (
       <div className="flex min-h-screen items-center justify-center p-6">

@@ -22,6 +22,7 @@ import type {
   VocabSet,
   Flashcard,
   CardStats,
+  AccountUser,
 } from "../types";
 
 const BASE = (import.meta as { env?: { VITE_API_BASE?: string } }).env?.VITE_API_BASE ?? "http://localhost:5050";
@@ -46,6 +47,10 @@ async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
   const body = text ? (JSON.parse(text) as { error?: { code: string; message: string; details?: unknown } }) : null;
   if (!res.ok) {
     const err = body?.error ?? { code: "INTERNAL", message: res.statusText };
+    // Idle-timeout: tell the app to return to the sign-in screen.
+    if (err.code === "SESSION_EXPIRED" && typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("ielts:session-expired"));
+    }
     throw new ApiError(err.code, err.message, (err as { details?: unknown }).details);
   }
   return body as T;
@@ -73,6 +78,10 @@ export const api = {
   authStatus: () => get<{ authRequired: boolean; authenticated: boolean }>("/api/auth/status"),
   authLogin: (passcode: string) => post<{ ok: boolean }>("/api/auth/login", { passcode }),
   authLogout: () => post<{ ok: boolean }>("/api/auth/logout", {}),
+  accountRegister: (b: { email: string; password: string }) => post<AccountUser>("/api/account/register", b),
+  accountLogin: (b: { email: string; password: string }) => post<AccountUser>("/api/account/login", b),
+  accountLogout: () => post<{ ok: boolean }>("/api/account/logout", {}),
+  accountMe: () => get<AccountUser>("/api/account/me"),
   onboarding: (b: OnboardingBody) => post("/api/onboarding", b),
   placementStart: () => post<PlacementStart>("/api/placement/start", {}),
   placementSubmit: (b: unknown) => post<PlacementResult>("/api/placement/submit", b),

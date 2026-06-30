@@ -107,6 +107,19 @@ describe("api client", () => {
     expect(fetchMock.mock.calls[0][1].method).toBe("POST");
   });
 
+  it("account endpoints hit the right URLs", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true, status: 200, statusText: "OK", text: async () => JSON.stringify({ id: 1 }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    await api.accountRegister({ email: "a@b.com", password: "secret123" });
+    expect(fetchMock.mock.calls[0][0]).toContain("/api/account/register");
+    await api.accountLogin({ email: "a@b.com", password: "secret123" });
+    expect(fetchMock.mock.calls[1][0]).toContain("/api/account/login");
+    await api.accountMe();
+    expect(fetchMock.mock.calls[2][0]).toContain("/api/account/me");
+  });
+
   it("throws ApiError with code on non-2xx", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       ok: false, status: 422, statusText: "Unprocessable",

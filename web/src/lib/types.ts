@@ -240,3 +240,11 @@ export interface CardStats {
   total: number;
   due: number;
 }
+
+export interface AccountUser {
+  id: number;
+  email: string | null;
+  name: string;
+  goal: string;
+  targetBand: number;
+}
