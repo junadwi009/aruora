@@ -57,3 +57,31 @@ def program_milestones():
         return jsonify([]), 200
 
     return jsonify(repo.get_milestones(prog.id)), 200
+
+
+@bp.post("/api/program/milestones")
+def milestone_add():
+    b = request.get_json(force=True) or {}
+    mid = _repo().add_milestone(
+        _require_uid(), b.get("title", "Milestone"),
+        int(b.get("dayTarget", 30)), b.get("targets", {}),
+    )
+    if mid is None:
+        raise ApiError("NOT_FOUND", "No active program — choose a program first", 404)
+    return jsonify({"id": mid}), 200
+
+
+@bp.put("/api/program/milestones/<int:milestone_id>")
+def milestone_update(milestone_id):
+    b = request.get_json(force=True) or {}
+    out = _repo().update_milestone(_require_uid(), milestone_id, b)
+    if out is None:
+        raise ApiError("NOT_FOUND", "Milestone not found", 404)
+    return jsonify(out), 200
+
+
+@bp.delete("/api/program/milestones/<int:milestone_id>")
+def milestone_delete(milestone_id):
+    if not _repo().delete_milestone(_require_uid(), milestone_id):
+        raise ApiError("NOT_FOUND", "Milestone not found", 404)
+    return jsonify({"deleted": milestone_id}), 200

@@ -19,6 +19,11 @@ class UserProfile(Base):
     email: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
     password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     google_sub: Mapped[str | None] = mapped_column(String(255), nullable=True)  # reserved for OAuth
+    # Phase 3e — profile detail + avatar (base64 data URL).
+    country: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    exam_date: Mapped[str | None] = mapped_column(String(20), nullable=True)  # ISO yyyy-mm-dd
+    bio: Mapped[str | None] = mapped_column(String, nullable=True)
+    avatar: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 class SkillLevel(Base):

@@ -106,6 +106,33 @@ class Repository:
             u.password_hash = generate_password_hash(password)
             s.commit()
 
+    def change_password(self, user_id, current, new) -> bool:
+        """Verify `current` then set `new`. False if current is wrong."""
+        from werkzeug.security import check_password_hash, generate_password_hash
+        with self._sf() as s:
+            u = s.get(UserProfile, user_id)
+            if u is None or not u.password_hash or not check_password_hash(u.password_hash, current):
+                return False
+            u.password_hash = generate_password_hash(new)
+            s.commit()
+            return True
+
+    def update_profile(self, user_id, fields: dict) -> None:
+        with self._sf() as s:
+            u = s.get(UserProfile, user_id)
+            for col in ("name", "country", "bio"):
+                if fields.get(col) is not None:
+                    setattr(u, col, fields[col])
+            if fields.get("examDate") is not None:
+                u.exam_date = fields["examDate"]
+            s.commit()
+
+    def set_avatar(self, user_id, data_url: str) -> None:
+        with self._sf() as s:
+            u = s.get(UserProfile, user_id)
+            u.avatar = data_url
+            s.commit()
+
     def get_user_by_id(self, user_id) -> UserProfile | None:
         with self._sf() as s:
             row = s.get(UserProfile, user_id)
@@ -312,6 +339,7 @@ class Repository:
             )
             return [
                 {
+                    "id": r.id,
                     "idx": r.idx,
                     "dayTarget": r.day_target,
                     "title": r.title,
@@ -319,6 +347,60 @@ class Repository:
                 }
                 for r in rows
             ]
+
+    def _owns_milestone(self, s, user_id: int, milestone_id: int):
+        """Return the Milestone if it belongs to a program owned by user_id, else None."""
+        m = s.get(Milestone, milestone_id)
+        if m is None:
+            return None
+        prog = s.get(Program, m.program_id)
+        if prog is None or prog.user_id != user_id:
+            return None
+        return m
+
+    def add_milestone(self, user_id: int, title: str, day_target: int, targets: dict) -> int | None:
+        """Append a milestone to the user's latest program. None if no program."""
+        with self._sf() as s:
+            prog = s.execute(
+                select(Program).where(Program.user_id == user_id).order_by(Program.id.desc()).limit(1)
+            ).scalars().first()
+            if prog is None:
+                return None
+            next_idx = (s.execute(
+                select(Milestone).where(Milestone.program_id == prog.id)
+            ).scalars().all() or [])
+            idx = (max((mm.idx for mm in next_idx), default=-1)) + 1
+            m = Milestone(program_id=prog.id, idx=idx, day_target=day_target,
+                          title=title, targets=targets or {})
+            s.add(m)
+            s.commit()
+            s.refresh(m)
+            return m.id
+
+    def update_milestone(self, user_id: int, milestone_id: int, fields: dict) -> dict | None:
+        with self._sf() as s:
+            m = self._owns_milestone(s, user_id, milestone_id)
+            if m is None:
+                return None
+            if "title" in fields and fields["title"] is not None:
+                m.title = fields["title"]
+            if "dayTarget" in fields and fields["dayTarget"] is not None:
+                m.day_target = int(fields["dayTarget"])
+            if "targets" in fields and fields["targets"] is not None:
+                m.targets = fields["targets"]
+            s.commit()
+            s.refresh(m)
+            return {"id": m.id, "idx": m.idx, "dayTarget": m.day_target,
+                    "title": m.title, "targets": m.targets}
+
+    def delete_milestone(self, user_id: int, milestone_id: int) -> bool:
+        with self._sf() as s:
+            m = self._owns_milestone(s, user_id, milestone_id)
+            if m is None:
+                return False
+            s.delete(m)
+            s.commit()
+            return True
 
     # ── Attempts (Writing / Speaking history) — Phase 2c ──────────────────────
 

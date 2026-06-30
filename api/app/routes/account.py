@@ -21,7 +21,9 @@ _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 def _public(u) -> dict:
     return {"id": u.id, "email": u.email, "name": u.name,
-            "goal": u.goal, "targetBand": u.target_band}
+            "goal": u.goal, "targetBand": u.target_band,
+            "country": u.country, "examDate": u.exam_date, "bio": u.bio,
+            "avatar": u.avatar}
 
 
 @bp.post("/api/account/register")
@@ -73,3 +75,43 @@ def me():
     if u is None:
         raise ApiError("UNAUTHORIZED", "Not signed in", 401)
     return jsonify(_public(u)), 200
+
+
+def _uid_or_401() -> int:
+    uid = current_uid()
+    if uid is None:
+        raise ApiError("UNAUTHORIZED", "Not signed in", 401)
+    return uid
+
+
+@bp.patch("/api/account/profile")
+def update_profile():
+    b = request.get_json(force=True) or {}
+    _repo().update_profile(_uid_or_401(), b)
+    return jsonify(_public(_repo().get_user_by_id(current_uid()))), 200
+
+
+_MAX_AVATAR = 3_000_000  # ~2 MB image as a base64 data URL
+
+
+@bp.post("/api/account/avatar")
+def set_avatar():
+    b = request.get_json(force=True) or {}
+    data_url = b.get("dataUrl", "")
+    if not isinstance(data_url, str) or not data_url.startswith("data:image/"):
+        raise ApiError("VALIDATION", "Avatar must be an image data URL", 422)
+    if len(data_url) > _MAX_AVATAR:
+        raise ApiError("VALIDATION", "Image is too large (max ~2 MB)", 422)
+    _repo().set_avatar(_uid_or_401(), data_url)
+    return jsonify({"ok": True}), 200
+
+
+@bp.post("/api/account/password")
+def change_password():
+    b = request.get_json(force=True) or {}
+    new = b.get("newPassword") or ""
+    if len(new) < 6:
+        raise ApiError("VALIDATION", "New password must be at least 6 characters", 422)
+    if not _repo().change_password(_uid_or_401(), b.get("currentPassword") or "", new):
+        raise ApiError("UNAUTHORIZED", "Current password is incorrect", 401)
+    return jsonify({"ok": True}), 200
