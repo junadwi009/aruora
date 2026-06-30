@@ -66,6 +66,15 @@ const EN: Dict = {
   "set.targetsOverall": "Overall band target", "set.targetsPerSkill": "Per-skill CEFR target",
   "set.changePassword": "Change password", "set.signedIn": "Signed in",
   "set.help": "Help",
+  // admin (master admin — Manage users)
+  "settings.admin": "Admin", "admin.title": "Master admin",
+  "admin.sub": "Manage accounts on this instance.",
+  "admin.accounts": "Accounts", "admin.attempts": "Attempts", "admin.anon": "Anonymous",
+  "admin.user": "User", "admin.usage": "Usage", "admin.actions": "Actions",
+  "admin.resetPw": "Send reset link", "admin.delete": "Delete user",
+  "admin.resetSent": "Reset link sent", "admin.you": "you",
+  "admin.confirmDelete": "Delete this user and ALL their data? This cannot be undone.",
+  "admin.empty": "No accounts yet.",
 };
 
 const ID: Dict = {

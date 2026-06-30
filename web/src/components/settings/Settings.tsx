@@ -15,6 +15,8 @@ import { MilestonesSection } from "./MilestonesSection";
 import { RemindersSection } from "./RemindersSection";
 import { DataSection } from "./DataSection";
 import { HelpSection } from "./HelpSection";
+import { AdminSection } from "./AdminSection";
+import type { AccountUser } from "../../lib/types";
 
 const FONTS: { value: Font; label: string; hint: string }[] = [
   { value: "default", label: "Default", hint: "Inter · Lexend" },
@@ -26,10 +28,11 @@ export const Settings: React.FC = () => {
   const { t, lang, setLang } = useT();
   const [theme, setThemeState] = useState<Theme>(getTheme());
   const [font, setFontState] = useState<Font>(getFont());
-  const [hasAccount, setHasAccount] = useState(false);
+  const [account, setAccount] = useState<AccountUser | null>(null);
+  const hasAccount = !!account?.email;
 
   React.useEffect(() => {
-    api.accountMe().then((u) => setHasAccount(!!u.email)).catch(() => setHasAccount(false));
+    api.accountMe().then(setAccount).catch(() => setAccount(null));
   }, []);
 
   const pickTheme = (t: Theme) => { setTheme(t); setThemeState(t); };
@@ -115,6 +118,9 @@ export const Settings: React.FC = () => {
 
         {/* Help / FAQ */}
         <HelpSection />
+
+        {/* Master-admin (only when the account is in ADMIN_EMAILS) */}
+        {account?.isAdmin && <AdminSection selfId={account.id} />}
 
         {/* Account */}
         {hasAccount && (

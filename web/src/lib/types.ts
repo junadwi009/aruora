@@ -254,4 +254,25 @@ export interface AccountUser {
   avatar?: string | null;
   skillTargets?: Record<string, string>;
   reminderTime?: string | null;
+  isAdmin?: boolean;
+}
+
+export interface AdminUser {
+  id: number;
+  email: string | null;
+  name: string;
+  targetBand: number;
+  country?: string | null;
+  examDate?: string | null;
+  attempts: number;
+  createdAt?: string | null;
+}
+
+export interface AdminStats {
+  totalAccounts: number;
+  totalProfiles: number;
+  anonymousProfiles: number;
+  totalAttempts: number;
+  totalMocks: number;
+  totalCards: number;
 }

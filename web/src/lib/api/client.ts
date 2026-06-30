@@ -23,6 +23,8 @@ import type {
   Flashcard,
   CardStats,
   AccountUser,
+  AdminUser,
+  AdminStats,
 } from "../types";
 
 const BASE = (import.meta as { env?: { VITE_API_BASE?: string } }).env?.VITE_API_BASE ?? "http://localhost:5050";
@@ -92,6 +94,13 @@ export const api = {
   accountForgot: (email: string) => post<{ ok: boolean }>("/api/account/forgot", { email }),
   accountReset: (b: { token: string; newPassword: string }) =>
     post<{ ok: boolean }>("/api/account/reset", b),
+  // Master-admin (only succeeds when the signed-in account is in ADMIN_EMAILS).
+  adminUsers: () => get<AdminUser[]>("/api/admin/users"),
+  adminStats: () => get<AdminStats>("/api/admin/stats"),
+  adminDeleteUser: (id: number) =>
+    request<{ ok: boolean }>(`/api/admin/users/${id}`, { method: "DELETE" }),
+  adminResetUser: (id: number) =>
+    post<{ ok: boolean }>(`/api/admin/users/${id}/reset-password`, {}),
   onboarding: (b: OnboardingBody) => post("/api/onboarding", b),
   placementStart: () => post<PlacementStart>("/api/placement/start", {}),
   placementSubmit: (b: unknown) => post<PlacementResult>("/api/placement/submit", b),
