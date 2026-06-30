@@ -56,8 +56,8 @@ export const PlacementIntro: React.FC<PlacementIntroProps> = ({ onBegin }) => {
               <Mic size={16} className="text-[var(--color-primary-600)]" />
             </span>
             <span className="pt-1">
-              Speaking uses a <strong>typed response</strong> in this version — speech recognition
-              is coming soon. Type what you would say naturally.
+              For Speaking you can <strong>record</strong> your answer (transcribed automatically) or
+              type it — whichever you prefer.
             </span>
           </li>
         </ul>

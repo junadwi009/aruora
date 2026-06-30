@@ -1,6 +1,6 @@
 import React from "react";
 import { Card, Textarea } from "../ui";
-import { Mic } from "lucide-react";
+import { Recorder } from "../speaking/Recorder";
 
 interface SpeakingPart2Cue {
   cue: string;
@@ -80,41 +80,22 @@ export const SpeakingSection: React.FC<SpeakingSectionProps> = ({
         </div>
       )}
 
-      {/* Record placeholder — styled */}
-      <div
-        className="flex items-center gap-4 p-5 rounded-[var(--radius-lg)] border border-dashed border-[var(--color-primary-600)] bg-[color-mix(in_srgb,var(--color-primary-600)_5%,transparent)]"
-      >
-        <div
-          aria-hidden="true"
-          className="w-12 h-12 rounded-full flex items-center justify-center shrink-0"
-          style={{
-            background: "linear-gradient(135deg, var(--color-primary-600), var(--color-primary-800))",
-            boxShadow: "var(--shadow-e2)",
-          }}
-        >
-          <Mic size={20} className="text-white" />
-        </div>
-        <div>
-          <p className="text-sm font-medium text-[var(--color-text)]">
-            Speech recording — coming soon
-          </p>
-          <p className="text-xs text-[var(--color-muted)] mt-0.5">
-            For now, type your responses in the box below
-          </p>
-        </div>
-      </div>
+      {/* Record (local ASR) — fills the editable transcript below */}
+      <Recorder
+        onTranscript={(t) => setValue(value ? `${value} ${t}`.trim() : t)}
+      />
 
-      {/* Typed transcript fallback */}
+      {/* Transcript (recorded above, or typed) — editable */}
       <div className="flex flex-col gap-2">
         <p className="text-xs font-semibold text-[var(--color-primary-600)] uppercase tracking-widest">
-          Your typed response
+          Your response (transcript)
         </p>
         <Textarea
-          label="Type or paste what you would say (speech recognition coming soon)"
+          label="Record above, or type what you would say — covering all three parts"
           value={value}
           onChange={(e) => setValue(e.target.value)}
           rows={8}
-          placeholder="Write your spoken responses here, covering all three parts…"
+          placeholder="Record your spoken responses, or type them here…"
         />
       </div>
     </div>
