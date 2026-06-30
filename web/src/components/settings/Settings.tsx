@@ -7,6 +7,7 @@ import {
 } from "../../lib/settings";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
+import { useT } from "../../lib/i18n";
 import { ProfileSection } from "./ProfileSection";
 import { TargetsSection } from "./TargetsSection";
 import { SecuritySection } from "./SecuritySection";
@@ -21,6 +22,7 @@ const FONTS: { value: Font; label: string; hint: string }[] = [
 ];
 
 export const Settings: React.FC = () => {
+  const { t, lang, setLang } = useT();
   const [theme, setThemeState] = useState<Theme>(getTheme());
   const [font, setFontState] = useState<Font>(getFont());
   const [hasAccount, setHasAccount] = useState(false);
@@ -39,19 +41,28 @@ export const Settings: React.FC = () => {
   return (
     <main className="flex-1 overflow-y-auto">
       <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 py-3 z-10">
-        <h1 className="text-base font-semibold text-[var(--color-text)]">Settings</h1>
+        <h1 className="text-base font-semibold text-[var(--color-text)]">{t("settings.title")}</h1>
       </div>
 
       <div className="p-4 md:p-6 max-w-xl mx-auto flex flex-col gap-4">
+        {/* Language */}
+        <Card className="flex flex-col gap-3">
+          <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("settings.language")}</p>
+          <div className="grid grid-cols-2 gap-2">
+            <Button variant={lang === "en" ? "primary" : "secondary"} onClick={() => setLang("en")}>English</Button>
+            <Button variant={lang === "id" ? "primary" : "secondary"} onClick={() => setLang("id")}>Indonesia</Button>
+          </div>
+        </Card>
+
         {/* Theme */}
         <Card className="flex flex-col gap-3">
-          <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">Appearance</p>
+          <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("settings.appearance")}</p>
           <div className="grid grid-cols-2 gap-2">
             <Button variant={theme === "light" ? "primary" : "secondary"} onClick={() => pickTheme("light")}>
-              <Sun size={16} className="mr-1.5" /> Light
+              <Sun size={16} className="mr-1.5" /> {t("common.light")}
             </Button>
             <Button variant={theme === "dark" ? "primary" : "secondary"} onClick={() => pickTheme("dark")}>
-              <Moon size={16} className="mr-1.5" /> Dark
+              <Moon size={16} className="mr-1.5" /> {t("common.dark")}
             </Button>
           </div>
         </Card>
@@ -106,7 +117,7 @@ export const Settings: React.FC = () => {
           <Card className="flex items-center justify-between">
             <p className="text-sm text-[var(--color-text)]">Signed in</p>
             <Button variant="secondary" size="sm" onClick={logout}>
-              <LogOut size={14} className="mr-1.5" /> Sign out
+              <LogOut size={14} className="mr-1.5" /> {t("common.signOut")}
             </Button>
           </Card>
         )}

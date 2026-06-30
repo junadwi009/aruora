@@ -1,23 +1,25 @@
 import React from "react";
 import { Home, BookOpen, ClipboardCheck, Lightbulb, LineChart } from "lucide-react";
 import { useView, type View } from "./viewContext";
+import { useT } from "../../lib/i18n";
 
 interface TabEntry {
   view: View;
-  label: string;
+  tkey: string;
   icon: React.ReactNode;
 }
 
 const TABS: TabEntry[] = [
-  { view: "home", label: "Home", icon: <Home size={20} aria-hidden="true" /> },
-  { view: "reading", label: "Practice", icon: <BookOpen size={20} aria-hidden="true" /> },
-  { view: "test", label: "Test", icon: <ClipboardCheck size={20} aria-hidden="true" /> },
-  { view: "tips", label: "Tips", icon: <Lightbulb size={20} aria-hidden="true" /> },
-  { view: "progress", label: "Progress", icon: <LineChart size={20} aria-hidden="true" /> },
+  { view: "home", tkey: "nav.home", icon: <Home size={20} aria-hidden="true" /> },
+  { view: "reading", tkey: "nav.practice", icon: <BookOpen size={20} aria-hidden="true" /> },
+  { view: "test", tkey: "nav.test", icon: <ClipboardCheck size={20} aria-hidden="true" /> },
+  { view: "tips", tkey: "nav.tips", icon: <Lightbulb size={20} aria-hidden="true" /> },
+  { view: "progress", tkey: "nav.progress", icon: <LineChart size={20} aria-hidden="true" /> },
 ];
 
 export const BottomTabs: React.FC = () => {
   const { view, setView } = useView();
+  const { t } = useT();
 
   return (
     <nav
@@ -51,7 +53,7 @@ export const BottomTabs: React.FC = () => {
                   .join(" ")}
               >
                 {tab.icon}
-                <span>{tab.label}</span>
+                <span>{t(tab.tkey)}</span>
               </button>
             </li>
           );

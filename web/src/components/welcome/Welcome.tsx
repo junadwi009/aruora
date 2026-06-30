@@ -2,9 +2,11 @@ import React from "react";
 import { BookOpen } from "lucide-react";
 import { Button } from "../ui";
 import { useJourney } from "../../lib/journey";
+import { useT } from "../../lib/i18n";
 
 export const Welcome: React.FC = () => {
   const { go } = useJourney();
+  const { t } = useT();
 
   return (
     <div className="journey-bg flex min-h-full items-center justify-center p-6">
@@ -33,10 +35,10 @@ export const Welcome: React.FC = () => {
             className="text-4xl font-bold text-[var(--color-text)] tracking-tight leading-tight"
             style={{ textWrap: "balance" } as React.CSSProperties}
           >
-            Find your level,<br />then improve it.
+            {t("welcome.title")}
           </h1>
           <p className="text-base text-[var(--color-muted)] leading-relaxed">
-            Expert feedback on Writing &amp; Speaking you can&apos;t grade yourself — plus Reading, Listening, and a personalised study plan.
+            {t("welcome.subtitle")}
           </p>
         </div>
 
@@ -47,7 +49,7 @@ export const Welcome: React.FC = () => {
             onClick={() => go("onboarding")}
             className="min-w-[12rem]"
           >
-            Get started
+            {t("welcome.getStarted")}
           </Button>
           <button
             type="button"
@@ -60,7 +62,7 @@ export const Welcome: React.FC = () => {
               "min-h-[44px] px-2",
             ].join(" ")}
           >
-            I already have an account
+            {t("welcome.haveAccount")}
           </button>
         </div>
       </div>

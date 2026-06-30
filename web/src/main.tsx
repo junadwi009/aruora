@@ -4,6 +4,7 @@ import "./fonts.css";
 import "./app.css";
 import App from "./App";
 import { applySettings } from "./lib/settings";
+import { I18nProvider } from "./lib/i18n";
 
 // Apply persisted theme + font before first paint.
 applySettings();
@@ -13,6 +14,8 @@ if (!rootEl) throw new Error("No #root element found");
 
 createRoot(rootEl).render(
   <StrictMode>
-    <App />
+    <I18nProvider>
+      <App />
+    </I18nProvider>
   </StrictMode>
 );

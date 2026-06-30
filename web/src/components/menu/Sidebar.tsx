@@ -15,6 +15,7 @@ import {
 import { LevelChip } from "../ui/LevelChip";
 import type { CefrBand } from "../ui/LevelChip";
 import { useView, type View } from "./viewContext";
+import { useT } from "../../lib/i18n";
 
 interface SidebarProps {
   levels: Record<string, CefrBand>;
@@ -42,6 +43,7 @@ const NAV_ENTRIES: NavEntry[] = [
 
 export const Sidebar: React.FC<SidebarProps> = ({ levels }) => {
   const { view, setView } = useView();
+  const { t } = useT();
 
   return (
     <nav
@@ -85,7 +87,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ levels }) => {
                   .join(" ")}
               >
                 {entry.icon}
-                <span className="flex-1 text-left">{entry.label}</span>
+                <span className="flex-1 text-left">{t("nav." + entry.view)}</span>
                 {band && <LevelChip band={band} />}
               </button>
             </li>
@@ -109,7 +111,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ levels }) => {
             .join(" ")}
         >
           <Settings size={18} aria-hidden="true" />
-          <span className="flex-1 text-left">Settings</span>
+          <span className="flex-1 text-left">{t("nav.settings")}</span>
         </button>
       </div>
     </nav>
