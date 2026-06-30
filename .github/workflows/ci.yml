@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+jobs:
+  api:
+    name: API (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r api/requirements.txt
+      - name: Download spaCy model (essay metrics)
+        run: python -m spacy download en_core_web_sm
+      - name: Run tests
+        working-directory: api
+        run: python -m pytest -q
+
+  web:
+    name: Web (tsc + vitest + build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install dependencies
+        working-directory: web
+        run: npm ci
+      - name: Type-check
+        working-directory: web
+        run: npx tsc --noEmit
+      - name: Unit tests
+        working-directory: web
+        run: npm test
+      - name: Build
+        working-directory: web
+        run: npm run build
+      - name: Secret scan (no API key in bundle)
+        run: bash tests/secret_scan.sh
+
+# NOTE: Playwright e2e (web/e2e) needs the full docker-compose stack + browsers,
+# so it is run locally (`npm run e2e`), not in this workflow.
