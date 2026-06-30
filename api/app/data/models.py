@@ -15,6 +15,10 @@ class UserProfile(Base):
     goal: Mapped[str] = mapped_column(String(20))
     target_band: Mapped[float] = mapped_column(Float)
     skill_targets: Mapped[dict] = mapped_column(JSON, default=dict)
+    # Phase 3a — account identity (nullable: a profile may start anonymous).
+    email: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
+    password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    google_sub: Mapped[str | None] = mapped_column(String(255), nullable=True)  # reserved for OAuth
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 class SkillLevel(Base):

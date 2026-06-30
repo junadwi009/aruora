@@ -53,6 +53,68 @@ class Repository:
             s.expunge(u)
         return u
 
+    # ── Accounts (Phase 3a) ───────────────────────────────────────────────────
+
+    def create_account(self, email, password, name="", goal="other", target_band=6.0,
+                       skill_targets=None) -> UserProfile:
+        from werkzeug.security import generate_password_hash
+        with self._sf() as s:
+            u = UserProfile(
+                name=name, goal=goal, target_band=target_band,
+                skill_targets=skill_targets or {},
+                email=email, password_hash=generate_password_hash(password),
+            )
+            s.add(u)
+            s.commit()
+            s.refresh(u)
+            s.expunge(u)
+        return u
+
+    def attach_credentials(self, user_id, email, password) -> UserProfile:
+        from werkzeug.security import generate_password_hash
+        with self._sf() as s:
+            u = s.get(UserProfile, user_id)
+            u.email = email
+            u.password_hash = generate_password_hash(password)
+            s.commit()
+            s.refresh(u)
+            s.expunge(u)
+        return u
+
+    def get_account_by_email(self, email) -> UserProfile | None:
+        with self._sf() as s:
+            row = s.execute(
+                select(UserProfile).where(UserProfile.email == email)
+            ).scalars().first()
+            if row is None:
+                return None
+            s.refresh(row)
+            s.expunge(row)
+        return row
+
+    def verify_login(self, email, password) -> UserProfile | None:
+        from werkzeug.security import check_password_hash
+        u = self.get_account_by_email(email)
+        if u is None or not u.password_hash or not check_password_hash(u.password_hash, password):
+            return None
+        return u
+
+    def set_password(self, user_id, password) -> None:
+        from werkzeug.security import generate_password_hash
+        with self._sf() as s:
+            u = s.get(UserProfile, user_id)
+            u.password_hash = generate_password_hash(password)
+            s.commit()
+
+    def get_user_by_id(self, user_id) -> UserProfile | None:
+        with self._sf() as s:
+            row = s.get(UserProfile, user_id)
+            if row is None:
+                return None
+            s.refresh(row)
+            s.expunge(row)
+        return row
+
     def get_user(self) -> UserProfile | None:
         """Return the most recently created UserProfile, or None."""
         with self._sf() as s:

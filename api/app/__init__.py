@@ -1,7 +1,8 @@
-from flask import Flask, request, session
+from flask import Flask, request
 from flask_cors import CORS
 from .config import Config
 from .errors import register_error_handlers, error_response, ApiError
+from . import session as auth_session  # submodule (not flask's session)
 
 
 def create_app(overrides=None):
@@ -15,11 +16,39 @@ def create_app(overrides=None):
     CORS(app, origins=[cfg.CORS_ORIGIN], supports_credentials=True)
     register_error_handlers(app)
 
+    # ── Sliding session timeout (Phase 3a) ─────────────────────────────────────
+    from datetime import datetime
+
+    _TIMEOUT_OPEN = {
+        "/api/health", "/api/auth/status", "/api/auth/login", "/api/auth/logout",
+        "/api/account/login", "/api/account/register", "/api/account/logout",
+    }
+
+    @app.before_request
+    def _session_timeout():
+        from flask import session as flask_session
+        last = flask_session.get("last_seen")
+        if not last:
+            return None
+        try:
+            last_dt = datetime.fromisoformat(last)
+        except (TypeError, ValueError):
+            return None
+        idle_min = (auth_session._now() - last_dt).total_seconds() / 60.0
+        if idle_min > cfg.SESSION_TIMEOUT_MIN:
+            flask_session.clear()
+            if request.path.startswith("/api/") and request.path not in _TIMEOUT_OPEN:
+                return error_response(ApiError("SESSION_EXPIRED", "Session expired — please sign in again", 401))
+            return None
+        flask_session["last_seen"] = auth_session._now().isoformat()
+        return None
+
     # ── Passcode gate (no-op when APP_PASSCODE is empty) ───────────────────────
     _OPEN_PATHS = {"/api/health", "/api/auth/status", "/api/auth/login", "/api/auth/logout"}
 
     @app.before_request
     def _require_passcode():
+        from flask import session as flask_session
         if not cfg.APP_PASSCODE:
             return None
         path = request.path
@@ -27,7 +56,7 @@ def create_app(overrides=None):
             return None
         if request.method == "OPTIONS":  # CORS preflight
             return None
-        if not session.get("auth"):
+        if not flask_session.get("auth"):
             return error_response(ApiError("UNAUTHORIZED", "Passcode required", 401))
         return None
 
@@ -73,6 +102,7 @@ def create_app(overrides=None):
     from .routes.cards import bp as cards_bp
     from .routes.vocab import bp as vocab_bp
     from .routes.auth import bp as auth_bp
+    from .routes.account import bp as account_bp
 
     app.register_blueprint(health_bp)
     app.register_blueprint(onboarding_bp)
@@ -92,5 +122,6 @@ def create_app(overrides=None):
     app.register_blueprint(cards_bp)
     app.register_blueprint(vocab_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(account_bp)
 
     return app
