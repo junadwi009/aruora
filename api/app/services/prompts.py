@@ -360,6 +360,28 @@ Rules:
 - Do NOT include any markdown fences, comments, or extra keys.
 """,
 
+    "roleplay": """\
+You are an English conversation partner for IELTS Speaking practice.
+
+Scenario: {scenario}
+Conversation so far:
+{history}
+Learner just said: {userText}
+
+Reply as the partner: one natural, encouraging turn that keeps the conversation
+going with a follow-up question. Keep it to 1-3 sentences at a level the learner
+can follow. Stay in character for the scenario.
+
+Return STRICT JSON — no markdown, no prose outside the JSON object:
+{{
+  "reply": "<your spoken turn>"
+}}
+
+Rules:
+- Be warm and natural; always end with a question to elicit more speech.
+- Do NOT include markdown fences or extra keys.
+""",
+
     "pronounce": """\
 You are a pronunciation coach giving feedback on a read-aloud attempt.
 

@@ -12,6 +12,7 @@ export type View =
   | "session"
   | "pronounce"
   | "vocab"
+  | "roleplay"
   | "settings";
 
 export interface Prefill {

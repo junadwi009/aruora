@@ -14,6 +14,7 @@ import { Progress } from "../progress/Progress";
 import { Session } from "../session/Session";
 import { MockTest } from "../test/MockTest";
 import { Pronounce } from "../pronounce/Pronounce";
+import { Roleplay } from "../speaking/Roleplay";
 import { Vocab } from "../vocab/Vocab";
 import { Settings } from "../settings/Settings";
 
@@ -35,6 +36,7 @@ const viewRegistry: ViewRegistry = {
   progress: () => <Progress />,
   session: () => <Session />,
   pronounce: () => <Pronounce />,
+  roleplay: () => <Roleplay />,
   vocab: () => <Vocab />,
   settings: () => <Settings />,
 };

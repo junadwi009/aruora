@@ -43,6 +43,20 @@ def speaking_evaluate():
     return jsonify(out), 200
 
 
+@bp.post("/api/speaking/roleplay")
+def speaking_roleplay():
+    """One AI partner turn in a conversation roleplay."""
+    body = request.get_json(force=True) or {}
+    history = "\n".join(f"{t.get('role')}: {t.get('text')}" for t in body.get("history", []))
+    out = _gateway().score(
+        "roleplay",
+        scenario=body.get("scenario", "casual conversation"),
+        history=history or "(start)",
+        userText=body.get("userText", ""),
+    )
+    return jsonify(out), 200
+
+
 @bp.post("/api/speaking/transcribe")
 def speaking_transcribe():
     """Accept a multipart audio upload and return a transcript dict."""

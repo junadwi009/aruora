@@ -116,6 +116,8 @@ export const api = {
   tips: (skill: string) => get<Tips>(`/api/tips/${skill}`),
   writingEvaluate: (b: unknown) => post<WritingEval>("/api/writing/evaluate", b),
   speakingEvaluate: (b: unknown) => post<SpeakingEval>("/api/speaking/evaluate", b),
+  speakingRoleplay: (b: { scenario: string; history: { role: string; text: string }[]; userText: string }) =>
+    post<{ reply: string }>("/api/speaking/roleplay", b),
   speakingTranscribe: (audio: Blob) => {
     const form = new FormData();
     form.append("audio", audio, "speech.webm");
