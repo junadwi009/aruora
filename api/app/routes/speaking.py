@@ -6,7 +6,7 @@ Speaking routes:
 from flask import Blueprint, jsonify, request
 
 from app.errors import ApiError
-from app.routes._deps import _cfg, _gateway, _repo
+from app.routes._deps import _cfg, _gateway, _repo, _require_uid
 from app.services import asr
 
 bp = Blueprint("speaking", __name__)
@@ -25,6 +25,7 @@ def speaking_evaluate():
 
     # Persist the attempt for the Progress tab (history + trends).
     out["savedId"] = _repo().save_attempt(
+        _require_uid(),
         type="speaking",
         task=body.get("part", ""),
         prompt=body.get("question", ""),

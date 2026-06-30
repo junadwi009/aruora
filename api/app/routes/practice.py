@@ -7,7 +7,7 @@ from flask import Blueprint, jsonify, request
 
 from app.errors import ApiError
 from app.schemas import GenerateJobOut, JobStatusOut
-from app.routes._deps import _repo
+from app.routes._deps import _repo, _require_uid
 
 bp = Blueprint("practice", __name__)
 
@@ -32,6 +32,7 @@ def practice_attempt():
     correct, total = int(b.get("correct", 0)), int(b.get("total", 0))
     band = float(b.get("band", 0.0))
     saved_id = _repo().save_attempt(
+        _require_uid(),
         type=skill,
         task=f"{correct}/{total}",
         prompt=b.get("title", ""),

@@ -324,6 +324,7 @@ class Repository:
 
     def save_attempt(
         self,
+        user_id: int,
         type: str,
         task: str,
         prompt: str,
@@ -333,9 +334,10 @@ class Repository:
         cefr: str,
         metrics: dict,
     ) -> int:
-        """Insert an Attempt (writing|speaking) and return its id."""
+        """Insert an Attempt (writing|speaking) scoped to user_id; return its id."""
         with self._sf() as s:
             a = Attempt(
+                user_id=user_id,
                 type=type,
                 task=task or "",
                 prompt=prompt or "",
@@ -350,10 +352,10 @@ class Repository:
             s.refresh(a)
             return a.id
 
-    def list_attempts(self, type: str | None = None) -> list[dict]:
-        """Return attempt summaries, newest first. Optionally filter by type."""
+    def list_attempts(self, user_id: int, type: str | None = None) -> list[dict]:
+        """Return this user's attempt summaries, newest first. Optional type filter."""
         with self._sf() as s:
-            stmt = select(Attempt).order_by(Attempt.id.desc())
+            stmt = select(Attempt).where(Attempt.user_id == user_id).order_by(Attempt.id.desc())
             if type:
                 stmt = stmt.where(Attempt.type == type)
             rows = s.execute(stmt).scalars().all()
@@ -369,11 +371,11 @@ class Repository:
                 for r in rows
             ]
 
-    def get_attempt(self, attempt_id: int) -> dict | None:
-        """Return the full stored eval payload (re-renderable), or None."""
+    def get_attempt(self, user_id: int, attempt_id: int) -> dict | None:
+        """Return the full stored eval payload — only if it belongs to user_id."""
         with self._sf() as s:
             r = s.get(Attempt, attempt_id)
-            if r is None:
+            if r is None or r.user_id != user_id:
                 return None
             return {
                 "id": r.id,
@@ -390,10 +392,12 @@ class Repository:
                 **(r.criteria or {}),
             }
 
-    def trends(self) -> dict:
-        """Per-skill time series (oldest first) for the Progress chart."""
+    def trends(self, user_id: int) -> dict:
+        """This user's per-skill time series (oldest first) for the Progress chart."""
         with self._sf() as s:
-            rows = s.execute(select(Attempt).order_by(Attempt.id.asc())).scalars().all()
+            rows = s.execute(
+                select(Attempt).where(Attempt.user_id == user_id).order_by(Attempt.id.asc())
+            ).scalars().all()
             out: dict[str, list] = {"writing": [], "speaking": [], "reading": [], "listening": []}
             for r in rows:
                 bucket = out.get(r.type)
@@ -420,24 +424,26 @@ class Repository:
             "due": c.due.isoformat() if c.due else None,
         }
 
-    def add_card(self, front: str, back: str) -> int:
+    def add_card(self, user_id: int, front: str, back: str) -> int:
         with self._sf() as s:
-            c = Card(front=front, back=back)
+            c = Card(user_id=user_id, front=front, back=back)
             s.add(c)
             s.commit()
             s.refresh(c)
             return c.id
 
-    def add_cards(self, items: list[dict]) -> int:
+    def add_cards(self, user_id: int, items: list[dict]) -> int:
         with self._sf() as s:
             for it in items:
-                s.add(Card(front=it.get("front", ""), back=it.get("back", "")))
+                s.add(Card(user_id=user_id, front=it.get("front", ""), back=it.get("back", "")))
             s.commit()
         return len(items)
 
-    def list_cards(self) -> list[dict]:
+    def list_cards(self, user_id: int) -> list[dict]:
         with self._sf() as s:
-            rows = s.execute(select(Card).order_by(Card.id.desc())).scalars().all()
+            rows = s.execute(
+                select(Card).where(Card.user_id == user_id).order_by(Card.id.desc())
+            ).scalars().all()
             return [self._card_dict(c) for c in rows]
 
     @staticmethod
@@ -447,28 +453,28 @@ class Repository:
             return None
         return dt.replace(tzinfo=None) if dt.tzinfo else dt
 
-    def card_stats(self) -> dict:
+    def card_stats(self, user_id: int) -> dict:
         from datetime import datetime, timezone
         now = datetime.now(timezone.utc).replace(tzinfo=None)
         with self._sf() as s:
-            rows = s.execute(select(Card)).scalars().all()
+            rows = s.execute(select(Card).where(Card.user_id == user_id)).scalars().all()
             due = sum(1 for c in rows if c.due is None or self._utc_naive(c.due) <= now)
             return {"total": len(rows), "due": due}
 
-    def due_cards(self, now) -> list[dict]:
+    def due_cards(self, user_id: int, now) -> list[dict]:
         now_n = self._utc_naive(now)
         with self._sf() as s:
-            rows = s.execute(select(Card)).scalars().all()
+            rows = s.execute(select(Card).where(Card.user_id == user_id)).scalars().all()
             due = [c for c in rows if c.due is None or self._utc_naive(c.due) <= now_n]
             due.sort(key=lambda c: self._utc_naive(c.due) or now_n)
             return [self._card_dict(c) for c in due]
 
-    def review_card(self, card_id: int, quality: int, now) -> dict | None:
+    def review_card(self, user_id: int, card_id: int, quality: int, now) -> dict | None:
         from datetime import timedelta
         from app.domain.sm2 import schedule
         with self._sf() as s:
             c = s.get(Card, card_id)
-            if c is None:
+            if c is None or c.user_id != user_id:
                 return None
             nxt = schedule(c.ease, c.interval, c.reps, c.lapses, quality)
             c.ease = nxt["ease"]
@@ -480,10 +486,10 @@ class Repository:
             s.refresh(c)
             return self._card_dict(c)
 
-    def delete_card(self, card_id: int) -> bool:
+    def delete_card(self, user_id: int, card_id: int) -> bool:
         with self._sf() as s:
             c = s.get(Card, card_id)
-            if c is None:
+            if c is None or c.user_id != user_id:
                 return False
             s.delete(c)
             s.commit()
@@ -491,19 +497,21 @@ class Repository:
 
     # ── Mock tests — Phase 2d-2 ───────────────────────────────────────────────
 
-    def save_mock(self, listening: float, reading: float, overall: float) -> int:
-        """Insert a Mock score and return its id."""
+    def save_mock(self, user_id: int, listening: float, reading: float, overall: float) -> int:
+        """Insert a Mock score scoped to user_id; return its id."""
         with self._sf() as s:
-            m = Mock(listening=listening, reading=reading, overall=overall)
+            m = Mock(user_id=user_id, listening=listening, reading=reading, overall=overall)
             s.add(m)
             s.commit()
             s.refresh(m)
             return m.id
 
-    def list_mocks(self) -> list[dict]:
-        """Return mock scores, newest first."""
+    def list_mocks(self, user_id: int) -> list[dict]:
+        """Return this user's mock scores, newest first."""
         with self._sf() as s:
-            rows = s.execute(select(Mock).order_by(Mock.id.desc())).scalars().all()
+            rows = s.execute(
+                select(Mock).where(Mock.user_id == user_id).order_by(Mock.id.desc())
+            ).scalars().all()
             return [
                 {
                     "id": r.id,
@@ -517,10 +525,10 @@ class Repository:
 
     # ── Lessons (guided sessions) — Phase 2d-1 ────────────────────────────────
 
-    def get_lesson(self, day: int) -> dict | None:
-        """Return the cached lesson for a program day, or None."""
+    def get_lesson(self, user_id: int, day: int) -> dict | None:
+        """Return this user's cached lesson for a program day, or None."""
         with self._sf() as s:
-            r = s.get(Lesson, day)
+            r = s.get(Lesson, (user_id, day))
             if r is None:
                 return None
             return {
@@ -530,16 +538,16 @@ class Repository:
                 "createdAt": r.created_at.isoformat() if r.created_at else None,
             }
 
-    def save_lesson(self, day: int, lesson: dict, focus: str) -> None:
-        """UPSERT a lesson by day (PK)."""
+    def save_lesson(self, user_id: int, day: int, lesson: dict, focus: str) -> None:
+        """UPSERT a lesson by (user_id, day)."""
         with self._sf() as s:
-            existing = s.get(Lesson, day)
+            existing = s.get(Lesson, (user_id, day))
             if existing:
                 existing.lesson = lesson
                 existing.focus = focus
                 existing.created_at = now()
             else:
-                s.add(Lesson(day=day, lesson=lesson, focus=focus))
+                s.add(Lesson(user_id=user_id, day=day, lesson=lesson, focus=focus))
             s.commit()
 
     def get_latest_program(self, user_id: int) -> Program | None:

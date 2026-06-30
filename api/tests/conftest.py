@@ -22,4 +22,8 @@ def client_with_seed():
     repo = Repository(Session)
     gw = LlmGateway(Config({"LLM_MODE": "stub"}))
     app = create_app({"TESTING": True, "REPO": repo, "GATEWAY": gw})
-    return app.test_client()
+    client = app.test_client()
+    # Establish a signed-in session so data routes are scoped to a real user
+    # (multi-user, Phase 3b). Tests that need their own user can register again.
+    client.post("/api/account/register", json={"email": "tester@example.com", "password": "secret123"})
+    return client

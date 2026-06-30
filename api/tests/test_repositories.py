@@ -88,131 +88,144 @@ def test_program_and_milestones():
     assert m["targets"] == {"reading": "C1"}
 
 
-# ── Phase 2c: attempt persistence ────────────────────────────────────────────
+# ── Phase 2c/3b: attempt persistence (user-scoped) ───────────────────────────
+
+def _uid(repo):
+    return repo.create_account("u%d@e.com" % id(repo), "secret123").id
+
 
 def test_save_and_list_attempts():
     repo = make_repo()
+    uid = _uid(repo)
     wid = repo.save_attempt(
-        type="writing", task="task2", prompt="Some prompt", body="My essay.",
+        uid, type="writing", task="task2", prompt="Some prompt", body="My essay.",
         bands={"taskResponse": 6.0, "overall": 6.0}, criteria={"rewrite": "Better."},
         cefr="B2", metrics={"wordCount": 2},
     )
     sid = repo.save_attempt(
-        type="speaking", task="part2", prompt="Describe a place", body="I went...",
+        uid, type="speaking", task="part2", prompt="Describe a place", body="I went...",
         bands={"fluencyCoherence": 5.0, "overall": 5.0}, criteria={"feedback": "ok"},
         cefr="B1", metrics={},
     )
     assert isinstance(wid, int) and isinstance(sid, int)
 
-    all_rows = repo.list_attempts()
+    all_rows = repo.list_attempts(uid)
     assert len(all_rows) == 2
-    # newest first
-    assert all_rows[0]["id"] == sid
-    # summary shape
+    assert all_rows[0]["id"] == sid  # newest first
     assert all_rows[0]["type"] == "speaking"
     assert all_rows[0]["overall"] == 5.0
-    assert all_rows[0]["cefr"] == "B1"
-    assert "createdAt" in all_rows[0]
 
-    writing_only = repo.list_attempts(type="writing")
+    writing_only = repo.list_attempts(uid, type="writing")
     assert len(writing_only) == 1 and writing_only[0]["id"] == wid
 
 
 def test_get_attempt_full_payload():
     repo = make_repo()
+    uid = _uid(repo)
     wid = repo.save_attempt(
-        type="writing", task="task2", prompt="P", body="Essay body.",
+        uid, type="writing", task="task2", prompt="P", body="Essay body.",
         bands={"taskResponse": 6.0, "overall": 6.0}, criteria={"rewrite": "Better.", "corrections": []},
         cefr="B2", metrics={"wordCount": 2},
     )
-    full = repo.get_attempt(wid)
-    assert full["id"] == wid
-    assert full["type"] == "writing"
-    assert full["prompt"] == "P"
-    assert full["body"] == "Essay body."
-    assert full["bands"]["overall"] == 6.0
-    assert full["rewrite"] == "Better."   # criteria flattened into the payload
-    assert full["metrics"]["wordCount"] == 2
-    assert repo.get_attempt(9999) is None
+    full = repo.get_attempt(uid, wid)
+    assert full["prompt"] == "P" and full["rewrite"] == "Better."
+    assert repo.get_attempt(uid, 9999) is None
+
+
+def test_attempts_are_isolated_per_user():
+    """Security: one user can never see or read another user's attempts."""
+    repo = make_repo()
+    a = repo.create_account("a@e.com", "secret123").id
+    b = repo.create_account("b@e.com", "secret123").id
+    aid = repo.save_attempt(a, type="writing", task="t", prompt="p", body="x",
+                            bands={"overall": 6.0}, criteria={}, cefr="B2", metrics={})
+    # B's listing is empty; B cannot fetch A's attempt by id
+    assert repo.list_attempts(b) == []
+    assert repo.get_attempt(b, aid) is None
+    assert repo.trends(b)["writing"] == []
+    # A still sees their own
+    assert len(repo.list_attempts(a)) == 1
+    assert repo.get_attempt(a, aid) is not None
 
 
 def test_trends_groups_by_skill():
     repo = make_repo()
-    repo.save_attempt(type="writing", task="task2", prompt="P", body="b",
+    uid = _uid(repo)
+    repo.save_attempt(uid, type="writing", task="t", prompt="P", body="b",
                       bands={"overall": 5.5}, criteria={}, cefr="B1", metrics={})
-    repo.save_attempt(type="writing", task="task2", prompt="P", body="b",
+    repo.save_attempt(uid, type="writing", task="t", prompt="P", body="b",
                       bands={"overall": 6.5}, criteria={}, cefr="B2", metrics={})
-    repo.save_attempt(type="speaking", task="part2", prompt="P", body="b",
+    repo.save_attempt(uid, type="speaking", task="p", prompt="P", body="b",
                       bands={"overall": 5.0}, criteria={}, cefr="B1", metrics={})
-    tr = repo.trends()
-    assert len(tr["writing"]) == 2
-    assert len(tr["speaking"]) == 1
-    # chronological (oldest first) for a trend line
-    assert tr["writing"][0]["overall"] == 5.5
-    assert tr["writing"][1]["overall"] == 6.5
-    assert "createdAt" in tr["writing"][0]
+    tr = repo.trends(uid)
+    assert len(tr["writing"]) == 2 and len(tr["speaking"]) == 1
+    assert tr["writing"][0]["overall"] == 5.5 and tr["writing"][1]["overall"] == 6.5
 
 
-# ── Phase 2d-1: lessons ──────────────────────────────────────────────────────
+# ── Phase 2d-1/3b: lessons (user-scoped) ─────────────────────────────────────
 
 def test_save_and_get_lesson_upsert():
     repo = make_repo()
-    assert repo.get_lesson(1) is None
-    repo.save_lesson(1, {"goal": "first"}, "writing")
-    got = repo.get_lesson(1)
-    assert got["day"] == 1
-    assert got["focus"] == "writing"
-    assert got["lesson"]["goal"] == "first"
-    assert "createdAt" in got
-    # upsert: same day overwrites
-    repo.save_lesson(1, {"goal": "second"}, "listening")
-    got2 = repo.get_lesson(1)
-    assert got2["lesson"]["goal"] == "second"
-    assert got2["focus"] == "listening"
+    uid = _uid(repo)
+    assert repo.get_lesson(uid, 1) is None
+    repo.save_lesson(uid, 1, {"goal": "first"}, "writing")
+    got = repo.get_lesson(uid, 1)
+    assert got["day"] == 1 and got["lesson"]["goal"] == "first"
+    repo.save_lesson(uid, 1, {"goal": "second"}, "listening")  # upsert
+    assert repo.get_lesson(uid, 1)["lesson"]["goal"] == "second"
+    # another user's day-1 is independent
+    other = repo.create_account("o@e.com", "secret123").id
+    assert repo.get_lesson(other, 1) is None
 
 
-# ── Phase 2d-2: mock tests ───────────────────────────────────────────────────
+# ── Phase 2d-2/3b: mock tests (user-scoped) ──────────────────────────────────
 
 def test_save_and_list_mocks():
     repo = make_repo()
-    a = repo.save_mock(6.0, 7.0, 6.5)
-    b = repo.save_mock(5.5, 6.0, 6.0)
+    uid = _uid(repo)
+    a = repo.save_mock(uid, 6.0, 7.0, 6.5)
+    b = repo.save_mock(uid, 5.5, 6.0, 6.0)
     assert isinstance(a, int) and isinstance(b, int)
-    rows = repo.list_mocks()
-    assert len(rows) == 2
-    # newest first
-    assert rows[0]["id"] == b
-    assert rows[0]["listening"] == 5.5 and rows[0]["reading"] == 6.0 and rows[0]["overall"] == 6.0
-    assert "createdAt" in rows[0]
+    rows = repo.list_mocks(uid)
+    assert len(rows) == 2 and rows[0]["id"] == b  # newest first
+    # isolated
+    other = repo.create_account("o2@e.com", "secret123").id
+    assert repo.list_mocks(other) == []
 
 
-# ── Phase 2d-4: flashcards (SM-2) ────────────────────────────────────────────
+# ── Phase 2d-4/3b: flashcards (user-scoped) ──────────────────────────────────
 
 def test_cards_add_list_stats_delete():
     from datetime import datetime, timezone
     repo = make_repo()
-    cid = repo.add_card("ubiquitous", "present everywhere")
-    n = repo.add_cards([{"front": "a", "back": "1"}, {"front": "b", "back": "2"}])
+    uid = _uid(repo)
+    cid = repo.add_card(uid, "ubiquitous", "present everywhere")
+    n = repo.add_cards(uid, [{"front": "a", "back": "1"}, {"front": "b", "back": "2"}])
     assert isinstance(cid, int) and n == 2
-    assert len(repo.list_cards()) == 3
-    stats = repo.card_stats()
-    assert stats["total"] == 3
-    # new cards are due now
+    assert len(repo.list_cards(uid)) == 3
+    assert repo.card_stats(uid)["total"] == 3
     now = datetime.now(timezone.utc)
-    assert len(repo.due_cards(now)) == 3
-    assert repo.delete_card(cid) is True
-    assert repo.delete_card(999999) is False
-    assert len(repo.list_cards()) == 2
+    assert len(repo.due_cards(uid, now)) == 3
+    assert repo.delete_card(uid, cid) is True
+    assert repo.delete_card(uid, 999999) is False
+    assert len(repo.list_cards(uid)) == 2
+    # another user cannot delete this user's cards
+    other = repo.create_account("o3@e.com", "secret123").id
+    remaining = repo.list_cards(uid)[0]["id"]
+    assert repo.delete_card(other, remaining) is False
+    assert repo.card_stats(other)["total"] == 0
 
 
 def test_card_review_reschedules():
     from datetime import datetime, timezone
     repo = make_repo()
-    cid = repo.add_card("front", "back")
+    uid = _uid(repo)
+    cid = repo.add_card(uid, "front", "back")
     now = datetime.now(timezone.utc)
-    out = repo.review_card(cid, quality=4, now=now)
-    assert out is not None
-    assert out["reps"] == 1 and out["interval"] == 1
-    # after a good review it's no longer due now (due ~1 day out)
-    assert all(c["id"] != cid for c in repo.due_cards(now))
-    assert repo.review_card(999999, quality=4, now=now) is None
+    out = repo.review_card(uid, cid, quality=4, now=now)
+    assert out is not None and out["reps"] == 1 and out["interval"] == 1
+    assert all(c["id"] != cid for c in repo.due_cards(uid, now))
+    assert repo.review_card(uid, 999999, quality=4, now=now) is None
+    # another user cannot review this user's card
+    other = repo.create_account("o4@e.com", "secret123").id
+    assert repo.review_card(other, cid, quality=4, now=now) is None

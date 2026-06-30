@@ -20,7 +20,7 @@ Do NOT call seed_all from create_app here — a later task wires that up.
 import json
 from pathlib import Path
 
-from app.data.models import GeneratedSet, Lesson, PlacementCombo, PlacementItem
+from app.data.models import GeneratedSet, PlacementCombo, PlacementItem
 
 # ---------------------------------------------------------------------------
 # Path helpers
@@ -62,7 +62,6 @@ def seed_all(session_factory) -> None:
         try:
             _seed_placement_combos(session)
             _seed_generated_sets(session)
-            _seed_day1_lesson(session)
             session.commit()
         except IntegrityError:
             # Another worker/process seeded concurrently (fresh DB + multiple
@@ -91,12 +90,6 @@ def _seed_placement_combos(session) -> None:
                 section_seconds=item_dict["sectionSeconds"],
             )
             session.add(item)
-
-
-def _seed_day1_lesson(session) -> None:
-    """Seed a ready Day-1 guided lesson so 'Today' works with zero API on first run."""
-    data = load_fixture("seed_lesson")
-    session.add(Lesson(day=data["day"], lesson=data["lesson"], focus=data["focus"]))
 
 
 def _seed_generated_sets(session) -> None:

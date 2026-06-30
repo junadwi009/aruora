@@ -1,16 +1,23 @@
 """Phase 2d-1: guided-lesson routes (today / generate / by-day). Stub mode."""
 
 
-def test_lesson_today_returns_seeded_day1(client_with_seed):
+def test_lesson_today_computes_focus_day(client_with_seed):
     r = client_with_seed.get("/api/lesson/today")
     assert r.status_code == 200
     b = r.get_json()
-    # no skill_levels seeded → focus defaults to writing; no program → day 1
+    # no skill_levels → focus defaults to writing; no program → day 1
     assert b["day"] == 1
     assert b["focus"] == "writing"
     assert b["skill"] == "writing"
     assert b["band"]  # some band string
-    assert b["lesson"] is not None and "goal" in b["lesson"]  # Day-1 seeded
+    # lessons are per-user and generated on demand → none cached yet
+    assert b["lesson"] is None
+
+
+def test_lesson_today_reflects_generated(client_with_seed):
+    client_with_seed.post("/api/lesson/generate", json={"day": 1, "focus": "writing", "band": "B1"})
+    b = client_with_seed.get("/api/lesson/today").get_json()
+    assert b["lesson"] is not None and "goal" in b["lesson"]
 
 
 def test_lesson_by_day_null_then_generated(client_with_seed):

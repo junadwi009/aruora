@@ -8,7 +8,7 @@ from pydantic import ValidationError
 from app.errors import ApiError
 from app.schemas import ProgramIn, ProgramOut, MilestoneOut
 from app.domain.program import build_milestones
-from app.routes._deps import _repo
+from app.routes._deps import _repo, _uid, _require_uid
 
 bp = Blueprint("program", __name__)
 
@@ -23,7 +23,7 @@ def program_create():
         raise ApiError("VALIDATION", "Invalid request", 422, e.errors())
 
     repo = _repo()
-    user = repo.get_user()
+    user = repo.get_user_by_id(_require_uid())
     if user is None:
         raise ApiError("NOT_FOUND", "no user profile", 404)
 
@@ -48,12 +48,11 @@ def program_create():
 
 @bp.get("/api/program/milestones")
 def program_milestones():
-    repo = _repo()
-    user = repo.get_user()
-    if user is None:
+    uid = _uid()
+    if uid is None:
         return jsonify([]), 200
-
-    prog = repo.get_latest_program(user.id)
+    repo = _repo()
+    prog = repo.get_latest_program(uid)
     if prog is None:
         return jsonify([]), 200
 

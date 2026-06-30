@@ -10,21 +10,20 @@ from datetime import datetime, timezone
 from flask import Blueprint, jsonify, request
 
 from app.domain.lesson_plan import current_day, pick_focus
-from app.routes._deps import _gateway, _repo
+from app.routes._deps import _gateway, _repo, _uid, _require_uid
 
 bp = Blueprint("lesson", __name__)
 
 _DEFAULT_BAND = "B1"
 
 
-def _today_plan():
-    """Compute (day, focus, skill, band) for today from skill_levels + program."""
+def _today_plan(uid):
+    """Compute (day, focus, skill, band) for today from this user's levels + program."""
     repo = _repo()
-    user = repo.get_user()
-    levels = repo.get_skill_levels(user.id) if user else []
+    levels = repo.get_skill_levels(uid) if uid else []
     focus = pick_focus(levels)
     band = dict(levels).get(focus, _DEFAULT_BAND)
-    program = repo.get_latest_program(user.id) if user else None
+    program = repo.get_latest_program(uid) if uid else None
     today = datetime.now(timezone.utc).date()
     day = current_day(
         getattr(program, "start_date", None),
@@ -36,8 +35,9 @@ def _today_plan():
 
 @bp.get("/api/lesson/today")
 def lesson_today():
-    day, focus, band = _today_plan()
-    cached = _repo().get_lesson(day)
+    uid = _uid()
+    day, focus, band = _today_plan(uid)
+    cached = _repo().get_lesson(uid, day) if uid is not None else None
     return jsonify({
         "day": day,
         "focus": focus,
@@ -51,26 +51,28 @@ def lesson_today():
 def lesson_generate():
     body = request.get_json(force=True) or {}
     repo = _repo()
+    uid = _require_uid()
 
-    t_day, t_focus, t_band = _today_plan()
+    t_day, t_focus, t_band = _today_plan(uid)
     day = int(body.get("day") or t_day)
     focus = body.get("focus") or t_focus
     band = body.get("band") or t_band
     force = bool(body.get("force"))
 
-    cached = repo.get_lesson(day)
+    cached = repo.get_lesson(uid, day)
     if cached and not force:
         return jsonify({"day": day, "focus": cached["focus"], "skill": focus,
                         "band": band, "lesson": cached["lesson"]}), 200
 
     lesson = _gateway().generate("lesson", skill=focus, band=band, day=day, focus=focus, tasks=focus)
-    repo.save_lesson(day, lesson, focus)
+    repo.save_lesson(uid, day, lesson, focus)
     return jsonify({"day": day, "focus": focus, "skill": focus, "band": band, "lesson": lesson}), 200
 
 
 @bp.get("/api/lesson/<int:day>")
 def lesson_by_day(day):
-    cached = _repo().get_lesson(day)
+    uid = _uid()
+    cached = _repo().get_lesson(uid, day) if uid is not None else None
     if cached is None:
         return jsonify({"day": day, "lesson": None}), 200
     return jsonify({"day": day, "focus": cached["focus"], "lesson": cached["lesson"]}), 200

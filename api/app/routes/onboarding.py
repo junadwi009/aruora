@@ -7,6 +7,7 @@ from pydantic import ValidationError
 from app.errors import ApiError
 from app.schemas import OnboardingIn, OnboardingOut
 from app.routes._deps import _repo
+from app.session import login_session
 
 bp = Blueprint("onboarding", __name__)
 
@@ -25,6 +26,9 @@ def onboarding():
         target_band=data.target_band,
         skill_targets=data.skill_targets,
     )
+    # Establish the session so all subsequent data is scoped to this profile
+    # (anonymous until they register an email/password in 3c).
+    login_session(user.id)
 
     return jsonify(
         OnboardingOut(

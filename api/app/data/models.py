@@ -90,6 +90,7 @@ class Milestone(Base):
 class Attempt(Base):
     __tablename__ = "attempts"
     id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("user_profile.id"), index=True, nullable=True)
     type: Mapped[str] = mapped_column(String(20))
     task: Mapped[str] = mapped_column(String(40), default="")
     prompt: Mapped[str] = mapped_column(String, default="")
@@ -103,6 +104,7 @@ class Attempt(Base):
 class Mock(Base):
     __tablename__ = "mocks"
     id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("user_profile.id"), index=True, nullable=True)
     listening: Mapped[float] = mapped_column(Float, default=0.0)
     reading: Mapped[float] = mapped_column(Float, default=0.0)
     overall: Mapped[float] = mapped_column(Float, default=0.0)
@@ -110,7 +112,10 @@ class Mock(Base):
 
 class Lesson(Base):
     __tablename__ = "lessons"
-    day: Mapped[int] = mapped_column(primary_key=True)
+    # Per-user lessons: composite PK (user_id, day). user_id NULLable for the
+    # anonymous case is avoided — lessons are always tied to a session user.
+    user_id: Mapped[int] = mapped_column(ForeignKey("user_profile.id"), primary_key=True)
+    day: Mapped[int] = mapped_column(Integer, primary_key=True)
     lesson: Mapped[dict] = mapped_column(JSON)
     focus: Mapped[str] = mapped_column(String(80), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
@@ -118,6 +123,7 @@ class Lesson(Base):
 class Card(Base):
     __tablename__ = "cards"
     id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("user_profile.id"), index=True, nullable=True)
     front: Mapped[str] = mapped_column(String)
     back: Mapped[str] = mapped_column(String)
     ease: Mapped[float] = mapped_column(Float, default=2.5)

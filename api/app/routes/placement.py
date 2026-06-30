@@ -8,7 +8,7 @@ from pydantic import ValidationError
 from app.errors import ApiError
 from app.schemas import PlacementStartOut, PlacementSubmitIn, PlacementResultOut
 from app.domain.placement import serve_combo, grade_placement
-from app.routes._deps import _repo, _gateway
+from app.routes._deps import _repo, _gateway, _require_uid
 
 bp = Blueprint("placement", __name__)
 
@@ -37,8 +37,8 @@ def placement_submit():
     repo = _repo()
     gateway = _gateway()
 
-    # 1. Require user profile
-    user = repo.get_user()
+    # 1. Require the session user profile
+    user = repo.get_user_by_id(_require_uid())
     if user is None:
         raise ApiError("NOT_FOUND", "no user profile", 404)
     target = user.target_band
