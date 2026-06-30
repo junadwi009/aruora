@@ -71,13 +71,14 @@ def create_app(overrides=None):
         # Production path: init engine, seed, build repo + gateway.
         from sqlalchemy.orm import sessionmaker
         from .data.db import init_engine
-        from .data.models import Base
         from .data.repositories import Repository
         from .data.seed import seed_all
         from .services.llm import LlmGateway
 
+        # Schema is owned by Alembic migrations (Dockerfile runs `alembic upgrade
+        # head` before the app starts). No create_all here, so incremental
+        # migrations can ALTER existing tables without data loss.
         engine = init_engine(cfg.DATABASE_URL)
-        Base.metadata.create_all(engine)
         Session = sessionmaker(bind=engine)
         seed_all(Session)
         app.config["REPO"] = Repository(Session)
