@@ -7,6 +7,7 @@ vi.mock("../../lib/api/client", () => ({
     skillLevels: vi.fn().mockResolvedValue([{ skill: "reading", band: "C1" }]),
     milestones: vi.fn().mockResolvedValue([]),
     accountMe: vi.fn().mockRejectedValue(new Error("anon")),
+    statsActivity: vi.fn().mockResolvedValue({ current: 0, longest: 0, today: 0, daysActive: 0 }),
   },
   ApiError: class extends Error {},
 }));

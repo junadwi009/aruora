@@ -124,6 +124,7 @@ export const api = {
   readingGenerate: (band: string) => post<QuizSet>("/api/reading/generate", { band }),
   listeningGenerate: (band: string) => post<QuizSet>("/api/listening/generate", { band }),
   statsTrends: () => get<Trends>("/api/stats/trends"),
+  statsActivity: () => get<{ current: number; longest: number; today: number; daysActive: number }>("/api/stats/activity"),
   historyAttempts: (type?: "writing" | "speaking") =>
     get<AttemptSummary[]>(`/api/history/attempts${type ? `?type=${type}` : ""}`),
   historyAttempt: (id: number) => get<AttemptDetail>(`/api/history/attempt/${id}`),

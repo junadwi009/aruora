@@ -39,11 +39,15 @@ export const Home: React.FC<HomeProps> = ({ levels }) => {
   const { setView } = useView();
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [examDays, setExamDays] = useState<number | null>(null);
+  const [streak, setStreak] = useState<{ current: number; today: number } | null>(null);
 
   useEffect(() => {
     api.milestones().then((m) => setMilestones(Array.isArray(m) ? m : [])).catch(() => {});
     api.accountMe().then((u) => setExamDays(daysUntil(u.examDate))).catch(() => {});
+    api.statsActivity().then((a) => setStreak({ current: a.current, today: a.today })).catch(() => {});
   }, []);
+
+  const DAILY_GOAL = 1; // one practice/eval a day keeps the streak alive
 
   return (
     <main className="flex-1 overflow-y-auto p-4 md:p-6 max-w-2xl">
@@ -76,6 +80,26 @@ export const Home: React.FC<HomeProps> = ({ levels }) => {
           </Button>
         </div>
       </section>
+
+      {/* Streak + daily goal */}
+      {streak && (streak.current > 0 || streak.today > 0) && (
+        <section className="mb-6">
+          <div className="rounded-[var(--radius-xl)] px-5 py-4 flex items-center justify-between gap-4"
+            style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-e1)" }}>
+            <div>
+              <p className="text-sm font-semibold text-[var(--color-text)]">
+                🔥 {streak.current}-day streak
+              </p>
+              <p className="text-xs text-[var(--color-muted)] mt-0.5">
+                {streak.today >= DAILY_GOAL ? "Today's goal done — nice!" : "Do one task today to keep it going."}
+              </p>
+            </div>
+            <span className={`text-3xl font-bold tabular-nums ${streak.today >= DAILY_GOAL ? "text-[var(--color-success)]" : "text-[var(--color-muted)]"}`}>
+              {streak.today}/{DAILY_GOAL}
+            </span>
+          </div>
+        </section>
+      )}
 
       {/* Exam countdown */}
       {examDays !== null && (

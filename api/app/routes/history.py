@@ -36,3 +36,12 @@ def stats_trends():
     if uid is None:
         return jsonify({"writing": [], "speaking": [], "reading": [], "listening": []}), 200
     return jsonify(_repo().trends(uid)), 200
+
+
+@bp.get("/api/stats/activity")
+def stats_activity():
+    from datetime import datetime, timezone
+    uid = _uid()
+    if uid is None:
+        return jsonify({"current": 0, "longest": 0, "today": 0, "daysActive": 0}), 200
+    return jsonify(_repo().activity_stats(uid, datetime.now(timezone.utc).date())), 200

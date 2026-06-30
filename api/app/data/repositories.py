@@ -529,6 +529,41 @@ class Repository:
                 **(r.criteria or {}),
             }
 
+    def activity_stats(self, user_id: int, today) -> dict:
+        """Streak + daily activity derived from this user's attempts (no extra table)."""
+        from datetime import timedelta
+        with self._sf() as s:
+            rows = s.execute(select(Attempt).where(Attempt.user_id == user_id)).scalars().all()
+            days = set()
+            today_count = 0
+            for r in rows:
+                if not r.created_at:
+                    continue
+                d = self._utc_naive(r.created_at).date()
+                days.add(d)
+                if d == today:
+                    today_count += 1
+            if not days:
+                return {"current": 0, "longest": 0, "today": 0, "daysActive": 0}
+            # current streak: from today (or yesterday) walking back over present days
+            cur = 0
+            start = today if today in days else (today - timedelta(days=1) if (today - timedelta(days=1)) in days else None)
+            if start is not None:
+                d = start
+                while d in days:
+                    cur += 1
+                    d = d - timedelta(days=1)
+            # longest run
+            longest = 0
+            for d in days:
+                if (d - timedelta(days=1)) not in days:  # run start
+                    run, n = d, 0
+                    while run in days:
+                        n += 1
+                        run = run + timedelta(days=1)
+                    longest = max(longest, n)
+            return {"current": cur, "longest": longest, "today": today_count, "daysActive": len(days)}
+
     def trends(self, user_id: int) -> dict:
         """This user's per-skill time series (oldest first) for the Progress chart."""
         with self._sf() as s:

@@ -73,9 +73,14 @@ export const Pronounce: React.FC = () => {
             <p className="text-lg leading-relaxed text-[var(--color-text)]" style={{ fontFamily: "var(--font-reading)" }}>
               {target.text.split(/\s+/).map((w, i) => {
                 const bare = w.toLowerCase().replace(/[^a-z0-9']/g, "");
-                const isMissed = result && missedSet.has(bare);
+                let cls = "";
+                if (result) {
+                  cls = missedSet.has(bare)
+                    ? "text-[var(--color-danger)] underline decoration-wavy decoration-[var(--color-danger)]"
+                    : "text-[var(--color-success)]";
+                }
                 return (
-                  <span key={i} className={isMissed ? "text-[var(--color-danger)] underline decoration-wavy" : ""}>
+                  <span key={i} className={cls}>
                     {w}{" "}
                   </span>
                 );
@@ -87,6 +92,12 @@ export const Pronounce: React.FC = () => {
           </div>
           {target.focus && (
             <p className="text-xs text-[var(--color-muted)] mt-2">Focus: {target.focus}</p>
+          )}
+          {result && (
+            <p className="text-[11px] text-[var(--color-muted)] mt-2 flex gap-3">
+              <span className="text-[var(--color-success)]">● clear</span>
+              <span className="text-[var(--color-danger)]">● unclear / missed</span>
+            </p>
           )}
         </Card>
 
