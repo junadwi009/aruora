@@ -12,6 +12,7 @@ from sqlalchemy import select
 from .models import (
     Attempt,
     GeneratedSet,
+    Lesson,
     Milestone,
     PlacementAttempt,
     PlacementCombo,
@@ -344,6 +345,33 @@ class Repository:
                     }
                 )
             return out
+
+    # ── Lessons (guided sessions) — Phase 2d-1 ────────────────────────────────
+
+    def get_lesson(self, day: int) -> dict | None:
+        """Return the cached lesson for a program day, or None."""
+        with self._sf() as s:
+            r = s.get(Lesson, day)
+            if r is None:
+                return None
+            return {
+                "day": r.day,
+                "focus": r.focus,
+                "lesson": r.lesson,
+                "createdAt": r.created_at.isoformat() if r.created_at else None,
+            }
+
+    def save_lesson(self, day: int, lesson: dict, focus: str) -> None:
+        """UPSERT a lesson by day (PK)."""
+        with self._sf() as s:
+            existing = s.get(Lesson, day)
+            if existing:
+                existing.lesson = lesson
+                existing.focus = focus
+                existing.created_at = now()
+            else:
+                s.add(Lesson(day=day, lesson=lesson, focus=focus))
+            s.commit()
 
     def get_latest_program(self, user_id: int) -> Program | None:
         """Return the most recently created Program for the user, detached, or None."""

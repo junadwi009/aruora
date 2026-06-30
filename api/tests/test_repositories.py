@@ -151,3 +151,21 @@ def test_trends_groups_by_skill():
     assert tr["writing"][0]["overall"] == 5.5
     assert tr["writing"][1]["overall"] == 6.5
     assert "createdAt" in tr["writing"][0]
+
+
+# ── Phase 2d-1: lessons ──────────────────────────────────────────────────────
+
+def test_save_and_get_lesson_upsert():
+    repo = make_repo()
+    assert repo.get_lesson(1) is None
+    repo.save_lesson(1, {"goal": "first"}, "writing")
+    got = repo.get_lesson(1)
+    assert got["day"] == 1
+    assert got["focus"] == "writing"
+    assert got["lesson"]["goal"] == "first"
+    assert "createdAt" in got
+    # upsert: same day overwrites
+    repo.save_lesson(1, {"goal": "second"}, "listening")
+    got2 = repo.get_lesson(1)
+    assert got2["lesson"]["goal"] == "second"
+    assert got2["focus"] == "listening"

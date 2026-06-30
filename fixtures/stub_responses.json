@@ -5,19 +5,31 @@
     "questions": [
       {
         "stem": "The Public Libraries Act of 1850 was passed in the United States.",
-        "options": ["True", "False", "Not Given"],
+        "options": [
+          "True",
+          "False",
+          "Not Given"
+        ],
         "answer": "False",
         "explanation": "The passage states the 1850 Act was in the United Kingdom, not the United States."
       },
       {
         "stem": "Library visitor numbers have increased in all countries since the introduction of the internet.",
-        "options": ["True", "False", "Not Given"],
+        "options": [
+          "True",
+          "False",
+          "Not Given"
+        ],
         "answer": "False",
         "explanation": "The passage says visitor numbers 'in many countries have either stabilised or increased', not in all countries."
       },
       {
         "stem": "Modern libraries sometimes provide access to 3D printers and laser cutters.",
-        "options": ["True", "False", "Not Given"],
+        "options": [
+          "True",
+          "False",
+          "Not Given"
+        ],
         "answer": "True",
         "explanation": "The passage mentions 'makerspaces — workshops equipped with 3D printers, laser cutters'."
       }
@@ -29,19 +41,31 @@
     "questions": [
       {
         "stem": "Between 60 and 90 percent of subconscious product assessment is based on colour.",
-        "options": ["True", "False", "Not Given"],
+        "options": [
+          "True",
+          "False",
+          "Not Given"
+        ],
         "answer": "True",
         "explanation": "This matches the statistic stated directly in the passage."
       },
       {
         "stem": "In China, red is associated with danger rather than good luck.",
-        "options": ["True", "False", "Not Given"],
+        "options": [
+          "True",
+          "False",
+          "Not Given"
+        ],
         "answer": "False",
         "explanation": "The passage states that in China 'red is strongly associated with good luck and prosperity rather than danger'."
       },
       {
         "stem": "Split testing involves comparing two versions of a design with different colour schemes.",
-        "options": ["True", "False", "Not Given"],
+        "options": [
+          "True",
+          "False",
+          "Not Given"
+        ],
         "answer": "True",
         "explanation": "The passage defines split testing as 'presenting two versions of a webpage or packaging with different colour schemes'."
       }
@@ -53,19 +77,31 @@
     "questions": [
       {
         "stem": "The illusory truth effect means that a claim feels more credible the more times a person has encountered it.",
-        "options": ["True", "False", "Not Given"],
+        "options": [
+          "True",
+          "False",
+          "Not Given"
+        ],
         "answer": "True",
         "explanation": "The passage defines the illusory truth effect as 'repeated exposure to a claim increases the perceived probability that it is true'."
       },
       {
         "stem": "Simply denying misinformation is always effective at reducing belief in false claims.",
-        "options": ["True", "False", "Not Given"],
+        "options": [
+          "True",
+          "False",
+          "Not Given"
+        ],
         "answer": "False",
         "explanation": "The passage warns that simply denying a claim 'can inadvertently reinforce it', referencing the 'backfire effect'."
       },
       {
         "stem": "Finland has introduced media literacy education in schools.",
-        "options": ["True", "False", "Not Given"],
+        "options": [
+          "True",
+          "False",
+          "Not Given"
+        ],
         "answer": "True",
         "explanation": "The passage explicitly mentions 'Finland' as a country that has introduced 'media literacy programmes across all levels of schooling'."
       }
@@ -164,11 +200,258 @@
     "feedback": "You spoke for a reasonable length and addressed the topic, but your response would benefit from more development of each idea. You tended to list points without explaining them — for example, you said 'it is good for health' but didn't explain why or give an example. Try to follow each point with a reason or a brief personal example. Your grammar was mostly accurate at a simple level, but you avoided complex structures. Practise using conditionals, relative clauses, and reporting structures to raise your grammatical range score. Vocabulary was functional but limited — you used the same words ('good', 'important', 'difficult') repeatedly. Replacing these with more precise alternatives would improve your lexical resource score significantly.",
     "modelAnswer": "I'd like to talk about something I learned relatively recently — playing the guitar. I'd always wanted to play but kept putting it off, thinking it was too late to start as an adult. About two years ago I finally enrolled in a beginners' class, and I found it genuinely difficult at first. The main challenge was developing calluses on my fingertips — for the first few weeks, pressing the steel strings was quite painful, and I couldn't hold chords for long without stopping. I also found it hard to coordinate both hands independently, since the left hand forms the chord while the right hand strums. What eventually helped me was practising for just fifteen minutes every day rather than long irregular sessions. Consistency made a much bigger difference than I expected. By the third month I could play several complete songs, and the feeling of satisfaction when I realised I'd learned something I thought was beyond me was genuinely one of the most rewarding experiences I've had as an adult.",
     "vocabUpgrades": [
-      {"from": "good for you", "to": "beneficial"},
-      {"from": "very difficult", "to": "genuinely challenging"},
-      {"from": "I think", "to": "I would argue"},
-      {"from": "a lot of", "to": "a considerable amount of"},
-      {"from": "make you happy", "to": "contribute to a sense of fulfilment"}
+      {
+        "from": "good for you",
+        "to": "beneficial"
+      },
+      {
+        "from": "very difficult",
+        "to": "genuinely challenging"
+      },
+      {
+        "from": "I think",
+        "to": "I would argue"
+      },
+      {
+        "from": "a lot of",
+        "to": "a considerable amount of"
+      },
+      {
+        "from": "make you happy",
+        "to": "contribute to a sense of fulfilment"
+      }
     ]
+  },
+  "lesson:writing:B1": {
+    "goal": "Use three types of cohesive device accurately in a Task 2 body paragraph.",
+    "skill": "writing",
+    "warmup": {
+      "instruction": "Recall one thing you find hard about writing.",
+      "duration_minutes": 3
+    },
+    "teach": {
+      "explanation": "Cohesion is how your ideas connect. Band 6+ writing links sentences with a mix of reference (this, such), conjunctions (however, moreover, despite), and substitution. Weak writing either omits links or overuses and/also. Aim for variety: open with a topic sentence, add a reason with because/since, concede with although/despite, and contrast with however. Use this to refer back to a whole idea.",
+      "examples": [
+        "Despite the high cost, studying abroad builds independence.",
+        "Many students struggle at first; however, they adapt within weeks.",
+        "Universities offer support such as mentoring and language classes."
+      ]
+    },
+    "exercises": [
+      {
+        "type": "multiple_choice",
+        "instruction": "Choose the correct linker.",
+        "items": [
+          {
+            "prompt": "___ the expense, the experience is worthwhile.",
+            "answer": "Despite",
+            "distractor": "Although",
+            "feedback": "Despite + noun phrase; Although needs a full clause."
+          },
+          {
+            "prompt": "It is hard at first; ___, most students adapt.",
+            "answer": "however",
+            "distractor": "because",
+            "feedback": "Use a contrast linker after a semicolon, not a reason."
+          },
+          {
+            "prompt": "Cities are crowded ___ they offer more jobs.",
+            "answer": "because",
+            "distractor": "however",
+            "feedback": "A reason is needed here, so use because."
+          },
+          {
+            "prompt": "Costs are rising. ___ trend worries families.",
+            "answer": "This",
+            "distractor": "It",
+            "feedback": "This refers back to the whole previous idea."
+          }
+        ]
+      }
+    ],
+    "produce": {
+      "instruction": "Write one Task 2 body paragraph (4-5 sentences) using despite, however, and a this-reference.",
+      "prefill": "Some people believe that university should be free for all students. ",
+      "duration_minutes": 15
+    },
+    "review": {
+      "collocations": [
+        "strike a balance",
+        "draw a conclusion",
+        "a compelling argument"
+      ],
+      "tip": "Link ideas, do not just list them - variety of linkers signals a higher band."
+    }
+  },
+  "lesson:listening:B1": {
+    "goal": "Predict answers and catch paraphrase in IELTS Section 1 gap-fill.",
+    "skill": "listening",
+    "warmup": {
+      "instruction": "Recall one thing you find hard about listening.",
+      "duration_minutes": 3
+    },
+    "teach": {
+      "explanation": "Before audio plays, read the gaps and predict the word type (number, name, time, noun). Speakers rarely use the exact words on the page - they paraphrase. Costs $15 may be said as fifteen dollars or a fee of fifteen. Listen for signposts (actually, sorry I mean) that signal a correction - the second number is usually the answer.",
+      "examples": [
+        "Page: Start time ___ -> Audio: we kick off at half seven.",
+        "Page: Cost $___ -> Audio: it is fifteen pounds, sorry, fifty.",
+        "Page: Surname ___ -> Audio: that is Brown, B-R-O-W-N."
+      ]
+    },
+    "exercises": [
+      {
+        "type": "classify",
+        "instruction": "What word type fits each gap?",
+        "items": [
+          {
+            "prompt": "Departure time: ___",
+            "answer": "time",
+            "distractor": "name",
+            "feedback": "A time word or number fits time."
+          },
+          {
+            "prompt": "Total price: $___",
+            "answer": "number",
+            "distractor": "noun",
+            "feedback": "A figure fits a price gap."
+          },
+          {
+            "prompt": "Contact ___",
+            "answer": "name",
+            "distractor": "time",
+            "feedback": "Contact usually precedes a name."
+          },
+          {
+            "prompt": "Booked for ___ people",
+            "answer": "number",
+            "distractor": "name",
+            "feedback": "A quantity fits here."
+          }
+        ]
+      }
+    ],
+    "produce": {
+      "instruction": "Generate a Listening set in the Listening tab and apply the predict-then-listen routine.",
+      "prefill": "",
+      "duration_minutes": 15
+    },
+    "review": {
+      "collocations": [
+        "catch the paraphrase",
+        "listen for signposts",
+        "predict the answer"
+      ],
+      "tip": "Predict the word type first - half the work is done before the audio starts."
+    }
+  },
+  "lesson:speaking:B1": {
+    "goal": "Extend Part 1 answers with a reason and an example instead of one-word replies.",
+    "skill": "speaking",
+    "warmup": {
+      "instruction": "Recall one thing you find hard about speaking.",
+      "duration_minutes": 3
+    },
+    "teach": {
+      "explanation": "Band 6+ speakers do not stop at yes. Use the PREP frame: Point, Reason, Example, rePoint. Do you like coffee? -> Yes, I do (point) because it helps me focus (reason); for instance, I always have one before work (example). Add fillers naturally (to be honest, I would say) to sound fluent, not memorised.",
+      "examples": [
+        "Yes, I do, because it relaxes me - for example, on weekends.",
+        "Not really, to be honest, since I find it boring.",
+        "I would say so; it depends, but usually I enjoy it."
+      ]
+    },
+    "exercises": [
+      {
+        "type": "rewrite",
+        "instruction": "Extend the short answer using a reason.",
+        "items": [
+          {
+            "prompt": "Do you like your hometown? - Yes.",
+            "answer": "Yes, because it is quiet and green.",
+            "distractor": "Yes.",
+            "feedback": "Add because + a reason to extend."
+          },
+          {
+            "prompt": "Do you cook? - No.",
+            "answer": "No, since I do not have much time.",
+            "distractor": "No.",
+            "feedback": "Give a reason with since."
+          },
+          {
+            "prompt": "Do you read? - Sometimes.",
+            "answer": "Sometimes, for example novels on the train.",
+            "distractor": "Sometimes.",
+            "feedback": "Add for example + detail."
+          }
+        ]
+      }
+    ],
+    "produce": {
+      "instruction": "Record a Part 2 answer in the Speaking tab using the PREP frame.",
+      "prefill": "Describe a hobby you enjoy. You should say what it is, how you started, and why you like it.",
+      "duration_minutes": 15
+    },
+    "review": {
+      "collocations": [
+        "to be honest",
+        "it depends",
+        "for instance"
+      ],
+      "tip": "Never stop at one word - point, reason, example."
+    }
+  },
+  "lesson:reading:B1": {
+    "goal": "Decide True / False / Not Given by separating contradiction from absence of information.",
+    "skill": "reading",
+    "warmup": {
+      "instruction": "Recall one thing you find hard about reading.",
+      "duration_minutes": 3
+    },
+    "teach": {
+      "explanation": "TFNG trips learners because False and Not Given feel similar. FALSE = the text states the opposite. NOT GIVEN = the text simply does not say. Do not use outside knowledge. Match the claim key words to the passage; if you cannot find a sentence that confirms OR contradicts, it is Not Given.",
+      "examples": [
+        "Claim: The museum is free. Text: Entry costs 5 pounds. -> False.",
+        "Claim: The museum is popular with children. Text: silent on children -> Not Given.",
+        "Claim: The museum opened in 1900. Text: opened in 1900 -> True."
+      ]
+    },
+    "exercises": [
+      {
+        "type": "classify",
+        "instruction": "True, False, or Not Given?",
+        "items": [
+          {
+            "prompt": "Text: The tour lasts two hours. Claim: The tour is short.",
+            "answer": "Not Given",
+            "distractor": "False",
+            "feedback": "Short is a judgement the text never makes."
+          },
+          {
+            "prompt": "Text: Photography is banned. Claim: Visitors may take photos.",
+            "answer": "False",
+            "distractor": "Not Given",
+            "feedback": "The text states the opposite."
+          },
+          {
+            "prompt": "Text: Built in 1850. Claim: Built in the 19th century.",
+            "answer": "True",
+            "distractor": "Not Given",
+            "feedback": "1850 is the 19th century - confirmed."
+          }
+        ]
+      }
+    ],
+    "produce": {
+      "instruction": "Generate a Reading passage and practise TFNG, justifying each Not Given.",
+      "prefill": "",
+      "duration_minutes": 15
+    },
+    "review": {
+      "collocations": [
+        "state the opposite",
+        "outside knowledge",
+        "scan for keywords"
+      ],
+      "tip": "No sentence to confirm or contradict? It is Not Given - do not guess from what you know."
+    }
   }
 }
