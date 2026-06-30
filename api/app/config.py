@@ -16,6 +16,9 @@ class Config:
         self.DATABASE_URL = o.get("DATABASE_URL", os.getenv("DATABASE_URL", ""))
         self.CORS_ORIGIN = os.getenv("CORS_ORIGIN", "http://localhost:5173")
         self.TESTING = o.get("TESTING", False)
+        # Optional app-level passcode gate. Empty = open (offline dev default).
+        self.APP_PASSCODE = o.get("APP_PASSCODE", os.getenv("APP_PASSCODE", ""))
+        self.SESSION_SECRET = o.get("SESSION_SECRET", os.getenv("SESSION_SECRET", "dev-secret-change-me"))
         self.MODEL_GENERATE = o.get("MODEL_GENERATE", os.getenv("MODEL_GENERATE", "anthropic/claude-haiku-4-5"))
         self.MODEL_SCORE = o.get("MODEL_SCORE", os.getenv("MODEL_SCORE", "anthropic/claude-sonnet-4-6"))
         # Speaking ASR (faster-whisper, fully local/offline). Phase 2b-2.

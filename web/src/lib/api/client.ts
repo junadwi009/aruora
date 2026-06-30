@@ -38,6 +38,7 @@ export class ApiError extends Error {
 
 async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
   const res = await fetch(BASE + path, {
+    credentials: "include", // send the passcode session cookie when set
     headers: { "Content-Type": "application/json", ...(opts.headers ?? {}) },
     ...opts,
   });
@@ -57,7 +58,7 @@ const get = <T>(p: string) => request<T>(p);
 // Multipart upload — let the browser set the multipart boundary; do NOT force
 // a JSON Content-Type (that would corrupt the form encoding).
 async function upload<T>(path: string, form: FormData): Promise<T> {
-  const res = await fetch(BASE + path, { method: "POST", body: form });
+  const res = await fetch(BASE + path, { method: "POST", body: form, credentials: "include" });
   const text = await res.text();
   const body = text ? (JSON.parse(text) as { error?: { code: string; message: string; details?: unknown } }) : null;
   if (!res.ok) {
@@ -69,6 +70,9 @@ async function upload<T>(path: string, form: FormData): Promise<T> {
 
 export const api = {
   health: () => get<Health>("/api/health"),
+  authStatus: () => get<{ authRequired: boolean; authenticated: boolean }>("/api/auth/status"),
+  authLogin: (passcode: string) => post<{ ok: boolean }>("/api/auth/login", { passcode }),
+  authLogout: () => post<{ ok: boolean }>("/api/auth/logout", {}),
   onboarding: (b: OnboardingBody) => post("/api/onboarding", b),
   placementStart: () => post<PlacementStart>("/api/placement/start", {}),
   placementSubmit: (b: unknown) => post<PlacementResult>("/api/placement/submit", b),

@@ -8,6 +8,7 @@ import { Generating } from "./components/placement/Generating";
 import { Program } from "./components/program/Program";
 import { Milestones } from "./components/milestones/Milestones";
 import { AppShell } from "./components/menu/AppShell";
+import { PasscodeGate } from "./components/auth/PasscodeGate";
 
 // Code-split: recharts lives only in Results, so lazy-loading it keeps the main chunk smaller
 const Results = lazy(() => import("./components/results/Results"));
@@ -79,6 +80,32 @@ function Journey() {
 }
 
 export default function App() {
+  // null = checking, true = may proceed, false = passcode required
+  const [unlocked, setUnlocked] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    api
+      .authStatus()
+      .then((s) => active && setUnlocked(!s.authRequired || s.authenticated))
+      .catch(() => active && setUnlocked(true)); // fail open (e.g. status route unreachable)
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (unlocked === null) {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-6">
+        <p className="text-[var(--color-muted)]">Loading…</p>
+      </div>
+    );
+  }
+
+  if (!unlocked) {
+    return <PasscodeGate onUnlock={() => setUnlocked(true)} />;
+  }
+
   return (
     <JourneyProvider>
       <Journey />

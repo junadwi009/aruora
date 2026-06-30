@@ -1,7 +1,7 @@
-from flask import Flask
+from flask import Flask, request, session
 from flask_cors import CORS
 from .config import Config
-from .errors import register_error_handlers
+from .errors import register_error_handlers, error_response, ApiError
 
 
 def create_app(overrides=None):
@@ -9,9 +9,27 @@ def create_app(overrides=None):
     overrides = overrides or {}
     cfg = Config(overrides)
     app.config["APP_CONFIG"] = cfg
+    app.secret_key = cfg.SESSION_SECRET
 
-    CORS(app, origins=[cfg.CORS_ORIGIN])
+    # supports_credentials so the passcode session cookie works cross-origin (dev).
+    CORS(app, origins=[cfg.CORS_ORIGIN], supports_credentials=True)
     register_error_handlers(app)
+
+    # ── Passcode gate (no-op when APP_PASSCODE is empty) ───────────────────────
+    _OPEN_PATHS = {"/api/health", "/api/auth/status", "/api/auth/login", "/api/auth/logout"}
+
+    @app.before_request
+    def _require_passcode():
+        if not cfg.APP_PASSCODE:
+            return None
+        path = request.path
+        if not path.startswith("/api/") or path in _OPEN_PATHS:
+            return None
+        if request.method == "OPTIONS":  # CORS preflight
+            return None
+        if not session.get("auth"):
+            return error_response(ApiError("UNAUTHORIZED", "Passcode required", 401))
+        return None
 
     # ── Dependency injection ───────────────────────────────────────────────
     if "REPO" in overrides and "GATEWAY" in overrides:
@@ -54,6 +72,7 @@ def create_app(overrides=None):
     from .routes.pronounce import bp as pronounce_bp
     from .routes.cards import bp as cards_bp
     from .routes.vocab import bp as vocab_bp
+    from .routes.auth import bp as auth_bp
 
     app.register_blueprint(health_bp)
     app.register_blueprint(onboarding_bp)
@@ -72,5 +91,6 @@ def create_app(overrides=None):
     app.register_blueprint(pronounce_bp)
     app.register_blueprint(cards_bp)
     app.register_blueprint(vocab_bp)
+    app.register_blueprint(auth_bp)
 
     return app
