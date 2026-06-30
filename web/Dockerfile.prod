@@ -1,0 +1,17 @@
+# ── Build the static SPA ─────────────────────────────────────────────────────
+FROM node:22-slim AS build
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN npm ci
+COPY . .
+# Same-origin in prod: the client calls relative /api/* and nginx proxies it,
+# so the bundle ships with an empty API base (no CORS, no hard-coded host).
+ARG VITE_API_BASE=""
+ENV VITE_API_BASE=$VITE_API_BASE
+RUN npm run build
+
+# ── Serve with nginx (+ /api reverse proxy) ──────────────────────────────────
+FROM nginx:1.27-alpine
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
+EXPOSE 80

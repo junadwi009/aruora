@@ -88,4 +88,35 @@ bash tests/secret_scan.sh
 bash tests/smoke.sh
 ```
 
+## Production deploy
+
+The dev `docker-compose.yml` runs the Vite dev server and publishes the API. For a
+real deployment use **`docker-compose.prod.yml`**, which builds the SPA to static
+files and serves them with nginx, reverse-proxying `/api/*` to gunicorn (same
+origin → no CORS, no API host baked into the bundle). Only the web port is
+published; `api` and `db` stay on the internal network.
+
+```bash
+cp .env.example .env          # set LLM_MODE + keys; CHANGE POSTGRES_PASSWORD
+docker compose -f docker-compose.prod.yml up -d --build
+# open http://<host>:${WEB_PORT:-80}
+```
+
+Env (in `.env`): `LLM_MODE` (`stub` offline / `live`), `OPENROUTER_API_KEY`,
+`MODEL_GENERATE`/`MODEL_SCORE`, `ASR_ENABLED`, `POSTGRES_USER/PASSWORD/DB`,
+`WEB_PORT`.
+
+**Before exposing publicly — not included, decide per host:**
+- **TLS**: terminate HTTPS at a front proxy (Caddy/Traefik/nginx) or the platform's
+  load balancer; this stack speaks plain HTTP on the web port.
+- **Access gate**: the app has no auth. Add a passcode/basic-auth at the proxy, e.g.
+  nginx `auth_basic` in front, or a platform access rule. (App-level passcode is a
+  future enhancement.)
+- **Secrets**: keep real keys in the host's secret store / env, never committed.
+- **DB**: change the default `ielts/ielts` credentials; back up the `ielts_pgdata`
+  volume.
+
+> ⚠️ The `web` image **copies source at build time** — always `--build` the web
+> service after frontend changes (a stale container serves old UI).
+
 See `CLAUDE.md` for full architecture, conventions, and roadmap.
