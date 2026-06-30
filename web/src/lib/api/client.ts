@@ -19,6 +19,9 @@ import type {
   MockScore,
   PronounceTarget,
   PronounceFeedback,
+  VocabSet,
+  Flashcard,
+  CardStats,
 } from "../types";
 
 const BASE = (import.meta as { env?: { VITE_API_BASE?: string } }).env?.VITE_API_BASE ?? "http://localhost:5050";
@@ -104,4 +107,12 @@ export const api = {
     post<PronounceTarget>("/api/pronounce/sentence", b),
   pronounceFeedback: (b: { target: string; transcript: string; accuracy: number; missed: string[] }) =>
     post<PronounceFeedback>("/api/pronounce/feedback", b),
+  vocab: (b: { topic: string; level?: string }) => post<VocabSet>("/api/vocab", b),
+  cardsList: () => get<{ cards: Flashcard[]; stats: CardStats }>("/api/cards"),
+  cardsDue: () => get<Flashcard[]>("/api/cards/due"),
+  cardAdd: (b: { front: string; back: string } | { cards: { front: string; back: string }[] }) =>
+    post<{ id?: number; added?: number }>("/api/cards", b),
+  cardReview: (id: number, quality: number) =>
+    post<Flashcard>(`/api/cards/${id}/review`, { quality }),
+  cardDelete: (id: number) => request<{ deleted: number }>(`/api/cards/${id}`, { method: "DELETE" }),
 };

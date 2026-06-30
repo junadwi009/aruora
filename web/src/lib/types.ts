@@ -210,3 +210,31 @@ export interface PronounceFeedback {
   prosody: string[];
   stub?: boolean;
 }
+
+export interface VocabWord {
+  word: string;
+  pos?: string;
+  definition: string;
+  example?: string;
+  collocations?: string[];
+}
+export interface VocabSet {
+  topic: string;
+  band?: string;
+  words: VocabWord[];
+  stub?: boolean;
+}
+export interface Flashcard {
+  id: number;
+  front: string;
+  back: string;
+  ease: number;
+  interval: number;
+  reps: number;
+  lapses: number;
+  due: string | null;
+}
+export interface CardStats {
+  total: number;
+  due: number;
+}

@@ -184,3 +184,35 @@ def test_save_and_list_mocks():
     assert rows[0]["id"] == b
     assert rows[0]["listening"] == 5.5 and rows[0]["reading"] == 6.0 and rows[0]["overall"] == 6.0
     assert "createdAt" in rows[0]
+
+
+# ── Phase 2d-4: flashcards (SM-2) ────────────────────────────────────────────
+
+def test_cards_add_list_stats_delete():
+    from datetime import datetime, timezone
+    repo = make_repo()
+    cid = repo.add_card("ubiquitous", "present everywhere")
+    n = repo.add_cards([{"front": "a", "back": "1"}, {"front": "b", "back": "2"}])
+    assert isinstance(cid, int) and n == 2
+    assert len(repo.list_cards()) == 3
+    stats = repo.card_stats()
+    assert stats["total"] == 3
+    # new cards are due now
+    now = datetime.now(timezone.utc)
+    assert len(repo.due_cards(now)) == 3
+    assert repo.delete_card(cid) is True
+    assert repo.delete_card(999999) is False
+    assert len(repo.list_cards()) == 2
+
+
+def test_card_review_reschedules():
+    from datetime import datetime, timezone
+    repo = make_repo()
+    cid = repo.add_card("front", "back")
+    now = datetime.now(timezone.utc)
+    out = repo.review_card(cid, quality=4, now=now)
+    assert out is not None
+    assert out["reps"] == 1 and out["interval"] == 1
+    # after a good review it's no longer due now (due ~1 day out)
+    assert all(c["id"] != cid for c in repo.due_cards(now))
+    assert repo.review_card(999999, quality=4, now=now) is None

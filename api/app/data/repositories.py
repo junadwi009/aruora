@@ -11,6 +11,7 @@ from sqlalchemy import select
 
 from .models import (
     Attempt,
+    Card,
     GeneratedSet,
     Lesson,
     Milestone,
@@ -346,6 +347,85 @@ class Repository:
                     }
                 )
             return out
+
+    # ── Flashcards (SM-2) — Phase 2d-4 ────────────────────────────────────────
+
+    @staticmethod
+    def _card_dict(c) -> dict:
+        return {
+            "id": c.id, "front": c.front, "back": c.back, "ease": c.ease,
+            "interval": c.interval, "reps": c.reps, "lapses": c.lapses,
+            "due": c.due.isoformat() if c.due else None,
+        }
+
+    def add_card(self, front: str, back: str) -> int:
+        with self._sf() as s:
+            c = Card(front=front, back=back)
+            s.add(c)
+            s.commit()
+            s.refresh(c)
+            return c.id
+
+    def add_cards(self, items: list[dict]) -> int:
+        with self._sf() as s:
+            for it in items:
+                s.add(Card(front=it.get("front", ""), back=it.get("back", "")))
+            s.commit()
+        return len(items)
+
+    def list_cards(self) -> list[dict]:
+        with self._sf() as s:
+            rows = s.execute(select(Card).order_by(Card.id.desc())).scalars().all()
+            return [self._card_dict(c) for c in rows]
+
+    @staticmethod
+    def _utc_naive(dt):
+        """Normalise to naive-UTC so SQLite (naive) and Postgres (aware) compare."""
+        if dt is None:
+            return None
+        return dt.replace(tzinfo=None) if dt.tzinfo else dt
+
+    def card_stats(self) -> dict:
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        with self._sf() as s:
+            rows = s.execute(select(Card)).scalars().all()
+            due = sum(1 for c in rows if c.due is None or self._utc_naive(c.due) <= now)
+            return {"total": len(rows), "due": due}
+
+    def due_cards(self, now) -> list[dict]:
+        now_n = self._utc_naive(now)
+        with self._sf() as s:
+            rows = s.execute(select(Card)).scalars().all()
+            due = [c for c in rows if c.due is None or self._utc_naive(c.due) <= now_n]
+            due.sort(key=lambda c: self._utc_naive(c.due) or now_n)
+            return [self._card_dict(c) for c in due]
+
+    def review_card(self, card_id: int, quality: int, now) -> dict | None:
+        from datetime import timedelta
+        from app.domain.sm2 import schedule
+        with self._sf() as s:
+            c = s.get(Card, card_id)
+            if c is None:
+                return None
+            nxt = schedule(c.ease, c.interval, c.reps, c.lapses, quality)
+            c.ease = nxt["ease"]
+            c.interval = nxt["interval"]
+            c.reps = nxt["reps"]
+            c.lapses = nxt["lapses"]
+            c.due = now + timedelta(days=nxt["interval"])
+            s.commit()
+            s.refresh(c)
+            return self._card_dict(c)
+
+    def delete_card(self, card_id: int) -> bool:
+        with self._sf() as s:
+            c = s.get(Card, card_id)
+            if c is None:
+                return False
+            s.delete(c)
+            s.commit()
+            return True
 
     # ── Mock tests — Phase 2d-2 ───────────────────────────────────────────────
 

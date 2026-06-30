@@ -14,6 +14,7 @@ import { Progress } from "../progress/Progress";
 import { Session } from "../session/Session";
 import { MockTest } from "../test/MockTest";
 import { Pronounce } from "../pronounce/Pronounce";
+import { Vocab } from "../vocab/Vocab";
 
 // ---------------------------------------------------------------------------
 // View registry — Task 21: real skill screens wired in.
@@ -41,6 +42,7 @@ const viewRegistry: ViewRegistry = {
   progress: () => <Progress />,
   session: () => <Session />,
   pronounce: () => <Pronounce />,
+  vocab: () => <Vocab />,
   settings: () => <Placeholder name="Settings" />,
 };
 

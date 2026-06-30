@@ -11,6 +11,7 @@ export type View =
   | "progress"
   | "session"
   | "pronounce"
+  | "vocab"
   | "settings";
 
 export interface Prefill {

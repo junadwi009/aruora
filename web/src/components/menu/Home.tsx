@@ -142,6 +142,9 @@ export const Home: React.FC<HomeProps> = ({ levels }) => {
           <Button variant="secondary" size="sm" onClick={() => setView("pronounce")}>
             Pronounce
           </Button>
+          <Button variant="secondary" size="sm" onClick={() => setView("vocab")}>
+            Vocab
+          </Button>
           <Button variant="secondary" size="sm" onClick={() => setView("tips")}>
             Tips
           </Button>

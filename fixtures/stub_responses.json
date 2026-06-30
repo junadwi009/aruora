@@ -479,5 +479,61 @@
       "Lift your pitch slightly on city to mark new information.",
       "Keep function words short and unstressed."
     ]
+  },
+  "generate:vocab:B1": {
+    "topic": "environment",
+    "band": "B1",
+    "words": [
+      {
+        "word": "sustainable",
+        "pos": "adj",
+        "definition": "able to continue over time without harming the environment",
+        "example": "We need sustainable energy sources.",
+        "collocations": [
+          "sustainable development",
+          "sustainable growth"
+        ]
+      },
+      {
+        "word": "emissions",
+        "pos": "noun",
+        "definition": "gases released into the air",
+        "example": "Carbon emissions must be reduced.",
+        "collocations": [
+          "reduce emissions",
+          "carbon emissions"
+        ]
+      },
+      {
+        "word": "renewable",
+        "pos": "adj",
+        "definition": "naturally replaced, like solar or wind",
+        "example": "Renewable energy is growing fast.",
+        "collocations": [
+          "renewable energy",
+          "renewable resources"
+        ]
+      },
+      {
+        "word": "conservation",
+        "pos": "noun",
+        "definition": "protection of nature and resources",
+        "example": "Wildlife conservation matters.",
+        "collocations": [
+          "water conservation",
+          "conservation efforts"
+        ]
+      },
+      {
+        "word": "pollution",
+        "pos": "noun",
+        "definition": "harmful substances in the environment",
+        "example": "Air pollution affects health.",
+        "collocations": [
+          "air pollution",
+          "reduce pollution"
+        ]
+      }
+    ]
   }
 }
