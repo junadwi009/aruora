@@ -40,3 +40,11 @@ test("enters the app shell and opens the Mock Test", async ({ page }) => {
   await page.getByRole("button", { name: /^test$/i }).first().click();
   await expect(page.getByText(/Listening \+ Reading mock/i)).toBeVisible();
 });
+
+test("Settings toggles dark mode (adds .dark to <html>)", async ({ page }) => {
+  await enterApp(page);
+  await page.getByRole("button", { name: /^settings$/i }).first().click();
+  await expect(page.getByRole("heading", { name: /^settings$/i })).toBeVisible();
+  await page.getByRole("button", { name: /^dark$/i }).click();
+  await expect.poll(() => page.evaluate(() => document.documentElement.classList.contains("dark"))).toBe(true);
+});
