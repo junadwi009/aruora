@@ -86,7 +86,8 @@ Decisions: provider=OpenRouter (OpenAI SDK, base_url https://openrouter.ai/api/v
 - ALL idle tables now active (attempts, mocks, lessons, cards).
 - PHASE 2d-5 persist practice R/L — DONE. commit 3d95039. POST /api/practice/attempt (reading|listening→attempts); trends() now 4 skills; QuizRunner posts score on submit; Progress chart 4 lines, history filtered to w/s. api 96, web 35. Live-verified.
 - PHASE 2d-6 Playwright e2e — DONE. commit 44aebbf. @playwright/test + web/playwright.config.ts + web/e2e/journey.spec.ts (3 tests: load smoke, app-shell→Vocab, app-shell→Mock). vitest scoped to src/**. 3/3 e2e green vs compose. IMPORTANT: web Dockerfile COPIES source (no bind-mount) → must `docker compose up -d --build web` after frontend changes (stale UI otherwise; bit us once here).
-- NEXT: 2d-7 deploy — needs user hosting decision (prep config + flag, do not deploy).
+- PHASE 2d-7 deploy CONFIG — DONE (config only, NOT deployed). commit e0c0d66. web/Dockerfile.prod (vite build→nginx), web/nginx.conf (SPA + /api proxy via docker resolver+var upstream), docker-compose.prod.yml (web published, api+db internal), README Production deploy section. Verified prod web image builds + serves 200. GO-LIVE BLOCKED on owner decision: host (single VPS compose vs split), TLS, access gate (no auth yet), prod secrets/DB creds.
+- === BATCH "lanjut semua berurutan" COMPLETE: 2d-2..2d-7 all done. All idle tables active. Remaining truly-optional: app-level passcode/auth, session-complete tracking, full 30-day day-list, official raw→band tables, code-split bundle, self-hosted fonts. ===
 
 ## Routes design notes (Tasks 11-13)
 - create_app(overrides): if overrides has REPO+GATEWAY -> use them (tests, skip engine). Else init_engine(DATABASE_URL), sessionmaker, seed_all(factory), Repository -> config["REPO"], LlmGateway -> config["GATEWAY"]. APP_CONFIG already set.
