@@ -2,9 +2,11 @@ import React, { useState } from "react";
 import { KeyRound } from "lucide-react";
 import { api } from "../../lib/api/client";
 import { Button } from "../ui/Button";
+import { useT } from "../../lib/i18n";
 
 /** Shown when the app is opened via a ?reset_token=… link. */
 export const ResetPassword: React.FC<{ token: string; onDone: () => void }> = ({ token, onDone }) => {
+  const { t } = useT();
   const [pw, setPw] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -35,11 +37,11 @@ export const ResetPassword: React.FC<{ token: string; onDone: () => void }> = ({
         >
           <KeyRound size={22} className="text-white" />
         </div>
-        <h1 className="text-xl font-bold text-[var(--color-text)]">Choose a new password</h1>
+        <h1 className="text-xl font-bold text-[var(--color-text)]">{t("auth.newPassword")}</h1>
         {done ? (
           <>
-            <p className="text-sm text-[var(--color-success)]">Password updated. You can sign in now.</p>
-            <Button onClick={onDone} className="w-full">Go to sign in</Button>
+            <p className="text-sm text-[var(--color-success)]">{t("auth.resetDone")}</p>
+            <Button onClick={onDone} className="w-full">{t("auth.goSignin")}</Button>
           </>
         ) : (
           <>
@@ -53,9 +55,9 @@ export const ResetPassword: React.FC<{ token: string; onDone: () => void }> = ({
               className="min-h-11 px-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-600)]"
             />
             {error && <p className="text-xs text-[var(--color-danger)]" role="alert">{error}</p>}
-            <Button type="submit" loading={busy} disabled={!pw} className="w-full">Reset password</Button>
+            <Button type="submit" loading={busy} disabled={!pw} className="w-full">{t("auth.resetBtn")}</Button>
             <button type="button" onClick={onDone} className="text-sm text-[var(--color-muted)] hover:text-[var(--color-text)] min-h-11">
-              Cancel
+              {t("common.cancel")}
             </button>
           </>
         )}

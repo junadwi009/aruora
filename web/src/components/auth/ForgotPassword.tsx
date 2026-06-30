@@ -2,8 +2,10 @@ import React, { useState } from "react";
 import { KeyRound } from "lucide-react";
 import { api } from "../../lib/api/client";
 import { Button } from "../ui/Button";
+import { useT } from "../../lib/i18n";
 
 export const ForgotPassword: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+  const { t } = useT();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -30,19 +32,19 @@ export const ForgotPassword: React.FC<{ onBack: () => void }> = ({ onBack }) => 
         >
           <KeyRound size={22} className="text-white" />
         </div>
-        <h1 className="text-xl font-bold text-[var(--color-text)]">Reset your password</h1>
+        <h1 className="text-xl font-bold text-[var(--color-text)]">{t("auth.resetTitle")}</h1>
         {sent ? (
           <>
             <p className="text-sm text-[var(--color-muted)]">
               If an account exists for <strong>{email}</strong>, we've sent a reset link. Check your
               inbox (and spam). The link works for 1 hour.
             </p>
-            <Button variant="secondary" onClick={onBack} className="w-full">Back to sign in</Button>
+            <Button variant="secondary" onClick={onBack} className="w-full">{t("auth.backToSignin")}</Button>
           </>
         ) : (
           <>
             <p className="text-sm text-[var(--color-muted)]">
-              Enter your account email and we'll send a reset link.
+              {t("auth.resetSub")}
             </p>
             <input
               type="email"
@@ -53,9 +55,9 @@ export const ForgotPassword: React.FC<{ onBack: () => void }> = ({ onBack }) => 
               placeholder="you@example.com"
               className="min-h-11 px-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-600)]"
             />
-            <Button type="submit" loading={busy} disabled={!email.trim()} className="w-full">Send reset link</Button>
+            <Button type="submit" loading={busy} disabled={!email.trim()} className="w-full">{t("auth.sendLink")}</Button>
             <button type="button" onClick={onBack} className="text-sm text-[var(--color-muted)] hover:text-[var(--color-text)] min-h-11">
-              Back to sign in
+              {t("auth.backToSignin")}
             </button>
           </>
         )}

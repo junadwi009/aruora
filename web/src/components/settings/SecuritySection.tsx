@@ -2,8 +2,10 @@ import React, { useState } from "react";
 import { api } from "../../lib/api/client";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
+import { useT } from "../../lib/i18n";
 
 export const SecuritySection: React.FC<{ hasAccount: boolean }> = ({ hasAccount }) => {
+  const { t } = useT();
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -27,7 +29,7 @@ export const SecuritySection: React.FC<{ hasAccount: boolean }> = ({ hasAccount 
 
   return (
     <Card className="flex flex-col gap-3">
-      <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">Security</p>
+      <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("settings.security")}</p>
       {!hasAccount ? (
         <p className="text-sm text-[var(--color-muted)]">Register an email/password account to set a password.</p>
       ) : (

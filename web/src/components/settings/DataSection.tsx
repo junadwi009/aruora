@@ -3,8 +3,10 @@ import { Download, Trash2 } from "lucide-react";
 import { api } from "../../lib/api/client";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
+import { useT } from "../../lib/i18n";
 
 export const DataSection: React.FC = () => {
+  const { t } = useT();
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
@@ -36,7 +38,7 @@ export const DataSection: React.FC = () => {
 
   return (
     <Card className="flex flex-col gap-3">
-      <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">Data &amp; privacy</p>
+      <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("settings.data")}</p>
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-[var(--color-text)]">Download all your data as JSON</p>
         <Button variant="secondary" size="sm" onClick={exportData} loading={busy}>

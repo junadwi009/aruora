@@ -6,6 +6,7 @@ import { Button } from "../ui/Button";
 import { LevelChip } from "../ui/LevelChip";
 import type { CefrBand } from "../ui/LevelChip";
 import { useView } from "./viewContext";
+import { useT } from "../../lib/i18n";
 import type { Skill, Milestone } from "../../lib/types";
 
 interface HomeProps {
@@ -37,6 +38,7 @@ function daysUntil(iso?: string | null): number | null {
 
 export const Home: React.FC<HomeProps> = ({ levels }) => {
   const { setView } = useView();
+  const { t } = useT();
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [examDays, setExamDays] = useState<number | null>(null);
   const [streak, setStreak] = useState<{ current: number; today: number } | null>(null);
@@ -52,7 +54,7 @@ export const Home: React.FC<HomeProps> = ({ levels }) => {
   return (
     <main className="flex-1 overflow-y-auto p-4 md:p-6 max-w-2xl">
       <h1 className="text-2xl font-bold tracking-tight text-[var(--color-text)] mb-6">
-        Dashboard
+        {t("home.dashboard")}
       </h1>
 
       {/* Today hero card — brand-tinted with accent left border */}
@@ -68,15 +70,15 @@ export const Home: React.FC<HomeProps> = ({ levels }) => {
         >
           <div>
             <h2 id="today-heading" className="text-base font-semibold text-[var(--color-text)] mb-0.5">
-              Today
+              {t("home.today")}
             </h2>
-            <p className="text-sm text-[var(--color-muted)]">Start today’s guided session</p>
+            <p className="text-sm text-[var(--color-muted)]">{t("home.todaySub")}</p>
           </div>
           <Button
             onClick={() => setView("session")}
             className="shrink-0"
           >
-            Start
+            {t("home.start")}
           </Button>
         </div>
       </section>
@@ -88,10 +90,10 @@ export const Home: React.FC<HomeProps> = ({ levels }) => {
             style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-e1)" }}>
             <div>
               <p className="text-sm font-semibold text-[var(--color-text)]">
-                🔥 {streak.current}-day streak
+                🔥 {streak.current}-{t("home.streak")}
               </p>
               <p className="text-xs text-[var(--color-muted)] mt-0.5">
-                {streak.today >= DAILY_GOAL ? "Today's goal done — nice!" : "Do one task today to keep it going."}
+                {streak.today >= DAILY_GOAL ? t("home.goalDone") : t("home.goalTodo")}
               </p>
             </div>
             <span className={`text-3xl font-bold tabular-nums ${streak.today >= DAILY_GOAL ? "text-[var(--color-success)]" : "text-[var(--color-muted)]"}`}>
@@ -107,9 +109,9 @@ export const Home: React.FC<HomeProps> = ({ levels }) => {
           <div className="rounded-[var(--radius-xl)] px-5 py-4 flex items-center justify-between gap-4"
             style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-e1)" }}>
             <div>
-              <p className="text-xs text-[var(--color-muted)] uppercase tracking-wide">Exam countdown</p>
+              <p className="text-xs text-[var(--color-muted)] uppercase tracking-wide">{t("home.examCountdown")}</p>
               <p className="text-sm text-[var(--color-text)] mt-0.5">
-                {examDays > 0 ? `${examDays} day${examDays === 1 ? "" : "s"} to go` : examDays === 0 ? "Exam is today — good luck!" : "Exam date has passed"}
+                {examDays > 0 ? `${examDays} ${t("home.daysToGo")}` : examDays === 0 ? t("home.examToday") : "—"}
               </p>
             </div>
             {examDays > 0 && <span className="text-3xl font-bold tabular-nums text-[var(--color-primary-600)]">{examDays}</span>}
@@ -123,10 +125,10 @@ export const Home: React.FC<HomeProps> = ({ levels }) => {
           id="skills-heading"
           className="text-sm font-semibold text-[var(--color-muted)] mb-3 tracking-tight uppercase"
         >
-          Your Skills
+          {t("home.yourSkills")}
         </h2>
         <div className="grid grid-cols-2 gap-3">
-          {SKILLS.map(({ skill, label, icon }) => {
+          {SKILLS.map(({ skill, icon }) => {
             const band = levels[skill];
             const nextBand = band ? NEXT_BAND[band] : "B1";
             return (
@@ -145,9 +147,9 @@ export const Home: React.FC<HomeProps> = ({ levels }) => {
                   </span>
                   {band && <LevelChip band={band} />}
                 </div>
-                <p className="text-sm font-semibold text-[var(--color-text)]">{label}</p>
+                <p className="text-sm font-semibold text-[var(--color-text)]">{t("nav." + skill)}</p>
                 <p className="text-xs text-[var(--color-muted)] mt-0.5">
-                  {band ? `Targeting ${nextBand}` : "Not assessed yet"}
+                  {band ? `${t("home.targeting")} ${nextBand}` : t("home.notAssessed")}
                 </p>
               </Card>
             );
@@ -162,7 +164,7 @@ export const Home: React.FC<HomeProps> = ({ levels }) => {
             id="milestones-heading"
             className="text-sm font-semibold text-[var(--color-muted)] mb-3 tracking-tight uppercase"
           >
-            Program Milestones
+            {t("home.milestones")}
           </h2>
           <Card>
             <ol className="flex flex-col gap-2">
@@ -186,27 +188,15 @@ export const Home: React.FC<HomeProps> = ({ levels }) => {
           id="quicklinks-heading"
           className="text-sm font-semibold text-[var(--color-muted)] mb-3 tracking-tight uppercase"
         >
-          Quick Access
+          {t("home.quickAccess")}
         </h2>
         <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" size="sm" onClick={() => setView("reading")}>
-            Practice
-          </Button>
-          <Button variant="secondary" size="sm" onClick={() => setView("test")}>
-            Test
-          </Button>
-          <Button variant="secondary" size="sm" onClick={() => setView("pronounce")}>
-            Pronounce
-          </Button>
-          <Button variant="secondary" size="sm" onClick={() => setView("roleplay")}>
-            Roleplay
-          </Button>
-          <Button variant="secondary" size="sm" onClick={() => setView("vocab")}>
-            Vocab
-          </Button>
-          <Button variant="secondary" size="sm" onClick={() => setView("tips")}>
-            Tips
-          </Button>
+          <Button variant="secondary" size="sm" onClick={() => setView("reading")}>{t("nav.practice")}</Button>
+          <Button variant="secondary" size="sm" onClick={() => setView("test")}>{t("nav.test")}</Button>
+          <Button variant="secondary" size="sm" onClick={() => setView("pronounce")}>{t("nav.pronounce")}</Button>
+          <Button variant="secondary" size="sm" onClick={() => setView("roleplay")}>{t("nav.roleplay")}</Button>
+          <Button variant="secondary" size="sm" onClick={() => setView("vocab")}>{t("nav.vocab")}</Button>
+          <Button variant="secondary" size="sm" onClick={() => setView("tips")}>{t("nav.tips")}</Button>
         </div>
       </section>
     </main>

@@ -4,8 +4,10 @@ import { api } from "../../lib/api/client";
 import type { AccountUser } from "../../lib/types";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
+import { useT } from "../../lib/i18n";
 
 export const ProfileSection: React.FC = () => {
+  const { t } = useT();
   const [user, setUser] = useState<AccountUser | null>(null);
   const [anon, setAnon] = useState(false);
   const [name, setName] = useState("");
@@ -65,7 +67,7 @@ export const ProfileSection: React.FC = () => {
 
   return (
     <Card className="flex flex-col gap-3">
-      <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">Profile</p>
+      <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("settings.profile")}</p>
 
       <div className="flex items-center gap-4">
         <div className="w-16 h-16 rounded-full overflow-hidden bg-[var(--color-surface-2)] flex items-center justify-center shrink-0">

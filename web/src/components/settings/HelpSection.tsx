@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ChevronDown, HelpCircle } from "lucide-react";
 import { Card } from "../ui/Card";
+import { useT } from "../../lib/i18n";
 
 const FAQ: { q: string; a: string }[] = [
   {
@@ -26,12 +27,13 @@ const FAQ: { q: string; a: string }[] = [
 ];
 
 export const HelpSection: React.FC = () => {
+  const { t } = useT();
   const [open, setOpen] = useState<number | null>(null);
   return (
     <Card className="flex flex-col gap-2">
       <div className="flex items-center gap-2 mb-1">
         <HelpCircle size={16} className="text-[var(--color-muted)]" aria-hidden="true" />
-        <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">Help</p>
+        <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("settings.help")}</p>
       </div>
       {FAQ.map((item, i) => (
         <div key={i} className="border-b border-[var(--color-border)] last:border-0">

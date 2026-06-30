@@ -7,6 +7,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useJourney } from "../../lib/journey";
+import { useT } from "../../lib/i18n";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { LevelChip } from "../ui/LevelChip";
@@ -30,6 +31,7 @@ function bandToRadar(band: number): number {
 
 export const Results: React.FC = () => {
   const { placementResult, go } = useJourney();
+  const { t } = useT();
 
   if (!placementResult) {
     return (
@@ -169,7 +171,7 @@ export const Results: React.FC = () => {
       {/* CTA */}
       <div className="flex justify-center pt-2">
         <Button size="lg" onClick={() => go("register")} className="min-w-[14rem]">
-          Save your results
+          {t("results.saveCta")}
         </Button>
       </div>
     </div>

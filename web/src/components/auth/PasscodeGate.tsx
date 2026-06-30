@@ -2,8 +2,10 @@ import React, { useState } from "react";
 import { Lock } from "lucide-react";
 import { api } from "../../lib/api/client";
 import { Button } from "../ui/Button";
+import { useT } from "../../lib/i18n";
 
 export const PasscodeGate: React.FC<{ onUnlock: () => void }> = ({ onUnlock }) => {
+  const { t } = useT();
   const [passcode, setPasscode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -17,7 +19,7 @@ export const PasscodeGate: React.FC<{ onUnlock: () => void }> = ({ onUnlock }) =
       await api.authLogin(passcode);
       onUnlock();
     } catch {
-      setError("Incorrect passcode. Try again.");
+      setError(t("auth.wrongPasscode"));
       setPasscode("");
     } finally {
       setBusy(false);
@@ -35,8 +37,8 @@ export const PasscodeGate: React.FC<{ onUnlock: () => void }> = ({ onUnlock }) =
           <Lock size={24} className="text-white" />
         </div>
         <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-bold text-[var(--color-text)]">Enter passcode</h1>
-          <p className="text-sm text-[var(--color-muted)]">This IELTS Coach instance is passcode-protected.</p>
+          <h1 className="text-xl font-bold text-[var(--color-text)]">{t("auth.passcodeTitle")}</h1>
+          <p className="text-sm text-[var(--color-muted)]">{t("auth.passcodeSub")}</p>
         </div>
         <input
           type="password"
@@ -50,7 +52,7 @@ export const PasscodeGate: React.FC<{ onUnlock: () => void }> = ({ onUnlock }) =
         />
         {error && <p className="text-xs text-[var(--color-danger)]" role="alert">{error}</p>}
         <Button type="submit" loading={busy} disabled={!passcode.trim()} className="w-full">
-          Unlock
+          {t("auth.unlock")}
         </Button>
       </form>
     </div>

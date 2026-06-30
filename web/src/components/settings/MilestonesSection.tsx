@@ -4,11 +4,13 @@ import { api } from "../../lib/api/client";
 import type { Milestone } from "../../lib/types";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
+import { useT } from "../../lib/i18n";
 
 const SKILLS = ["listening", "reading", "writing", "speaking"] as const;
 const BANDS = ["A1A2", "B1", "B2", "C1", "C2"] as const;
 
 export const MilestonesSection: React.FC = () => {
+  const { t } = useT();
   const [items, setItems] = useState<Milestone[] | null>(null);
 
   const load = () => api.milestones().then((m) => setItems(m)).catch(() => setItems([]));
@@ -33,7 +35,7 @@ export const MilestonesSection: React.FC = () => {
   return (
     <Card className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">Milestones</p>
+        <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("settings.milestones")}</p>
         <Button variant="secondary" size="sm" onClick={addMilestone}><Plus size={14} className="mr-1" /> Add</Button>
       </div>
       <ul className="flex flex-col gap-3">

@@ -3,10 +3,12 @@ import { Bell } from "lucide-react";
 import { api } from "../../lib/api/client";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
+import { useT } from "../../lib/i18n";
 
 const HOURS = Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, "0")}:00`);
 
 export const RemindersSection: React.FC = () => {
+  const { t } = useT();
   const [anon, setAnon] = useState(false);
   const [enabled, setEnabled] = useState(false);
   const [time, setTime] = useState("09:00");
@@ -36,7 +38,7 @@ export const RemindersSection: React.FC = () => {
     <Card className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
         <Bell size={16} className="text-[var(--color-muted)]" aria-hidden="true" />
-        <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">Study reminder</p>
+        <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("set.reminder")}</p>
       </div>
 
       <label className="flex items-center justify-between gap-3">

@@ -2,12 +2,14 @@ import React, { useEffect, useState } from "react";
 import { api } from "../../lib/api/client";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
+import { useT } from "../../lib/i18n";
 
 const SKILLS = ["listening", "reading", "writing", "speaking"] as const;
 const BANDS = ["A1A2", "B1", "B2", "C1", "C2"] as const;
 const TARGET_BANDS = [4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5];
 
 export const TargetsSection: React.FC = () => {
+  const { t } = useT();
   const [anon, setAnon] = useState(false);
   const [targetBand, setTargetBand] = useState(6.0);
   const [skillTargets, setSkillTargets] = useState<Record<string, string>>({});
@@ -42,7 +44,7 @@ export const TargetsSection: React.FC = () => {
 
   return (
     <Card className="flex flex-col gap-3">
-      <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">Targets</p>
+      <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("settings.targets")}</p>
 
       <label className="flex items-center justify-between gap-3">
         <span className="text-sm text-[var(--color-text)]">Overall band target</span>

@@ -3,6 +3,7 @@ import { LogIn, UserPlus } from "lucide-react";
 import { api } from "../../lib/api/client";
 import type { AccountUser } from "../../lib/types";
 import { Button } from "../ui/Button";
+import { useT } from "../../lib/i18n";
 
 interface AuthFormProps {
   mode: "login" | "register";
@@ -13,6 +14,7 @@ interface AuthFormProps {
 }
 
 export const AuthForm: React.FC<AuthFormProps> = ({ mode, onSuccess, onSwitch, onSkip, onForgot }) => {
+  const { t } = useT();
   const isLogin = mode === "login";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,7 +24,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode, onSuccess, onSwitch, o
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || password.length < 6) {
-      setError("Enter an email and a password of at least 6 characters.");
+      setError(t("auth.badCreds"));
       return;
     }
     setBusy(true);
@@ -51,15 +53,15 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode, onSuccess, onSwitch, o
             {isLogin ? <LogIn size={22} className="text-white" /> : <UserPlus size={22} className="text-white" />}
           </div>
           <h1 className="text-xl font-bold text-[var(--color-text)]">
-            {isLogin ? "Welcome back" : "Create your account"}
+            {isLogin ? t("auth.welcomeBack") : t("auth.createAccount")}
           </h1>
           <p className="text-sm text-[var(--color-muted)]">
-            {isLogin ? "Sign in to continue your prep." : "Save your progress and pick up on any device."}
+            {isLogin ? t("auth.signinSub") : t("auth.registerSub")}
           </p>
         </div>
 
         <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-[var(--color-muted)]">Email</span>
+          <span className="text-xs font-medium text-[var(--color-muted)]">{t("auth.email")}</span>
           <input
             type="email"
             autoComplete="email"
@@ -71,7 +73,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode, onSuccess, onSwitch, o
         </label>
 
         <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-[var(--color-muted)]">Password</span>
+          <span className="text-xs font-medium text-[var(--color-muted)]">{t("auth.password")}</span>
           <input
             type="password"
             autoComplete={isLogin ? "current-password" : "new-password"}
@@ -85,7 +87,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode, onSuccess, onSwitch, o
         {error && <p className="text-xs text-[var(--color-danger)]" role="alert">{error}</p>}
 
         <Button type="submit" loading={busy} className="w-full">
-          {isLogin ? "Sign in" : "Create account"}
+          {isLogin ? t("auth.signIn") : t("auth.createBtn")}
         </Button>
 
         {isLogin && onForgot && (
@@ -94,7 +96,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode, onSuccess, onSwitch, o
             onClick={onForgot}
             className="text-xs text-[var(--color-muted)] hover:text-[var(--color-text)] underline-offset-2 hover:underline min-h-11"
           >
-            Forgot your password?
+            {t("auth.forgot")}
           </button>
         )}
 
@@ -104,7 +106,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode, onSuccess, onSwitch, o
             onClick={onSwitch}
             className="text-sm text-[var(--color-muted)] hover:text-[var(--color-text)] underline-offset-2 hover:underline min-h-11"
           >
-            {isLogin ? "New here? Create an account" : "Already have an account? Sign in"}
+            {isLogin ? t("auth.toRegister") : t("auth.toLogin")}
           </button>
         )}
 
@@ -114,7 +116,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode, onSuccess, onSwitch, o
             onClick={onSkip}
             className="text-xs text-[var(--color-muted)] hover:text-[var(--color-text)] min-h-11"
           >
-            Maybe later — continue without an account
+            {t("auth.maybeLater")}
           </button>
         )}
       </form>
