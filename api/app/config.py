@@ -5,6 +5,15 @@ def _truthy(val):
     return str(val).strip().lower() in ("1", "true", "yes", "on")
 
 
+def _email_set(val):
+    """Parse a comma-separated string (or any iterable) into a lowercased email set."""
+    if isinstance(val, (set, frozenset, list, tuple)):
+        items = val
+    else:
+        items = str(val).split(",")
+    return frozenset(e.strip().lower() for e in items if e and e.strip())
+
+
 class Config:
     def __init__(self, overrides=None):
         o = overrides or {}
@@ -20,6 +29,10 @@ class Config:
         self.APP_PASSCODE = o.get("APP_PASSCODE", os.getenv("APP_PASSCODE", ""))
         self.SESSION_SECRET = o.get("SESSION_SECRET", os.getenv("SESSION_SECRET", "dev-secret-change-me"))
         self.SESSION_TIMEOUT_MIN = int(o.get("SESSION_TIMEOUT_MIN", os.getenv("SESSION_TIMEOUT_MIN", "30")))
+        # Master-admin allow-list. Designation is env-only (never self-service): a
+        # signed-in account is admin iff its email is in this set. No is_admin DB
+        # column, so admin can't be granted by a DB write — only by deployment config.
+        self.ADMIN_EMAILS = _email_set(o.get("ADMIN_EMAILS", os.getenv("ADMIN_EMAILS", "")))
         # SMTP (optional) for password reset + reminders. Empty SMTP_HOST = dev (log only).
         self.SMTP_HOST = os.getenv("SMTP_HOST", "")
         self.SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))

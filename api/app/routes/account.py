@@ -28,12 +28,19 @@ def _reset_serializer():
 _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
+def _is_admin(email) -> bool:
+    if not email:
+        return False
+    return email.strip().lower() in current_app.config["APP_CONFIG"].ADMIN_EMAILS
+
+
 def _public(u) -> dict:
     return {"id": u.id, "email": u.email, "name": u.name,
             "goal": u.goal, "targetBand": u.target_band,
             "skillTargets": u.skill_targets or {},
             "country": u.country, "examDate": u.exam_date, "bio": u.bio,
-            "avatar": u.avatar, "reminderTime": u.reminder_time}
+            "avatar": u.avatar, "reminderTime": u.reminder_time,
+            "isAdmin": _is_admin(u.email)}
 
 
 @bp.post("/api/account/register")

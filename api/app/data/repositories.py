@@ -7,7 +7,7 @@ and return plain dicts or detached ORM objects.  No business logic here.
 import random
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from .models import (
     Attempt,
@@ -213,6 +213,52 @@ class Repository:
             s.delete(u)
             s.commit()
             return True
+
+    # ── Admin (Manage users) ──────────────────────────────────────────────────
+
+    def list_accounts(self) -> list[dict]:
+        """Every registered account (email not null), oldest first, with usage counts."""
+        with self._sf() as s:
+            users = s.execute(
+                select(UserProfile)
+                .where(UserProfile.email.is_not(None))
+                .order_by(UserProfile.id)
+            ).scalars().all()
+            out = []
+            for u in users:
+                n_att = s.execute(
+                    select(func.count(Attempt.id)).where(Attempt.user_id == u.id)
+                ).scalar() or 0
+                out.append({
+                    "id": u.id,
+                    "email": u.email,
+                    "name": u.name,
+                    "targetBand": u.target_band,
+                    "country": u.country,
+                    "examDate": u.exam_date,
+                    "attempts": int(n_att),
+                    "createdAt": u.created_at.isoformat() if u.created_at else None,
+                })
+            return out
+
+    def admin_stats(self) -> dict:
+        """Instance-wide totals for the admin dashboard."""
+        with self._sf() as s:
+            total_profiles = s.execute(select(func.count(UserProfile.id))).scalar() or 0
+            total_accounts = s.execute(
+                select(func.count(UserProfile.id)).where(UserProfile.email.is_not(None))
+            ).scalar() or 0
+            total_attempts = s.execute(select(func.count(Attempt.id))).scalar() or 0
+            total_mocks = s.execute(select(func.count(Mock.id))).scalar() or 0
+            total_cards = s.execute(select(func.count(Card.id))).scalar() or 0
+            return {
+                "totalAccounts": int(total_accounts),
+                "totalProfiles": int(total_profiles),
+                "anonymousProfiles": int(total_profiles) - int(total_accounts),
+                "totalAttempts": int(total_attempts),
+                "totalMocks": int(total_mocks),
+                "totalCards": int(total_cards),
+            }
 
     def get_user_by_id(self, user_id) -> UserProfile | None:
         with self._sf() as s:
