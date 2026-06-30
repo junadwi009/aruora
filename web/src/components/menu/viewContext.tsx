@@ -10,6 +10,7 @@ export type View =
   | "tips"
   | "progress"
   | "session"
+  | "pronounce"
   | "settings";
 
 export interface Prefill {

@@ -453,5 +453,31 @@
       ],
       "tip": "No sentence to confirm or contradict? It is Not Given - do not guess from what you know."
     }
+  },
+  "generate:pronounce:B1": {
+    "text": "The early train to the city usually arrives before eight in the morning.",
+    "focus": "sentence stress on content words",
+    "tips": [
+      "Stress train, city, eight, morning.",
+      "Reduce the to a quick schwa.",
+      "Link arrives before smoothly."
+    ]
+  },
+  "score:pronounce": {
+    "summary": "Good effort - your rhythm was mostly clear and most words were understood. Focus on stressing the key content words a little more.",
+    "wordTips": [
+      {
+        "word": "usually",
+        "tip": "Three syllables: YOO-zhoo-uh-lee, stress the first."
+      },
+      {
+        "word": "arrives",
+        "tip": "Stress the second syllable: a-RIVES."
+      }
+    ],
+    "prosody": [
+      "Lift your pitch slightly on city to mark new information.",
+      "Keep function words short and unstressed."
+    ]
   }
 }

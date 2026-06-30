@@ -13,6 +13,7 @@ import { Tips } from "../tips/Tips";
 import { Progress } from "../progress/Progress";
 import { Session } from "../session/Session";
 import { MockTest } from "../test/MockTest";
+import { Pronounce } from "../pronounce/Pronounce";
 
 // ---------------------------------------------------------------------------
 // View registry — Task 21: real skill screens wired in.
@@ -39,6 +40,7 @@ const viewRegistry: ViewRegistry = {
   tips: () => <Tips />,
   progress: () => <Progress />,
   session: () => <Session />,
+  pronounce: () => <Pronounce />,
   settings: () => <Placeholder name="Settings" />,
 };
 

@@ -197,3 +197,16 @@ export interface MockScore {
   overall: number;
   createdAt: string | null;
 }
+
+export interface PronounceTarget {
+  text: string;
+  focus?: string;
+  tips: string[];
+  stub?: boolean;
+}
+export interface PronounceFeedback {
+  summary: string;
+  wordTips: { word: string; tip: string }[];
+  prosody: string[];
+  stub?: boolean;
+}

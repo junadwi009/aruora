@@ -51,6 +51,7 @@ def create_app(overrides=None):
     from .routes.history import bp as history_bp
     from .routes.lesson import bp as lesson_bp
     from .routes.mocks import bp as mocks_bp
+    from .routes.pronounce import bp as pronounce_bp
 
     app.register_blueprint(health_bp)
     app.register_blueprint(onboarding_bp)
@@ -66,5 +67,6 @@ def create_app(overrides=None):
     app.register_blueprint(history_bp)
     app.register_blueprint(lesson_bp)
     app.register_blueprint(mocks_bp)
+    app.register_blueprint(pronounce_bp)
 
     return app

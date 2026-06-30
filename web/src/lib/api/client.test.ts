@@ -71,6 +71,17 @@ describe("api client", () => {
     expect(fetchMock.mock.calls[1][1].method).toBe("POST");
   });
 
+  it("pronounce endpoints hit the right URLs", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true, status: 200, statusText: "OK", text: async () => JSON.stringify({}),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    await api.pronounceSentence({ level: "B1" });
+    expect(fetchMock.mock.calls[0][0]).toContain("/api/pronounce/sentence");
+    await api.pronounceFeedback({ target: "a", transcript: "a", accuracy: 100, missed: [] });
+    expect(fetchMock.mock.calls[1][0]).toContain("/api/pronounce/feedback");
+  });
+
   it("throws ApiError with code on non-2xx", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       ok: false, status: 422, statusText: "Unprocessable",

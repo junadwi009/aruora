@@ -17,6 +17,8 @@ import type {
   Lesson,
   LessonToday,
   MockScore,
+  PronounceTarget,
+  PronounceFeedback,
 } from "../types";
 
 const BASE = (import.meta as { env?: { VITE_API_BASE?: string } }).env?.VITE_API_BASE ?? "http://localhost:5050";
@@ -98,4 +100,8 @@ export const api = {
   mocksList: () => get<MockScore[]>("/api/mocks"),
   mockSave: (b: { listening: number; reading: number; overall: number }) =>
     post<{ id: number }>("/api/mocks", b),
+  pronounceSentence: (b: { level?: string; topic?: string }) =>
+    post<PronounceTarget>("/api/pronounce/sentence", b),
+  pronounceFeedback: (b: { target: string; transcript: string; accuracy: number; missed: string[] }) =>
+    post<PronounceFeedback>("/api/pronounce/feedback", b),
 };

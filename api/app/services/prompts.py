@@ -109,6 +109,23 @@ Rules:
 - Do NOT include any markdown fences, comments, or extra keys.
 """,
 
+    "pronounce": """\
+You are a pronunciation coach creating a short read-aloud target for an IELTS learner.
+
+Level: {band}
+
+Return STRICT JSON — no markdown, no prose outside the JSON object:
+{{
+  "text": "<one natural English sentence, 12-20 words, with a clear stress/intonation challenge>",
+  "focus": "<the pronunciation feature it targets, e.g. 'sentence stress on content words'>",
+  "tips": ["<short tip 1>", "<short tip 2>", "<short tip 3>"]
+}}
+
+Rules:
+- Keep the sentence sayable in one breath; everyday vocabulary at the given level.
+- Do NOT include markdown fences or extra keys.
+""",
+
     "lesson": """\
 You are a Cambridge CELTA-trained IELTS instructor designing a guided micro-lesson.
 
@@ -340,6 +357,29 @@ Rules:
 - Feedback must be specific to the transcript (cite examples), not generic advice.
 - Be honest: do not inflate scores.
 - Pronunciation feedback must be inferred from the transcript — note if this is approximate.
+- Do NOT include any markdown fences, comments, or extra keys.
+""",
+
+    "pronounce": """\
+You are a pronunciation coach giving feedback on a read-aloud attempt.
+
+Target sentence : {target}
+Recogniser heard: {transcript}
+Word-match accuracy: {accuracy}%
+Words likely missed/mispronounced: {missed}
+
+The accuracy + missed words come from a browser speech recogniser (approximate, not
+phoneme-level). Use them as evidence, but keep advice practical.
+
+Return STRICT JSON — no markdown, no prose outside the JSON object:
+{{
+  "summary": "<2-3 sentence encouraging summary of how the attempt went>",
+  "wordTips": [{{"word": "<word>", "tip": "<how to say it more clearly>"}}],
+  "prosody": ["<stress/intonation/linking tip 1>", "<tip 2>"]
+}}
+
+Rules:
+- Be encouraging and specific; note that scoring is approximate.
 - Do NOT include any markdown fences, comments, or extra keys.
 """,
 }
