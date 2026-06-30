@@ -87,6 +87,9 @@ export const api = {
   accountAvatar: (dataUrl: string) => post<{ ok: boolean }>("/api/account/avatar", { dataUrl }),
   accountPassword: (b: { currentPassword: string; newPassword: string }) =>
     post<{ ok: boolean }>("/api/account/password", b),
+  accountForgot: (email: string) => post<{ ok: boolean }>("/api/account/forgot", { email }),
+  accountReset: (b: { token: string; newPassword: string }) =>
+    post<{ ok: boolean }>("/api/account/reset", b),
   onboarding: (b: OnboardingBody) => post("/api/onboarding", b),
   placementStart: () => post<PlacementStart>("/api/placement/start", {}),
   placementSubmit: (b: unknown) => post<PlacementResult>("/api/placement/submit", b),

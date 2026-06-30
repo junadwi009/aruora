@@ -20,6 +20,13 @@ class Config:
         self.APP_PASSCODE = o.get("APP_PASSCODE", os.getenv("APP_PASSCODE", ""))
         self.SESSION_SECRET = o.get("SESSION_SECRET", os.getenv("SESSION_SECRET", "dev-secret-change-me"))
         self.SESSION_TIMEOUT_MIN = int(o.get("SESSION_TIMEOUT_MIN", os.getenv("SESSION_TIMEOUT_MIN", "30")))
+        # SMTP (optional) for password reset + reminders. Empty SMTP_HOST = dev (log only).
+        self.SMTP_HOST = os.getenv("SMTP_HOST", "")
+        self.SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+        self.SMTP_USER = os.getenv("SMTP_USER", "")
+        self.SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
+        self.SMTP_FROM = os.getenv("SMTP_FROM", "")
+        self.APP_BASE_URL = o.get("APP_BASE_URL", os.getenv("APP_BASE_URL", "http://localhost:5173"))
         self.MODEL_GENERATE = o.get("MODEL_GENERATE", os.getenv("MODEL_GENERATE", "anthropic/claude-haiku-4-5"))
         self.MODEL_SCORE = o.get("MODEL_SCORE", os.getenv("MODEL_SCORE", "anthropic/claude-sonnet-4-6"))
         # Speaking ASR (faster-whisper, fully local/offline). Phase 2b-2.

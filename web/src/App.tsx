@@ -9,7 +9,8 @@ import { Program } from "./components/program/Program";
 import { Milestones } from "./components/milestones/Milestones";
 import { AppShell } from "./components/menu/AppShell";
 import { PasscodeGate } from "./components/auth/PasscodeGate";
-import { LoginScreen, RegisterScreen } from "./components/auth/AuthScreens";
+import { LoginScreen, RegisterScreen, ForgotScreen } from "./components/auth/AuthScreens";
+import { ResetPassword } from "./components/auth/ResetPassword";
 
 // Code-split: recharts lives only in Results, so lazy-loading it keeps the main chunk smaller
 const Results = lazy(() => import("./components/results/Results"));
@@ -59,6 +60,8 @@ function Journey() {
       return <Welcome />;
     case "login":
       return <LoginScreen />;
+    case "forgot":
+      return <ForgotScreen />;
     case "register":
       return <RegisterScreen />;
     case "onboarding":
@@ -87,6 +90,10 @@ function Journey() {
 export default function App() {
   // null = checking, true = may proceed, false = passcode required
   const [unlocked, setUnlocked] = useState<boolean | null>(null);
+  // Password reset via emailed ?reset_token=… link takes precedence over everything.
+  const [resetToken, setResetToken] = useState<string | null>(() =>
+    typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("reset_token") : null
+  );
 
   useEffect(() => {
     let active = true;
@@ -106,6 +113,18 @@ export default function App() {
     window.addEventListener("ielts:session-expired", onExpired);
     return () => window.removeEventListener("ielts:session-expired", onExpired);
   }, []);
+
+  if (resetToken) {
+    return (
+      <ResetPassword
+        token={resetToken}
+        onDone={() => {
+          window.history.replaceState({}, "", window.location.pathname);
+          setResetToken(null);
+        }}
+      />
+    );
+  }
 
   if (unlocked === null) {
     return (

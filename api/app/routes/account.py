@@ -8,13 +8,22 @@ Phase 3a — account identity + auth.
 """
 import re
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, current_app, jsonify, request
+from itsdangerous import BadData, URLSafeTimedSerializer
 
 from app.errors import ApiError
-from app.routes._deps import _repo
+from app.routes._deps import _repo, _cfg
+from app.services import mailer
 from app.session import login_session, current_uid, clear_session
 
 bp = Blueprint("account", __name__)
+
+_RESET_SALT = "ielts-password-reset"
+_RESET_MAX_AGE = 3600  # 1 hour
+
+
+def _reset_serializer():
+    return URLSafeTimedSerializer(current_app.config["APP_CONFIG"].SESSION_SECRET, salt=_RESET_SALT)
 
 _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
@@ -65,6 +74,39 @@ def login():
 @bp.post("/api/account/logout")
 def logout():
     clear_session()
+    return jsonify({"ok": True}), 200
+
+
+@bp.post("/api/account/forgot")
+def forgot():
+    """Email a reset link if the account exists. Always 200 (no enumeration)."""
+    email = ((request.get_json(force=True) or {}).get("email") or "").strip().lower()
+    u = _repo().get_account_by_email(email) if email else None
+    if u is not None:
+        token = _reset_serializer().dumps(u.id)
+        cfg = _cfg()
+        link = f"{cfg.APP_BASE_URL}/?reset_token={token}"
+        mailer.send_email(
+            cfg, email, "Reset your IELTS Coach password",
+            f"Someone asked to reset your password. Open this link within 1 hour:\n\n{link}\n\n"
+            "If this wasn't you, you can ignore this email.",
+        )
+    return jsonify({"ok": True}), 200
+
+
+@bp.post("/api/account/reset")
+def reset():
+    b = request.get_json(force=True) or {}
+    new = b.get("newPassword") or ""
+    if len(new) < 6:
+        raise ApiError("VALIDATION", "New password must be at least 6 characters", 422)
+    try:
+        uid = _reset_serializer().loads(b.get("token", ""), max_age=_RESET_MAX_AGE)
+    except BadData:
+        raise ApiError("VALIDATION", "This reset link is invalid or has expired", 400)
+    if _repo().get_user_by_id(uid) is None:
+        raise ApiError("VALIDATION", "This reset link is invalid or has expired", 400)
+    _repo().set_password(uid, new)
     return jsonify({"ok": True}), 200
 
 

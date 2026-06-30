@@ -9,9 +9,10 @@ interface AuthFormProps {
   onSuccess: (user: AccountUser) => void;
   onSwitch?: () => void;
   onSkip?: () => void;
+  onForgot?: () => void;
 }
 
-export const AuthForm: React.FC<AuthFormProps> = ({ mode, onSuccess, onSwitch, onSkip }) => {
+export const AuthForm: React.FC<AuthFormProps> = ({ mode, onSuccess, onSwitch, onSkip, onForgot }) => {
   const isLogin = mode === "login";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -86,6 +87,16 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode, onSuccess, onSwitch, o
         <Button type="submit" loading={busy} className="w-full">
           {isLogin ? "Sign in" : "Create account"}
         </Button>
+
+        {isLogin && onForgot && (
+          <button
+            type="button"
+            onClick={onForgot}
+            className="text-xs text-[var(--color-muted)] hover:text-[var(--color-text)] underline-offset-2 hover:underline min-h-11"
+          >
+            Forgot your password?
+          </button>
+        )}
 
         {onSwitch && (
           <button

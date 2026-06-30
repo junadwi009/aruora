@@ -4,6 +4,7 @@ import type { PlacementResult, Milestone } from "./types";
 export type Step =
   | "welcome"
   | "login"
+  | "forgot"
   | "onboarding"
   | "placement"
   | "generating"

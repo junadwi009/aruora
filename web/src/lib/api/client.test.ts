@@ -120,6 +120,17 @@ describe("api client", () => {
     expect(fetchMock.mock.calls[2][0]).toContain("/api/account/me");
   });
 
+  it("forgot/reset password hit the right URLs", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true, status: 200, statusText: "OK", text: async () => JSON.stringify({ ok: true }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    await api.accountForgot("a@b.com");
+    expect(fetchMock.mock.calls[0][0]).toContain("/api/account/forgot");
+    await api.accountReset({ token: "t", newPassword: "secret123" });
+    expect(fetchMock.mock.calls[1][0]).toContain("/api/account/reset");
+  });
+
   it("throws ApiError with code on non-2xx", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       ok: false, status: 422, statusText: "Unprocessable",
