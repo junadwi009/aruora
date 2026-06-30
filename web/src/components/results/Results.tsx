@@ -168,8 +168,8 @@ export const Results: React.FC = () => {
 
       {/* CTA */}
       <div className="flex justify-center pt-2">
-        <Button size="lg" onClick={() => go("program")} className="min-w-[14rem]">
-          Choose your program
+        <Button size="lg" onClick={() => go("register")} className="min-w-[14rem]">
+          Save your results
         </Button>
       </div>
     </div>

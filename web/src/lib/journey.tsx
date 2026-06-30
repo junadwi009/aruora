@@ -3,10 +3,12 @@ import type { PlacementResult, Milestone } from "./types";
 
 export type Step =
   | "welcome"
+  | "login"
   | "onboarding"
   | "placement"
   | "generating"
   | "results"
+  | "register"
   | "program"
   | "milestones"
   | "app";

@@ -9,6 +9,7 @@ import { Program } from "./components/program/Program";
 import { Milestones } from "./components/milestones/Milestones";
 import { AppShell } from "./components/menu/AppShell";
 import { PasscodeGate } from "./components/auth/PasscodeGate";
+import { LoginScreen, RegisterScreen } from "./components/auth/AuthScreens";
 
 // Code-split: recharts lives only in Results, so lazy-loading it keeps the main chunk smaller
 const Results = lazy(() => import("./components/results/Results"));
@@ -56,6 +57,10 @@ function Journey() {
   switch (step) {
     case "welcome":
       return <Welcome />;
+    case "login":
+      return <LoginScreen />;
+    case "register":
+      return <RegisterScreen />;
     case "onboarding":
       return <Onboarding />;
     case "placement":

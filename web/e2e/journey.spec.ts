@@ -1,21 +1,16 @@
 import { test, expect, Page } from "@playwright/test";
 
-// These run against the live stack (docker compose up). They are resilient to
-// whether a profile already exists: the "I already have a profile" shortcut on
-// Welcome forces the app shell, and if the app auto-enters the shell we skip it.
+// Runs against the live stack (docker compose up). With multi-user accounts the
+// app shell sits behind a real account + completed placement, so the e2e focuses
+// on the journey *entry points* (load, login, onboarding). The in-app features
+// are covered by the unit suite.
 
-async function enterApp(page: Page) {
+async function freshWelcome(page: Page) {
+  await page.context().clearCookies();
   await page.goto("/");
-  // Wait for either Welcome (Get started) or the app shell (Dashboard).
-  await Promise.race([
-    page.getByRole("button", { name: /get started/i }).waitFor({ timeout: 15_000 }),
-    page.getByRole("heading", { name: /dashboard/i }).waitFor({ timeout: 15_000 }),
-  ]);
-  const welcome = page.getByRole("button", { name: /get started/i });
-  if (await welcome.isVisible().catch(() => false)) {
-    await page.getByRole("button", { name: /already have a profile/i }).click();
-  }
-  await expect(page.getByRole("heading", { name: /dashboard/i })).toBeVisible();
+  // Wait for Welcome (a returning logged-in session would skip it, but a fresh
+  // context has no cookie).
+  await page.getByRole("button", { name: /get started/i }).waitFor({ timeout: 15_000 });
 }
 
 test("loads and shows the IELTS Coach app", async ({ page }) => {
@@ -23,28 +18,37 @@ test("loads and shows the IELTS Coach app", async ({ page }) => {
   page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
   await page.goto("/");
   await expect(page.getByText(/IELTS Coach|Dashboard/).first()).toBeVisible({ timeout: 15_000 });
-  // no hard crash in the console
   expect(errors.join("\n")).not.toMatch(/Uncaught|is not a function/);
 });
 
-test("enters the app shell and navigates to Vocabulary", async ({ page }) => {
-  await enterApp(page);
-  // "Vocab" appears in both the sidebar and the Home quick links — first is fine.
-  await page.getByRole("button", { name: /^vocab$/i }).first().click();
-  await expect(page.getByRole("heading", { name: /vocabulary/i })).toBeVisible();
+test("Welcome → sign-in screen", async ({ page }) => {
+  await freshWelcome(page);
+  await page.getByRole("button", { name: /already have an account/i }).click();
+  await expect(page.getByRole("heading", { name: /welcome back/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^sign in$/i })).toBeVisible();
 });
 
-test("enters the app shell and opens the Mock Test", async ({ page }) => {
-  await enterApp(page);
-  // "Test" appears in both the sidebar and the Home quick links — first match is fine.
-  await page.getByRole("button", { name: /^test$/i }).first().click();
-  await expect(page.getByText(/Listening \+ Reading mock/i)).toBeVisible();
+test("Welcome → Get started → onboarding", async ({ page }) => {
+  await freshWelcome(page);
+  await page.getByRole("button", { name: /get started/i }).click();
+  // Onboarding step 1 asks for a name.
+  await expect(page.getByLabel(/name/i)).toBeVisible();
 });
 
-test("Settings toggles dark mode (adds .dark to <html>)", async ({ page }) => {
-  await enterApp(page);
-  await page.getByRole("button", { name: /^settings$/i }).first().click();
-  await expect(page.getByRole("heading", { name: /^settings$/i })).toBeVisible();
-  await page.getByRole("button", { name: /^dark$/i }).click();
-  await expect.poll(() => page.evaluate(() => document.documentElement.classList.contains("dark"))).toBe(true);
+test("a registered account can sign in", async ({ page, request }) => {
+  // Seed an account via the API, then sign in through the UI.
+  const email = "e2e@example.com";
+  await request.post("http://localhost:5050/api/account/register", {
+    data: { email, password: "secret123" },
+  });
+  await request.post("http://localhost:5050/api/account/logout");
+
+  await freshWelcome(page);
+  await page.getByRole("button", { name: /already have an account/i }).click();
+  await page.getByPlaceholder(/you@example/i).fill(email);
+  await page.getByPlaceholder(/6 characters/i).fill("secret123");
+  await page.getByRole("button", { name: /^sign in$/i }).click();
+  // A signed-in account with no placement yet lands back on Welcome (no skill
+  // levels) — the key assertion is that login succeeded without an error alert.
+  await expect(page.getByRole("alert")).toHaveCount(0);
 });

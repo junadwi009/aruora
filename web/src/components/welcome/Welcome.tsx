@@ -51,7 +51,7 @@ export const Welcome: React.FC = () => {
           </Button>
           <button
             type="button"
-            onClick={() => go("app")}
+            onClick={() => go("login")}
             className={[
               "text-sm text-[var(--color-muted)] underline-offset-2",
               "hover:text-[var(--color-text)] hover:underline",
@@ -60,7 +60,7 @@ export const Welcome: React.FC = () => {
               "min-h-[44px] px-2",
             ].join(" ")}
           >
-            I already have a profile
+            I already have an account
           </button>
         </div>
       </div>

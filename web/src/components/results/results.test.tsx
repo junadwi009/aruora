@@ -23,10 +23,10 @@ function Harness() {
 }
 
 describe("Results", () => {
-  it("shows reading level and the program CTA", async () => {
+  it("shows reading level and the save/continue CTA", async () => {
     render(<JourneyProvider><Harness /></JourneyProvider>);
     expect(await screen.findByText("C1")).toBeTruthy();   // reading level chip
-    const cta = await screen.findByRole("button", { name: /choose your program/i });
+    const cta = await screen.findByRole("button", { name: /save your results/i });
     expect(cta).toBeTruthy();
   });
 
