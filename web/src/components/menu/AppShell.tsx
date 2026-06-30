@@ -15,18 +15,11 @@ import { Session } from "../session/Session";
 import { MockTest } from "../test/MockTest";
 import { Pronounce } from "../pronounce/Pronounce";
 import { Vocab } from "../vocab/Vocab";
+import { Settings } from "../settings/Settings";
 
 // ---------------------------------------------------------------------------
-// View registry — Task 21: real skill screens wired in.
+// View registry — every view maps to a real screen.
 // ---------------------------------------------------------------------------
-function Placeholder({ name }: { name: string }) {
-  return (
-    <main className="flex-1 flex items-center justify-center p-6">
-      <p className="text-[var(--color-muted)] capitalize">{name}</p>
-    </main>
-  );
-}
-
 type ViewRegistry = {
   [V in View]: (levels: Record<string, CefrBand>) => React.ReactNode;
 };
@@ -43,7 +36,7 @@ const viewRegistry: ViewRegistry = {
   session: () => <Session />,
   pronounce: () => <Pronounce />,
   vocab: () => <Vocab />,
-  settings: () => <Placeholder name="Settings" />,
+  settings: () => <Settings />,
 };
 
 // ---------------------------------------------------------------------------
