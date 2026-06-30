@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { api } from "../../lib/api/client";
 import type { SpeakingEval } from "../../lib/types";
+import { useView } from "../menu/viewContext";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { Textarea } from "../ui/Textarea";
@@ -22,10 +23,18 @@ const CRIT_LABELS: Record<string, string> = {
 };
 
 export const Speaking: React.FC = () => {
+  const { consumePrefill } = useView();
   const [phase, setPhase] = useState<Phase>("editor");
   const [transcript, setTranscript] = useState("");
+  const [question, setQuestion] = useState(STATIC_QUESTION);
   const [result, setResult] = useState<SpeakingEval | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
+
+  // A guided lesson's Produce step can hand off a cue-card prompt.
+  useEffect(() => {
+    const t = consumePrefill("speaking");
+    if (t) setQuestion(t);
+  }, [consumePrefill]);
 
   const handleEvaluate = async () => {
     if (!transcript.trim()) return;
@@ -34,7 +43,7 @@ export const Speaking: React.FC = () => {
     try {
       const data = await api.speakingEvaluate({
         part: "part2",
-        question: STATIC_QUESTION,
+        question,
         transcript,
       });
       setResult(data);
@@ -62,7 +71,7 @@ export const Speaking: React.FC = () => {
           <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-1">
             Part 2 — Cue Card
           </p>
-          <p className="text-sm text-[var(--color-text)] leading-relaxed">{STATIC_QUESTION}</p>
+          <p className="text-sm text-[var(--color-text)] leading-relaxed">{question}</p>
         </Card>
 
         {(phase === "editor" || phase === "loading") && (

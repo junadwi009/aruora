@@ -45,6 +45,20 @@ describe("api client", () => {
     expect(fetchMock.mock.calls[2][0]).toContain("/api/history/attempt/7");
   });
 
+  it("lesson endpoints hit the right URLs", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true, status: 200, statusText: "OK",
+      text: async () => JSON.stringify({ day: 1, focus: "writing", skill: "writing", band: "B1", lesson: null }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    await api.lessonToday();
+    expect(fetchMock.mock.calls[0][0]).toContain("/api/lesson/today");
+    await api.lessonGenerate({ day: 2, focus: "listening", band: "B1" });
+    expect(fetchMock.mock.calls[1][0]).toContain("/api/lesson/generate");
+    await api.lesson(2);
+    expect(fetchMock.mock.calls[2][0]).toContain("/api/lesson/2");
+  });
+
   it("throws ApiError with code on non-2xx", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       ok: false, status: 422, statusText: "Unprocessable",

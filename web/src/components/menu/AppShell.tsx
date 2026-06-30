@@ -11,6 +11,7 @@ import { Writing } from "../writing/Writing";
 import { Speaking } from "../speaking/Speaking";
 import { Tips } from "../tips/Tips";
 import { Progress } from "../progress/Progress";
+import { Session } from "../session/Session";
 
 // ---------------------------------------------------------------------------
 // View registry — Task 21: real skill screens wired in.
@@ -36,6 +37,7 @@ const viewRegistry: ViewRegistry = {
   test: () => <Placeholder name="Mock test — coming soon" />,
   tips: () => <Tips />,
   progress: () => <Progress />,
+  session: () => <Session />,
   settings: () => <Placeholder name="Settings" />,
 };
 

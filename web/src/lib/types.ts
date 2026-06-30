@@ -159,3 +159,33 @@ export type AttemptDetail = (WritingEval | SpeakingEval) & {
   body: string;
   createdAt: string | null;
 };
+
+// ── Guided lessons (Phase 2d-1) ──────────────────────────────────────────────
+export interface LessonExerciseItem {
+  prompt: string;
+  answer: string;
+  distractor?: string;
+  feedback?: string;
+}
+export interface LessonExercise {
+  type: string;
+  instruction: string;
+  items: LessonExerciseItem[];
+}
+export interface Lesson {
+  goal: string;
+  skill: Skill;
+  warmup?: { instruction: string; duration_minutes?: number };
+  teach: { explanation: string; examples: string[] };
+  exercises: LessonExercise[];
+  produce: { instruction: string; prefill?: string; duration_minutes?: number };
+  review: { collocations: string[]; tip: string };
+  stub?: boolean;
+}
+export interface LessonToday {
+  day: number;
+  focus: Skill;
+  skill: Skill;
+  band: string;
+  lesson: Lesson | null;
+}

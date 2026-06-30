@@ -14,6 +14,8 @@ import type {
   AttemptSummary,
   AttemptDetail,
   Trends,
+  Lesson,
+  LessonToday,
 } from "../types";
 
 const BASE = (import.meta as { env?: { VITE_API_BASE?: string } }).env?.VITE_API_BASE ?? "http://localhost:5050";
@@ -88,4 +90,8 @@ export const api = {
   historyAttempts: (type?: "writing" | "speaking") =>
     get<AttemptSummary[]>(`/api/history/attempts${type ? `?type=${type}` : ""}`),
   historyAttempt: (id: number) => get<AttemptDetail>(`/api/history/attempt/${id}`),
+  lessonToday: () => get<LessonToday>("/api/lesson/today"),
+  lessonGenerate: (b: { day?: number; focus?: string; band?: string; force?: boolean }) =>
+    post<LessonToday>("/api/lesson/generate", b),
+  lesson: (day: number) => get<{ day: number; focus?: string; lesson: Lesson | null }>(`/api/lesson/${day}`),
 };

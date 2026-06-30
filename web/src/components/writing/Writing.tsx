@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { api } from "../../lib/api/client";
 import type { WritingEval, EssayMetrics } from "../../lib/types";
 import { Button } from "../ui/Button";
@@ -7,6 +7,7 @@ import { Textarea } from "../ui/Textarea";
 import { LevelChip } from "../ui/LevelChip";
 import type { CefrBand } from "../ui/LevelChip";
 import { Badge } from "../ui/Badge";
+import { useView } from "../menu/viewContext";
 
 const STATIC_PROMPT =
   "Some people think that the best way to increase road safety is to increase the minimum legal age for driving cars or riding motorbikes. To what extent do you agree or disagree?";
@@ -18,10 +19,17 @@ function countWords(text: string): number {
 }
 
 export const Writing: React.FC = () => {
+  const { consumePrefill } = useView();
   const [phase, setPhase] = useState<Phase>("editor");
   const [essay, setEssay] = useState("");
   const [result, setResult] = useState<WritingEval | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
+
+  // Consume a one-shot prefill handed off from a guided lesson's Produce step.
+  useEffect(() => {
+    const t = consumePrefill("writing");
+    if (t) setEssay((prev) => (prev ? prev : t));
+  }, [consumePrefill]);
 
   const wordCount = countWords(essay);
 

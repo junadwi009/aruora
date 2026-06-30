@@ -50,10 +50,10 @@ export const Home: React.FC<HomeProps> = ({ levels }) => {
             <h2 id="today-heading" className="text-base font-semibold text-[var(--color-text)] mb-0.5">
               Today
             </h2>
-            <p className="text-sm text-[var(--color-muted)]">Continue your next practice session</p>
+            <p className="text-sm text-[var(--color-muted)]">Start today’s guided session</p>
           </div>
           <Button
-            onClick={() => setView("reading")}
+            onClick={() => setView("session")}
             className="shrink-0"
           >
             Start
