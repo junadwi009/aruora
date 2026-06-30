@@ -72,6 +72,13 @@ Decisions: provider=OpenRouter (OpenAI SDK, base_url https://openrouter.ai/api/v
 - Tests: api 73 (8 new), web 16 (1 new client). Live-verified in container (LLM_MODE=live): W+S eval → savedId 1,2; trends grouped per skill; history newest-first; detail full payload; 404 ok. NOTE: 2 real sample attempts now in dev pg volume (no delete endpoint yet).
 - Audit done this session (full): remaining gaps after 2c → Phase 2d candidates = Mock Test L/R (mocks table idle), R/L practice persistence, guided lessons (lessons table idle), flashcards/vocab (cards table idle), pronunciation scoring from audio, e2e Playwright, deploy. Tables still idle: mocks, lessons, cards.
 
+## PHASE 2d-1 — Guided Lessons — DONE
+- Spec docs/superpowers/specs/2026-06-29-ielts-v3-phase2d-guided-lessons.md (7a62938). Commits 6d73255 (api), 2370a16 (web).
+- Activates the idle `lessons` table (no schema change). Pure domain lesson_plan.py: pick_focus (weakest skill, plan-weight tiebreak writing>listening>speaking>reading) + current_day (clamp days-since-program-start, 1 if none). Repo get_lesson/save_lesson (upsert by day PK). Routes: GET /api/lesson/today (computed day/focus/band + cached lesson|null), POST /api/lesson/generate (cache-or-generate via gateway "lesson" task; idempotent w/o force; force regenerates), GET /api/lesson/<day>. Offline: 4 lesson stubs (lesson:{skill}:B1, band-fallback) + Day-1 lesson seeded at boot (fixtures/seed_lesson.json).
+- web: Session.tsx runner (Teach→Practice→Produce→Review, stepper, auto-check exercises w/ immediate feedback, Generate/Regenerate CTA). viewContext gained "session" view + one-shot prefill (goWithPrefill/consumePrefill); Writing prefills essay, Speaking prefills cue question; Home "Start"→session. client lessonToday/lessonGenerate/lesson + Lesson types.
+- Tests: api 84 (11 new), web 20 (4 new). Live-verified: generate (live)→full lesson; today reflects cache; idempotent w/o force; /<day> cached vs null. NOTE: existing dev pg volume predates Day-1 seed (idempotent seed) so today was null there until first generate.
+- Tables still idle after 2d-1: mocks, cards. NOT done in 2d-1 (deferred): session "complete"/plan-day tick, full 30-day day-list, Mock Test, flashcards/vocab, pronunciation scoring, e2e Playwright, deploy.
+
 ## Routes design notes (Tasks 11-13)
 - create_app(overrides): if overrides has REPO+GATEWAY -> use them (tests, skip engine). Else init_engine(DATABASE_URL), sessionmaker, seed_all(factory), Repository -> config["REPO"], LlmGateway -> config["GATEWAY"]. APP_CONFIG already set.
 - __init__ gets modified by T11, T12, T13 each adding their blueprints (sequential).
