@@ -8,8 +8,10 @@ import {
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { ProfileSection } from "./ProfileSection";
+import { TargetsSection } from "./TargetsSection";
 import { SecuritySection } from "./SecuritySection";
 import { MilestonesSection } from "./MilestonesSection";
+import { DataSection } from "./DataSection";
 import { HelpSection } from "./HelpSection";
 
 const FONTS: { value: Font; label: string; hint: string }[] = [
@@ -84,11 +86,17 @@ export const Settings: React.FC = () => {
         {/* Profile + photo */}
         <ProfileSection />
 
+        {/* Band targets */}
+        <TargetsSection />
+
         {/* Security — change password */}
         <SecuritySection hasAccount={hasAccount} />
 
         {/* Program milestones editor */}
         <MilestonesSection />
+
+        {/* Data & privacy */}
+        {hasAccount && <DataSection />}
 
         {/* Help / FAQ */}
         <HelpSection />

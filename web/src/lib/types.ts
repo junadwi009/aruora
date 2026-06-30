@@ -252,4 +252,5 @@ export interface AccountUser {
   examDate?: string | null;
   bio?: string | null;
   avatar?: string | null;
+  skillTargets?: Record<string, string>;
 }

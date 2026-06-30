@@ -31,6 +31,7 @@ _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 def _public(u) -> dict:
     return {"id": u.id, "email": u.email, "name": u.name,
             "goal": u.goal, "targetBand": u.target_band,
+            "skillTargets": u.skill_targets or {},
             "country": u.country, "examDate": u.exam_date, "bio": u.bio,
             "avatar": u.avatar}
 
@@ -145,6 +146,18 @@ def set_avatar():
     if len(data_url) > _MAX_AVATAR:
         raise ApiError("VALIDATION", "Image is too large (max ~2 MB)", 422)
     _repo().set_avatar(_uid_or_401(), data_url)
+    return jsonify({"ok": True}), 200
+
+
+@bp.get("/api/account/export")
+def export_data():
+    return jsonify(_repo().export_data(_uid_or_401())), 200
+
+
+@bp.delete("/api/account")
+def delete_account():
+    _repo().delete_account(_uid_or_401())
+    clear_session()
     return jsonify({"ok": True}), 200
 
 

@@ -27,12 +27,22 @@ const NEXT_BAND: Record<CefrBand, CefrBand> = {
   C2: "C2",
 };
 
+function daysUntil(iso?: string | null): number | null {
+  if (!iso) return null;
+  const d = new Date(iso + "T00:00:00");
+  if (isNaN(d.getTime())) return null;
+  const diff = Math.ceil((d.getTime() - Date.now()) / 86_400_000);
+  return diff;
+}
+
 export const Home: React.FC<HomeProps> = ({ levels }) => {
   const { setView } = useView();
   const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [examDays, setExamDays] = useState<number | null>(null);
 
   useEffect(() => {
     api.milestones().then((m) => setMilestones(Array.isArray(m) ? m : [])).catch(() => {});
+    api.accountMe().then((u) => setExamDays(daysUntil(u.examDate))).catch(() => {});
   }, []);
 
   return (
@@ -66,6 +76,22 @@ export const Home: React.FC<HomeProps> = ({ levels }) => {
           </Button>
         </div>
       </section>
+
+      {/* Exam countdown */}
+      {examDays !== null && (
+        <section className="mb-6">
+          <div className="rounded-[var(--radius-xl)] px-5 py-4 flex items-center justify-between gap-4"
+            style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-e1)" }}>
+            <div>
+              <p className="text-xs text-[var(--color-muted)] uppercase tracking-wide">Exam countdown</p>
+              <p className="text-sm text-[var(--color-text)] mt-0.5">
+                {examDays > 0 ? `${examDays} day${examDays === 1 ? "" : "s"} to go` : examDays === 0 ? "Exam is today — good luck!" : "Exam date has passed"}
+              </p>
+            </div>
+            {examDays > 0 && <span className="text-3xl font-bold tabular-nums text-[var(--color-primary-600)]">{examDays}</span>}
+          </div>
+        </section>
+      )}
 
       {/* Skill map — 2×2 elevated interactive cards */}
       <section aria-labelledby="skills-heading" className="mb-6">

@@ -13,6 +13,15 @@ def test_update_profile_and_me(client_with_seed):
     assert me["bio"] == "Targeting 7.0"
 
 
+def test_update_targets(client_with_seed):
+    r = client_with_seed.patch("/api/account/profile",
+                               json={"targetBand": 7.0, "skillTargets": {"writing": "C1", "speaking": "B2"}})
+    assert r.status_code == 200
+    me = client_with_seed.get("/api/account/me").get_json()
+    assert me["targetBand"] == 7.0
+    assert me["skillTargets"]["writing"] == "C1"
+
+
 def test_avatar_upload(client_with_seed):
     data_url = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUg=="
     r = client_with_seed.post("/api/account/avatar", json={"dataUrl": data_url})

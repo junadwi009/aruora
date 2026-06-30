@@ -125,6 +125,10 @@ class Repository:
                     setattr(u, col, fields[col])
             if fields.get("examDate") is not None:
                 u.exam_date = fields["examDate"]
+            if fields.get("targetBand") is not None:
+                u.target_band = float(fields["targetBand"])
+            if fields.get("skillTargets") is not None:
+                u.skill_targets = fields["skillTargets"]
             s.commit()
 
     def set_avatar(self, user_id, data_url: str) -> None:
@@ -132,6 +136,57 @@ class Repository:
             u = s.get(UserProfile, user_id)
             u.avatar = data_url
             s.commit()
+
+    def export_data(self, user_id) -> dict:
+        """All of this user's data as plain JSON-able dicts (data portability)."""
+        with self._sf() as s:
+            u = s.get(UserProfile, user_id)
+            profile = {"id": u.id, "email": u.email, "name": u.name, "goal": u.goal,
+                       "targetBand": u.target_band, "skillTargets": u.skill_targets,
+                       "country": u.country, "examDate": u.exam_date, "bio": u.bio} if u else {}
+            def dump(model, **w):
+                rows = s.execute(select(model).where(*[getattr(model, k) == v for k, v in w.items()])).scalars().all()
+                out = []
+                for r in rows:
+                    d = {c.name: getattr(r, c.name) for c in r.__table__.columns}
+                    for k, v in list(d.items()):
+                        if hasattr(v, "isoformat"):
+                            d[k] = v.isoformat()
+                    out.append(d)
+                return out
+            programs = dump(Program, user_id=user_id)
+            milestones = []
+            for p in programs:
+                milestones += dump(Milestone, program_id=p["id"])
+            return {
+                "profile": profile,
+                "skillLevels": dump(SkillLevel, user_id=user_id),
+                "attempts": dump(Attempt, user_id=user_id),
+                "mocks": dump(Mock, user_id=user_id),
+                "cards": dump(Card, user_id=user_id),
+                "lessons": dump(Lesson, user_id=user_id),
+                "programs": programs,
+                "milestones": milestones,
+                "placementAttempts": dump(PlacementAttempt, user_id=user_id),
+            }
+
+    def delete_account(self, user_id) -> bool:
+        """Delete the user and every row they own. Idempotent-ish (False if absent)."""
+        with self._sf() as s:
+            u = s.get(UserProfile, user_id)
+            if u is None:
+                return False
+            # child rows first
+            for model in (Attempt, Mock, Card, Lesson, SkillLevel, PlacementAttempt):
+                for r in s.execute(select(model).where(model.user_id == user_id)).scalars().all():
+                    s.delete(r)
+            for p in s.execute(select(Program).where(Program.user_id == user_id)).scalars().all():
+                for m in s.execute(select(Milestone).where(Milestone.program_id == p.id)).scalars().all():
+                    s.delete(m)
+                s.delete(p)
+            s.delete(u)
+            s.commit()
+            return True
 
     def get_user_by_id(self, user_id) -> UserProfile | None:
         with self._sf() as s:

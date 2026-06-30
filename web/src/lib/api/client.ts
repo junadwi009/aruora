@@ -82,11 +82,13 @@ export const api = {
   accountLogin: (b: { email: string; password: string }) => post<AccountUser>("/api/account/login", b),
   accountLogout: () => post<{ ok: boolean }>("/api/account/logout", {}),
   accountMe: () => get<AccountUser>("/api/account/me"),
-  accountProfile: (b: { name?: string; country?: string; examDate?: string; bio?: string }) =>
+  accountProfile: (b: { name?: string; country?: string; examDate?: string; bio?: string; targetBand?: number; skillTargets?: Record<string, string> }) =>
     request<AccountUser>("/api/account/profile", { method: "PATCH", body: JSON.stringify(b) }),
   accountAvatar: (dataUrl: string) => post<{ ok: boolean }>("/api/account/avatar", { dataUrl }),
   accountPassword: (b: { currentPassword: string; newPassword: string }) =>
     post<{ ok: boolean }>("/api/account/password", b),
+  accountExport: () => get<Record<string, unknown>>("/api/account/export"),
+  accountDelete: () => request<{ ok: boolean }>("/api/account", { method: "DELETE" }),
   accountForgot: (email: string) => post<{ ok: boolean }>("/api/account/forgot", { email }),
   accountReset: (b: { token: string; newPassword: string }) =>
     post<{ ok: boolean }>("/api/account/reset", b),
