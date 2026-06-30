@@ -21,6 +21,15 @@ test("loads and shows the IELTS Coach app", async ({ page }) => {
   expect(errors.join("\n")).not.toMatch(/Uncaught|is not a function/);
 });
 
+test("i18n: Indonesian translates the Welcome screen", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => localStorage.setItem("ielts.lang", "id"));
+  await page.reload();
+  // "Get started" → "Mulai" in Indonesian
+  await expect(page.getByRole("button", { name: /^mulai$/i })).toBeVisible({ timeout: 15_000 });
+  await page.evaluate(() => localStorage.removeItem("ielts.lang"));
+});
+
 test("Welcome → sign-in screen", async ({ page }) => {
   await freshWelcome(page);
   await page.getByRole("button", { name: /already have an account/i }).click();
