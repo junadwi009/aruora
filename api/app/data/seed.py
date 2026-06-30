@@ -53,14 +53,21 @@ def seed_all(session_factory) -> None:
     Idempotent: if placement_combos already has rows, returns immediately
     without touching any table.
     """
+    from sqlalchemy.exc import IntegrityError
+
     with session_factory() as session:
         if session.query(PlacementCombo).count() > 0:
             return  # already seeded — nothing to do
 
-        _seed_placement_combos(session)
-        _seed_generated_sets(session)
-        _seed_day1_lesson(session)
-        session.commit()
+        try:
+            _seed_placement_combos(session)
+            _seed_generated_sets(session)
+            _seed_day1_lesson(session)
+            session.commit()
+        except IntegrityError:
+            # Another worker/process seeded concurrently (fresh DB + multiple
+            # gunicorn workers race past the count check). That's fine.
+            session.rollback()
 
 
 def _seed_placement_combos(session) -> None:
