@@ -1,0 +1,226 @@
+import React, { useState } from "react";
+import { ClipboardCheck, ArrowRight } from "lucide-react";
+import { api } from "../../lib/api/client";
+import type { QuizSet, QuizQuestion } from "../../lib/types";
+import { bandFromPct, roundHalf } from "../../lib/band";
+import { Button } from "../ui/Button";
+import { Card } from "../ui/Card";
+import { Timer } from "../ui/Timer";
+import { useView } from "../menu/viewContext";
+
+type Stage = "intro" | "listening" | "reading" | "result";
+
+function norm(s: string): string {
+  return s.toLowerCase().trim().replace(/\s+/g, " ");
+}
+
+function gradePct(set: QuizSet | null, answers: Record<number, string>): number {
+  if (!set || set.questions.length === 0) return 0;
+  const correct = set.questions.filter((q, i) => norm(answers[i] ?? "") === norm(q.answer)).length;
+  return Math.round((correct / set.questions.length) * 100);
+}
+
+const MOCK_SECONDS = 30 * 60;
+
+export const MockTest: React.FC = () => {
+  const { setView } = useView();
+  const [stage, setStage] = useState<Stage>("intro");
+  const [listeningSet, setListeningSet] = useState<QuizSet | null>(null);
+  const [readingSet, setReadingSet] = useState<QuizSet | null>(null);
+  const [lAnswers, setLAnswers] = useState<Record<number, string>>({});
+  const [rAnswers, setRAnswers] = useState<Record<number, string>>({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<{ l: number; r: number; overall: number } | null>(null);
+
+  const start = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [l, r] = await Promise.all([
+        api.practiceSet("listening"),
+        api.practiceSet("reading"),
+      ]);
+      setListeningSet(l);
+      setReadingSet(r);
+      setStage("listening");
+    } catch {
+      setError("Could not load the mock sets. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const finish = async () => {
+    const lBand = bandFromPct(gradePct(listeningSet, lAnswers));
+    const rBand = bandFromPct(gradePct(readingSet, rAnswers));
+    const overall = roundHalf((lBand + rBand) / 2);
+    setResult({ l: lBand, r: rBand, overall });
+    setStage("result");
+    try {
+      await api.mockSave({ listening: lBand, reading: rBand, overall });
+    } catch {
+      /* non-fatal — result still shown */
+    }
+  };
+
+  return (
+    <main className="flex-1 overflow-y-auto">
+      <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 py-3 z-10 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <ClipboardCheck size={18} className="text-[var(--color-primary-600)]" aria-hidden="true" />
+          <h1 className="text-base font-semibold text-[var(--color-text)]">Mock Test</h1>
+        </div>
+        {(stage === "listening" || stage === "reading") && (
+          <Timer seconds={MOCK_SECONDS} onExpire={finish} />
+        )}
+      </div>
+
+      <div className="p-4 md:p-6 max-w-3xl mx-auto flex flex-col gap-4">
+        {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
+
+        {stage === "intro" && (
+          <Card className="flex flex-col items-center gap-4 py-10 text-center">
+            <p className="text-base font-semibold text-[var(--color-text)]">Listening + Reading mock</p>
+            <p className="text-sm text-[var(--color-muted)] max-w-sm">
+              One Listening section then one Reading section, 30 minutes total. You'll get an estimated
+              band for each and an overall score, saved to your Progress.
+            </p>
+            <Button onClick={start} loading={loading}>
+              {loading ? "Loading…" : "Start mock"}
+            </Button>
+          </Card>
+        )}
+
+        {stage === "listening" && listeningSet && (
+          <Section
+            title="Section 1 — Listening"
+            set={listeningSet}
+            answers={lAnswers}
+            onAnswer={(i, v) => setLAnswers((p) => ({ ...p, [i]: v }))}
+            isListening
+            onNext={() => setStage("reading")}
+            nextLabel="Go to Reading"
+          />
+        )}
+
+        {stage === "reading" && readingSet && (
+          <Section
+            title="Section 2 — Reading"
+            set={readingSet}
+            answers={rAnswers}
+            onAnswer={(i, v) => setRAnswers((p) => ({ ...p, [i]: v }))}
+            onNext={finish}
+            nextLabel="Finish & score"
+          />
+        )}
+
+        {stage === "result" && result && (
+          <Card className="flex flex-col gap-4 py-8">
+            <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide text-center">
+              Estimated result
+            </p>
+            <div className="flex items-center justify-center gap-8">
+              <ScorePill label="Listening" band={result.l} />
+              <ScorePill label="Reading" band={result.r} />
+              <ScorePill label="Overall" band={result.overall} highlight />
+            </div>
+            <p className="text-[11px] text-[var(--color-muted)] text-center">
+              Estimates from short practice sets — not an official band score.
+            </p>
+            <div className="flex justify-center gap-2">
+              <Button variant="secondary" onClick={() => { setStage("intro"); setResult(null); setLAnswers({}); setRAnswers({}); }}>
+                New mock
+              </Button>
+              <Button onClick={() => setView("progress")}>
+                View Progress <ArrowRight size={14} className="ml-1" />
+              </Button>
+            </div>
+          </Card>
+        )}
+      </div>
+    </main>
+  );
+};
+
+const ScorePill: React.FC<{ label: string; band: number; highlight?: boolean }> = ({ label, band, highlight }) => (
+  <div className="flex flex-col items-center gap-1">
+    <span
+      className={`tabular-nums font-bold leading-none ${highlight ? "text-4xl text-[var(--color-primary-600)]" : "text-3xl text-[var(--color-text)]"}`}
+    >
+      {band}
+    </span>
+    <span className="text-xs text-[var(--color-muted)]">{label}</span>
+  </div>
+);
+
+// ── One section (reuses the local-grade pattern) ──────────────────────────────
+interface SectionProps {
+  title: string;
+  set: QuizSet;
+  answers: Record<number, string>;
+  onAnswer: (i: number, v: string) => void;
+  onNext: () => void;
+  nextLabel: string;
+  isListening?: boolean;
+}
+
+const Section: React.FC<SectionProps> = ({ title, set, answers, onAnswer, onNext, nextLabel, isListening }) => {
+  const play = () => {
+    if (!set.transcript || !window.speechSynthesis) return;
+    window.speechSynthesis.speak(new SpeechSynthesisUtterance(set.transcript));
+  };
+  return (
+    <>
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-[var(--color-text)]">{title}</h2>
+        {isListening && set.transcript && (
+          <Button variant="secondary" size="sm" onClick={play}>▶ Play</Button>
+        )}
+      </div>
+
+      {!isListening && set.passage && (
+        <Card>
+          <div className="leading-[1.7] max-w-[66ch]" style={{ fontSize: "1.0625rem", fontFamily: "var(--font-reading)" }}>
+            {set.passage.split("\n").map((p, i) => (
+              <p key={i} className="mb-3 last:mb-0 text-[var(--color-text)]">{p}</p>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      <div className="flex flex-col gap-3">
+        {set.questions.map((q: QuizQuestion, qi: number) => (
+          <Card key={qi}>
+            <p className="text-sm font-medium text-[var(--color-text)] mb-2">
+              <span className="text-[var(--color-muted)] mr-1">{qi + 1}.</span>{q.stem}
+            </p>
+            {q.options ? (
+              <div className="flex flex-col gap-1.5">
+                {q.options.map((opt) => (
+                  <label key={opt} className="flex items-center gap-2 px-3 py-2 rounded-[var(--radius-md)] border border-[var(--color-border)] cursor-pointer text-sm text-[var(--color-text)]">
+                    <input type="radio" name={`mq-${title}-${qi}`} checked={answers[qi] === opt} onChange={() => onAnswer(qi, opt)} />
+                    {opt}
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <input
+                type="text"
+                value={answers[qi] ?? ""}
+                onChange={(e) => onAnswer(qi, e.target.value)}
+                placeholder="Your answer…"
+                aria-label={`Answer ${qi + 1}`}
+                className="min-h-10 w-full px-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] text-sm text-[var(--color-text)]"
+              />
+            )}
+          </Card>
+        ))}
+      </div>
+
+      <Button className="self-end" onClick={onNext}>
+        {nextLabel} <ArrowRight size={14} className="ml-1" />
+      </Button>
+    </>
+  );
+};

@@ -169,3 +169,18 @@ def test_save_and_get_lesson_upsert():
     got2 = repo.get_lesson(1)
     assert got2["lesson"]["goal"] == "second"
     assert got2["focus"] == "listening"
+
+
+# ── Phase 2d-2: mock tests ───────────────────────────────────────────────────
+
+def test_save_and_list_mocks():
+    repo = make_repo()
+    a = repo.save_mock(6.0, 7.0, 6.5)
+    b = repo.save_mock(5.5, 6.0, 6.0)
+    assert isinstance(a, int) and isinstance(b, int)
+    rows = repo.list_mocks()
+    assert len(rows) == 2
+    # newest first
+    assert rows[0]["id"] == b
+    assert rows[0]["listening"] == 5.5 and rows[0]["reading"] == 6.0 and rows[0]["overall"] == 6.0
+    assert "createdAt" in rows[0]

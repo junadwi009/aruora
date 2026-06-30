@@ -14,6 +14,7 @@ from .models import (
     GeneratedSet,
     Lesson,
     Milestone,
+    Mock,
     PlacementAttempt,
     PlacementCombo,
     PlacementItem,
@@ -345,6 +346,32 @@ class Repository:
                     }
                 )
             return out
+
+    # ── Mock tests — Phase 2d-2 ───────────────────────────────────────────────
+
+    def save_mock(self, listening: float, reading: float, overall: float) -> int:
+        """Insert a Mock score and return its id."""
+        with self._sf() as s:
+            m = Mock(listening=listening, reading=reading, overall=overall)
+            s.add(m)
+            s.commit()
+            s.refresh(m)
+            return m.id
+
+    def list_mocks(self) -> list[dict]:
+        """Return mock scores, newest first."""
+        with self._sf() as s:
+            rows = s.execute(select(Mock).order_by(Mock.id.desc())).scalars().all()
+            return [
+                {
+                    "id": r.id,
+                    "listening": r.listening,
+                    "reading": r.reading,
+                    "overall": r.overall,
+                    "createdAt": r.created_at.isoformat() if r.created_at else None,
+                }
+                for r in rows
+            ]
 
     # ── Lessons (guided sessions) — Phase 2d-1 ────────────────────────────────
 

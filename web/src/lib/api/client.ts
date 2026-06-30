@@ -16,6 +16,7 @@ import type {
   Trends,
   Lesson,
   LessonToday,
+  MockScore,
 } from "../types";
 
 const BASE = (import.meta as { env?: { VITE_API_BASE?: string } }).env?.VITE_API_BASE ?? "http://localhost:5050";
@@ -94,4 +95,7 @@ export const api = {
   lessonGenerate: (b: { day?: number; focus?: string; band?: string; force?: boolean }) =>
     post<LessonToday>("/api/lesson/generate", b),
   lesson: (day: number) => get<{ day: number; focus?: string; lesson: Lesson | null }>(`/api/lesson/${day}`),
+  mocksList: () => get<MockScore[]>("/api/mocks"),
+  mockSave: (b: { listening: number; reading: number; overall: number }) =>
+    post<{ id: number }>("/api/mocks", b),
 };

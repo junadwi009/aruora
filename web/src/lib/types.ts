@@ -189,3 +189,11 @@ export interface LessonToday {
   band: string;
   lesson: Lesson | null;
 }
+
+export interface MockScore {
+  id: number;
+  listening: number;
+  reading: number;
+  overall: number;
+  createdAt: string | null;
+}

@@ -11,7 +11,7 @@ import {
 } from "recharts";
 import { TrendingUp, PenLine, Mic } from "lucide-react";
 import { api } from "../../lib/api/client";
-import type { AttemptSummary, AttemptDetail, Trends, WritingEval, SpeakingEval } from "../../lib/types";
+import type { AttemptSummary, AttemptDetail, Trends, WritingEval, SpeakingEval, MockScore } from "../../lib/types";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { Dialog } from "../ui/Dialog";
@@ -48,16 +48,18 @@ export const Progress: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [trends, setTrends] = useState<Trends>({ writing: [], speaking: [] });
   const [history, setHistory] = useState<AttemptSummary[]>([]);
+  const [mocks, setMocks] = useState<MockScore[]>([]);
   const [detail, setDetail] = useState<AttemptDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([api.statsTrends(), api.historyAttempts()])
-      .then(([tr, h]) => {
+    Promise.all([api.statsTrends(), api.historyAttempts(), api.mocksList()])
+      .then(([tr, h, m]) => {
         if (cancelled) return;
         setTrends(tr);
         setHistory(h);
+        setMocks(m);
       })
       .catch(() => {
         /* leave empty-state */
@@ -71,7 +73,7 @@ export const Progress: React.FC = () => {
   }, []);
 
   const chartData = useMemo(() => buildChartData(trends), [trends]);
-  const hasData = history.length > 0;
+  const hasData = history.length > 0 || mocks.length > 0;
 
   const openDetail = async (id: number) => {
     setDetailLoading(true);
@@ -117,6 +119,7 @@ export const Progress: React.FC = () => {
         ) : (
           <>
             {/* Trend chart */}
+            {chartData.length > 0 && (
             <Card>
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">
@@ -150,8 +153,31 @@ export const Progress: React.FC = () => {
                 </tbody>
               </table>
             </Card>
+            )}
+
+            {/* Mock tests */}
+            {mocks.length > 0 && (
+              <Card>
+                <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-2">
+                  Mock tests
+                </p>
+                <ul className="flex flex-col divide-y divide-[var(--color-border)]">
+                  {mocks.map((m) => (
+                    <li key={m.id} className="flex items-center gap-3 py-2.5 text-sm">
+                      <span className="flex-1 text-xs text-[var(--color-muted)]">{fmtDate(m.createdAt)}</span>
+                      <span className="tabular-nums text-[var(--color-muted)]">L {m.listening}</span>
+                      <span className="tabular-nums text-[var(--color-muted)]">R {m.reading}</span>
+                      <span className="tabular-nums font-semibold text-[var(--color-text)] w-10 text-right">
+                        {m.overall}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            )}
 
             {/* History list */}
+            {history.length > 0 && (
             <Card>
               <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-2">
                 History
@@ -182,6 +208,7 @@ export const Progress: React.FC = () => {
                 ))}
               </ul>
             </Card>
+            )}
           </>
         )}
       </div>
