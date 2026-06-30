@@ -7,6 +7,10 @@ import {
 } from "../../lib/settings";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
+import { ProfileSection } from "./ProfileSection";
+import { SecuritySection } from "./SecuritySection";
+import { MilestonesSection } from "./MilestonesSection";
+import { HelpSection } from "./HelpSection";
 
 const FONTS: { value: Font; label: string; hint: string }[] = [
   { value: "default", label: "Default", hint: "Inter · Lexend" },
@@ -17,17 +21,17 @@ const FONTS: { value: Font; label: string; hint: string }[] = [
 export const Settings: React.FC = () => {
   const [theme, setThemeState] = useState<Theme>(getTheme());
   const [font, setFontState] = useState<Font>(getFont());
-  const [authRequired, setAuthRequired] = useState(false);
+  const [hasAccount, setHasAccount] = useState(false);
 
   React.useEffect(() => {
-    api.authStatus().then((s) => setAuthRequired(s.authRequired)).catch(() => {});
+    api.accountMe().then((u) => setHasAccount(!!u.email)).catch(() => setHasAccount(false));
   }, []);
 
   const pickTheme = (t: Theme) => { setTheme(t); setThemeState(t); };
   const pickFont = (f: Font) => { setFont(f); setFontState(f); };
 
   const logout = async () => {
-    try { await api.authLogout(); } finally { window.location.reload(); }
+    try { await api.accountLogout(); } finally { window.location.reload(); }
   };
 
   return (
@@ -77,12 +81,24 @@ export const Settings: React.FC = () => {
           </p>
         </Card>
 
+        {/* Profile + photo */}
+        <ProfileSection />
+
+        {/* Security — change password */}
+        <SecuritySection hasAccount={hasAccount} />
+
+        {/* Program milestones editor */}
+        <MilestonesSection />
+
+        {/* Help / FAQ */}
+        <HelpSection />
+
         {/* Account */}
-        {authRequired && (
+        {hasAccount && (
           <Card className="flex items-center justify-between">
-            <p className="text-sm text-[var(--color-text)]">Signed in with passcode</p>
+            <p className="text-sm text-[var(--color-text)]">Signed in</p>
             <Button variant="secondary" size="sm" onClick={logout}>
-              <LogOut size={14} className="mr-1.5" /> Lock
+              <LogOut size={14} className="mr-1.5" /> Sign out
             </Button>
           </Card>
         )}

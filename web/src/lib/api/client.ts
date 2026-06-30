@@ -82,6 +82,11 @@ export const api = {
   accountLogin: (b: { email: string; password: string }) => post<AccountUser>("/api/account/login", b),
   accountLogout: () => post<{ ok: boolean }>("/api/account/logout", {}),
   accountMe: () => get<AccountUser>("/api/account/me"),
+  accountProfile: (b: { name?: string; country?: string; examDate?: string; bio?: string }) =>
+    request<AccountUser>("/api/account/profile", { method: "PATCH", body: JSON.stringify(b) }),
+  accountAvatar: (dataUrl: string) => post<{ ok: boolean }>("/api/account/avatar", { dataUrl }),
+  accountPassword: (b: { currentPassword: string; newPassword: string }) =>
+    post<{ ok: boolean }>("/api/account/password", b),
   onboarding: (b: OnboardingBody) => post("/api/onboarding", b),
   placementStart: () => post<PlacementStart>("/api/placement/start", {}),
   placementSubmit: (b: unknown) => post<PlacementResult>("/api/placement/submit", b),
@@ -96,6 +101,12 @@ export const api = {
     post<{ savedId: number }>("/api/practice/attempt", b),
   program: (lengthDays: number) => post<ProgramResult>("/api/program", { lengthDays }),
   milestones: () => get<Milestone[]>("/api/program/milestones"),
+  milestoneAdd: (b: { title: string; dayTarget: number; targets: Record<string, string> }) =>
+    post<{ id: number }>("/api/program/milestones", b),
+  milestoneUpdate: (id: number, b: { title?: string; dayTarget?: number; targets?: Record<string, string> }) =>
+    request<Milestone>(`/api/program/milestones/${id}`, { method: "PUT", body: JSON.stringify(b) }),
+  milestoneDelete: (id: number) =>
+    request<{ deleted: number }>(`/api/program/milestones/${id}`, { method: "DELETE" }),
   skillLevels: () => get<SkillLevel[]>("/api/skill-levels"),
   tips: (skill: string) => get<Tips>(`/api/tips/${skill}`),
   writingEvaluate: (b: unknown) => post<WritingEval>("/api/writing/evaluate", b),

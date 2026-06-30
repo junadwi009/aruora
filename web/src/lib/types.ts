@@ -48,6 +48,7 @@ export interface PlacementResult {
 }
 
 export interface Milestone {
+  id?: number;
   idx: number;
   dayTarget: number;
   title: string;
@@ -247,4 +248,8 @@ export interface AccountUser {
   name: string;
   goal: string;
   targetBand: number;
+  country?: string | null;
+  examDate?: string | null;
+  bio?: string | null;
+  avatar?: string | null;
 }

@@ -12,7 +12,9 @@ beforeEach(() => {
 
 describe("Settings", () => {
   it("toggles dark mode and the dyslexia font", async () => {
-    vi.spyOn(api, "authStatus").mockResolvedValue({ authRequired: false, authenticated: true });
+    // sub-sections fetch on mount — keep them offline-safe
+    vi.spyOn(api, "accountMe").mockRejectedValue(new Error("anon"));
+    vi.spyOn(api, "milestones").mockResolvedValue([]);
     render(<Settings />);
 
     fireEvent.click(screen.getByRole("button", { name: /dark/i }));
