@@ -29,7 +29,8 @@ test("loads and shows the IELTS Coach app", async ({ page }) => {
 
 test("enters the app shell and navigates to Vocabulary", async ({ page }) => {
   await enterApp(page);
-  await page.getByRole("button", { name: /^vocab$/i }).click();
+  // "Vocab" appears in both the sidebar and the Home quick links — first is fine.
+  await page.getByRole("button", { name: /^vocab$/i }).first().click();
   await expect(page.getByRole("heading", { name: /vocabulary/i })).toBeVisible();
 });
 

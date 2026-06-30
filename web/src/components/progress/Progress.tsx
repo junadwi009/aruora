@@ -151,11 +151,17 @@ export const Progress: React.FC = () => {
               <table className="sr-only">
                 <caption>Band estimates over time</caption>
                 <thead>
-                  <tr><th>Date</th><th>Writing</th><th>Speaking</th></tr>
+                  <tr><th>Date</th><th>Writing</th><th>Speaking</th><th>Reading</th><th>Listening</th></tr>
                 </thead>
                 <tbody>
                   {chartData.map((r, i) => (
-                    <tr key={i}><td>{r.t}</td><td>{r.writing ?? "—"}</td><td>{r.speaking ?? "—"}</td></tr>
+                    <tr key={i}>
+                      <td>{r.t}</td>
+                      <td>{r.writing ?? "—"}</td>
+                      <td>{r.speaking ?? "—"}</td>
+                      <td>{r.reading ?? "—"}</td>
+                      <td>{r.listening ?? "—"}</td>
+                    </tr>
                   ))}
                 </tbody>
               </table>

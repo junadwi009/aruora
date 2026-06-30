@@ -3,7 +3,10 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { AppShell } from "./AppShell";
 
 vi.mock("../../lib/api/client", () => ({
-  api: { skillLevels: vi.fn().mockResolvedValue([{ skill: "reading", band: "C1" }]) },
+  api: {
+    skillLevels: vi.fn().mockResolvedValue([{ skill: "reading", band: "C1" }]),
+    milestones: vi.fn().mockResolvedValue([]),
+  },
   ApiError: class extends Error {},
 }));
 

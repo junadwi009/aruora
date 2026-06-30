@@ -1,11 +1,12 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { BookOpen, Headphones, Mic, PenLine } from "lucide-react";
+import { api } from "../../lib/api/client";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { LevelChip } from "../ui/LevelChip";
 import type { CefrBand } from "../ui/LevelChip";
 import { useView } from "./viewContext";
-import type { Skill } from "../../lib/types";
+import type { Skill, Milestone } from "../../lib/types";
 
 interface HomeProps {
   levels: Record<string, CefrBand>;
@@ -28,6 +29,11 @@ const NEXT_BAND: Record<CefrBand, CefrBand> = {
 
 export const Home: React.FC<HomeProps> = ({ levels }) => {
   const { setView } = useView();
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+
+  useEffect(() => {
+    api.milestones().then((m) => setMilestones(Array.isArray(m) ? m : [])).catch(() => {});
+  }, []);
 
   return (
     <main className="flex-1 overflow-y-auto p-4 md:p-6 max-w-2xl">
@@ -99,30 +105,30 @@ export const Home: React.FC<HomeProps> = ({ levels }) => {
         </div>
       </section>
 
-      {/* Milestone progress */}
-      <section aria-labelledby="milestones-heading" className="mb-6">
-        <h2
-          id="milestones-heading"
-          className="text-sm font-semibold text-[var(--color-muted)] mb-3 tracking-tight uppercase"
-        >
-          Milestone Progress
-        </h2>
-        <Card>
-          <div className="h-2 rounded-full bg-[var(--color-surface-2)] overflow-hidden">
-            <div
-              className="h-full rounded-full bg-[var(--color-primary-600)] transition-[width]"
-              style={{ width: "30%" }}
-              role="progressbar"
-              aria-valuenow={30}
-              aria-valuemin={0}
-              aria-valuemax={100}
-            />
-          </div>
-          <p className="text-xs text-[var(--color-muted)] mt-2 tabular-nums">
-            30% towards your next milestone
-          </p>
-        </Card>
-      </section>
+      {/* Program milestones — real targets from the chosen plan */}
+      {milestones.length > 0 && (
+        <section aria-labelledby="milestones-heading" className="mb-6">
+          <h2
+            id="milestones-heading"
+            className="text-sm font-semibold text-[var(--color-muted)] mb-3 tracking-tight uppercase"
+          >
+            Program Milestones
+          </h2>
+          <Card>
+            <ol className="flex flex-col gap-2">
+              {milestones.map((m) => (
+                <li key={m.idx} className="flex items-center gap-3 text-sm">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-surface-2)] text-xs tabular-nums text-[var(--color-muted)] shrink-0">
+                    {m.idx + 1}
+                  </span>
+                  <span className="flex-1 text-[var(--color-text)]">{m.title}</span>
+                  <span className="text-xs text-[var(--color-muted)] tabular-nums">Day {m.dayTarget}</span>
+                </li>
+              ))}
+            </ol>
+          </Card>
+        </section>
+      )}
 
       {/* Quick links */}
       <section aria-labelledby="quicklinks-heading">
