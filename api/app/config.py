@@ -27,6 +27,8 @@ class Config:
         self.SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
         self.SMTP_FROM = os.getenv("SMTP_FROM", "")
         self.APP_BASE_URL = o.get("APP_BASE_URL", os.getenv("APP_BASE_URL", "http://localhost:5173"))
+        # Shared secret for the cron-triggered reminder endpoint. Empty = disabled.
+        self.REMINDER_TOKEN = o.get("REMINDER_TOKEN", os.getenv("REMINDER_TOKEN", ""))
         self.MODEL_GENERATE = o.get("MODEL_GENERATE", os.getenv("MODEL_GENERATE", "anthropic/claude-haiku-4-5"))
         self.MODEL_SCORE = o.get("MODEL_SCORE", os.getenv("MODEL_SCORE", "anthropic/claude-sonnet-4-6"))
         # Speaking ASR (faster-whisper, fully local/offline). Phase 2b-2.

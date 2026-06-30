@@ -129,6 +129,32 @@ class Repository:
                 u.target_band = float(fields["targetBand"])
             if fields.get("skillTargets") is not None:
                 u.skill_targets = fields["skillTargets"]
+            if "reminderTime" in fields:  # "" or null clears it
+                u.reminder_time = fields["reminderTime"] or None
+            s.commit()
+
+    def due_reminders(self, hour: int, today: str) -> list[dict]:
+        """Users whose reminder hour == `hour` and who haven't been sent today."""
+        with self._sf() as s:
+            rows = s.execute(
+                select(UserProfile).where(UserProfile.reminder_time.is_not(None))
+            ).scalars().all()
+            out = []
+            for u in rows:
+                if not u.email or not u.reminder_time:
+                    continue
+                try:
+                    rh = int(u.reminder_time.split(":")[0])
+                except (ValueError, IndexError):
+                    continue
+                if rh == hour and u.reminder_last_sent != today:
+                    out.append({"id": u.id, "email": u.email, "name": u.name})
+            return out
+
+    def mark_reminder_sent(self, user_id: int, today: str) -> None:
+        with self._sf() as s:
+            u = s.get(UserProfile, user_id)
+            u.reminder_last_sent = today
             s.commit()
 
     def set_avatar(self, user_id, data_url: str) -> None:

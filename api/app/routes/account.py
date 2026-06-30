@@ -33,7 +33,7 @@ def _public(u) -> dict:
             "goal": u.goal, "targetBand": u.target_band,
             "skillTargets": u.skill_targets or {},
             "country": u.country, "examDate": u.exam_date, "bio": u.bio,
-            "avatar": u.avatar}
+            "avatar": u.avatar, "reminderTime": u.reminder_time}
 
 
 @bp.post("/api/account/register")

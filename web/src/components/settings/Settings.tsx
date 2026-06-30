@@ -12,6 +12,7 @@ import { ProfileSection } from "./ProfileSection";
 import { TargetsSection } from "./TargetsSection";
 import { SecuritySection } from "./SecuritySection";
 import { MilestonesSection } from "./MilestonesSection";
+import { RemindersSection } from "./RemindersSection";
 import { DataSection } from "./DataSection";
 import { HelpSection } from "./HelpSection";
 
@@ -102,6 +103,9 @@ export const Settings: React.FC = () => {
 
         {/* Security — change password */}
         <SecuritySection hasAccount={hasAccount} />
+
+        {/* Study reminder */}
+        <RemindersSection />
 
         {/* Program milestones editor */}
         <MilestonesSection />

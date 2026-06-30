@@ -45,7 +45,8 @@ def create_app(overrides=None):
         return None
 
     # ── Passcode gate (no-op when APP_PASSCODE is empty) ───────────────────────
-    _OPEN_PATHS = {"/api/health", "/api/auth/status", "/api/auth/login", "/api/auth/logout"}
+    _OPEN_PATHS = {"/api/health", "/api/auth/status", "/api/auth/login", "/api/auth/logout",
+                   "/api/internal/reminders/run"}
 
     @app.before_request
     def _require_passcode():
@@ -104,6 +105,7 @@ def create_app(overrides=None):
     from .routes.vocab import bp as vocab_bp
     from .routes.auth import bp as auth_bp
     from .routes.account import bp as account_bp
+    from .routes.internal import bp as internal_bp
 
     app.register_blueprint(health_bp)
     app.register_blueprint(onboarding_bp)
@@ -124,5 +126,6 @@ def create_app(overrides=None):
     app.register_blueprint(vocab_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(account_bp)
+    app.register_blueprint(internal_bp)
 
     return app

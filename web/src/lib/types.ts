@@ -253,4 +253,5 @@ export interface AccountUser {
   bio?: string | null;
   avatar?: string | null;
   skillTargets?: Record<string, string>;
+  reminderTime?: string | null;
 }

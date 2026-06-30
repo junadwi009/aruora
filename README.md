@@ -119,4 +119,21 @@ Env (in `.env`): `LLM_MODE` (`stub` offline / `live`), `OPENROUTER_API_KEY`,
 > ⚠️ The `web` image **copies source at build time** — always `--build` the web
 > service after frontend changes (a stale container serves old UI).
 
+### Email + study reminders (optional)
+
+Password reset and study reminders send email when **SMTP** is configured
+(`SMTP_HOST/PORT/USER/PASSWORD/FROM` + `APP_BASE_URL`). Without SMTP, the message
+(including any reset link) is **logged to the api container** instead of sent.
+
+Reminders are driven by an external scheduler hitting a token-protected endpoint
+hourly. Set `REMINDER_TOKEN`, then add a cron entry (host or platform scheduler):
+
+```cron
+0 * * * * curl -fsS -X POST -H "X-Reminder-Token: $REMINDER_TOKEN" \
+  http://localhost:5050/api/internal/reminders/run >/dev/null
+```
+
+Each run emails users whose chosen reminder hour matches and who haven't been
+emailed that day.
+
 See `CLAUDE.md` for full architecture, conventions, and roadmap.
