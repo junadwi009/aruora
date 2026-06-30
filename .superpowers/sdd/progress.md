@@ -93,7 +93,11 @@ Decisions: provider=OpenRouter (OpenAI SDK, base_url https://openrouter.ai/api/v
 - 2e-1 Auth passcode gate — DONE 7d81e23. APP_PASSCODE gates /api/* (session cookie); /api/auth/status|login|logout; before_request; PasscodeGate frontend (fails open). api 98, web 37. Live-verified gated 401s.
 - 2e-2 Secret-scan fix — DONE 4185e28. Scans only web/dist for key VALUES, real exit code (clean→0, planted→1).
 - 2e-3 CI — DONE 3a70cb5. .github/workflows/ci.yml (api pytest + web tsc/vitest/build/secret-scan). e2e stays local.
-- NEXT: 2e-4 Settings (dark mode + dyslexia font, persist localStorage), 2e-5 placement Speaking ASR, 2e-6 nav (add Pronounce/Vocab/Session) + real milestone % + Progress sr-only 4 skills.
+- 2e-4 Settings theme+font — DONE 6e7f1a3. lib/settings.ts (localStorage, .dark class + --font-* overrides, applied at boot); Settings view (Light/Dark, Default/Dyslexic/Hyperlegible fonts, Lock/logout). Uses the 4 bundled fonts. localStorage shim in test-setup.
+- 2e-5 placement ASR — DONE 554895c. placement SpeakingSection uses the Recorder (was coming-soon). PlacementIntro copy updated.
+- 2e-6 nav+milestone+a11y — DONE a647920. Sidebar adds Pronounce+Vocab; Home shows real api.milestones (was fake 30%); Progress sr-only table 4 skills. e2e Settings dark-mode test f0fdaff.
+- === PHASE 2e COMPLETE (audit fixes). e2e now 4/4 (incl live dark-mode). api 98, web 42. All 26 audit/feature tasks done this session. ===
+- Remaining (truly optional, documented): session-complete/plan-day tracking, full 30-day day-list, official raw→band tables, code-split bundle, mobile bottom-tab for new tools, app-level multi-user auth, alembic incremental migrations (currently single create_all). Deploy still awaits owner go-live decision.
 
 ## Routes design notes (Tasks 11-13)
 - create_app(overrides): if overrides has REPO+GATEWAY -> use them (tests, skip engine). Else init_engine(DATABASE_URL), sessionmaker, seed_all(factory), Repository -> config["REPO"], LlmGateway -> config["GATEWAY"]. APP_CONFIG already set.
