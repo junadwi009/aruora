@@ -79,6 +79,11 @@ Decisions: provider=OpenRouter (OpenAI SDK, base_url https://openrouter.ai/api/v
 - Tests: api 84 (11 new), web 20 (4 new). Live-verified: generate (live)→full lesson; today reflects cache; idempotent w/o force; /<day> cached vs null. NOTE: existing dev pg volume predates Day-1 seed (idempotent seed) so today was null there until first generate.
 - Tables still idle after 2d-1: mocks, cards. NOT done in 2d-1 (deferred): session "complete"/plan-day tick, full 30-day day-list, Mock Test, flashcards/vocab, pronunciation scoring, e2e Playwright, deploy.
 
+## Batch "lanjut semua berurutan" — remaining 2d basket, sequential. Order: Mock→Pronunciation→Flashcards/Vocab→persist R/L→Playwright→Deploy.
+- PHASE 2d-2 Mock Test (L/R) — DONE. commit 3c74419 + log 164bb95. Activates `mocks` table. Repo save_mock/list_mocks; POST/GET /api/mocks. web MockTest.tsx (Test tab, L+R sections, 30-min Timer, local grade, lib/band.ts bandFromPct→approx band, save→Progress). Progress shows mock history. api 86, web 25.
+- PHASE 2d-3 Pronunciation — DONE. commit 049f898. Pronounce read-aloud drill: prompts.py pronounce gen+score, routes POST /api/pronounce/sentence + /feedback, stubs. web lib/pron.ts wordAccuracy + Pronounce.tsx (reuses ASR Recorder) + pronounce view + Home link. Approximate (recogniser+tips), no persistence. api 88, web 31.
+- NEXT: 2d-4 Flashcards+Vocab (cards table, SM-2), 2d-5 persist practice R/L, 2d-6 Playwright e2e, 2d-7 deploy (needs user hosting decision).
+
 ## Routes design notes (Tasks 11-13)
 - create_app(overrides): if overrides has REPO+GATEWAY -> use them (tests, skip engine). Else init_engine(DATABASE_URL), sessionmaker, seed_all(factory), Repository -> config["REPO"], LlmGateway -> config["GATEWAY"]. APP_CONFIG already set.
 - __init__ gets modified by T11, T12, T13 each adding their blueprints (sequential).
