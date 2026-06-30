@@ -30,16 +30,20 @@ function fmtDate(iso: string | null): string {
   ).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
-// Merge writing+speaking points into one time-ordered series for the chart.
+// Merge all four skills' points into one time-ordered series for the chart.
 function buildChartData(trends: Trends) {
   const rows = [
     ...trends.writing.map((p) => ({ ...p, skill: "writing" as const })),
     ...trends.speaking.map((p) => ({ ...p, skill: "speaking" as const })),
+    ...(trends.reading ?? []).map((p) => ({ ...p, skill: "reading" as const })),
+    ...(trends.listening ?? []).map((p) => ({ ...p, skill: "listening" as const })),
   ].sort((a, b) => (a.createdAt ?? "").localeCompare(b.createdAt ?? ""));
   return rows.map((p) => ({
     t: fmtDate(p.createdAt),
     writing: p.skill === "writing" ? p.overall : null,
     speaking: p.skill === "speaking" ? p.overall : null,
+    reading: p.skill === "reading" ? p.overall : null,
+    listening: p.skill === "listening" ? p.overall : null,
   }));
 }
 
@@ -58,7 +62,8 @@ export const Progress: React.FC = () => {
       .then(([tr, h, m]) => {
         if (cancelled) return;
         setTrends(tr);
-        setHistory(h);
+        // only writing/speaking attempts carry re-openable feedback
+        setHistory(h.filter((a) => a.type === "writing" || a.type === "speaking"));
         setMocks(m);
       })
       .catch(() => {
@@ -137,6 +142,8 @@ export const Progress: React.FC = () => {
                     <Legend />
                     <Line type="monotone" dataKey="writing" name="Writing" stroke="var(--color-primary-600)" connectNulls dot />
                     <Line type="monotone" dataKey="speaking" name="Speaking" stroke="#0d9488" connectNulls dot />
+                    <Line type="monotone" dataKey="reading" name="Reading" stroke="#d97706" connectNulls dot />
+                    <Line type="monotone" dataKey="listening" name="Listening" stroke="#7c3aed" connectNulls dot />
                   </LineChart>
                 </ResponsiveContainer>
               </div>

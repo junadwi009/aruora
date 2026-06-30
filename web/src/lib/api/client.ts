@@ -79,6 +79,8 @@ export const api = {
     ),
   practiceSet: (skill: string, band?: string) =>
     get<QuizSet>(`/api/practice/set?skill=${skill}${band ? `&band=${band}` : ""}`),
+  practiceAttempt: (b: { skill: string; band: number; correct: number; total: number }) =>
+    post<{ savedId: number }>("/api/practice/attempt", b),
   program: (lengthDays: number) => post<ProgramResult>("/api/program", { lengthDays }),
   milestones: () => get<Milestone[]>("/api/program/milestones"),
   skillLevels: () => get<SkillLevel[]>("/api/skill-levels"),

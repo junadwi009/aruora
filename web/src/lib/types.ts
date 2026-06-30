@@ -147,6 +147,8 @@ export interface TrendPoint {
 export interface Trends {
   writing: TrendPoint[];
   speaking: TrendPoint[];
+  reading?: TrendPoint[];
+  listening?: TrendPoint[];
 }
 
 // Stored attempt detail — superset of WritingEval/SpeakingEval plus meta, so the

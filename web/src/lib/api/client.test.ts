@@ -97,6 +97,16 @@ describe("api client", () => {
     expect(fetchMock.mock.calls[3][1].method).toBe("DELETE");
   });
 
+  it("practiceAttempt posts to the right URL", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true, status: 200, statusText: "OK", text: async () => JSON.stringify({ savedId: 1 }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    await api.practiceAttempt({ skill: "reading", band: 7, correct: 9, total: 10 });
+    expect(fetchMock.mock.calls[0][0]).toContain("/api/practice/attempt");
+    expect(fetchMock.mock.calls[0][1].method).toBe("POST");
+  });
+
   it("throws ApiError with code on non-2xx", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       ok: false, status: 422, statusText: "Unprocessable",

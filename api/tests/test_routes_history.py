@@ -61,3 +61,17 @@ def test_stats_trends_shape(client_with_seed):
     assert "writing" in tr and "speaking" in tr
     assert len(tr["writing"]) >= 1
     assert "overall" in tr["writing"][0]
+
+
+def test_practice_attempt_persists_and_appears_in_trends(client_with_seed):
+    r = client_with_seed.post(
+        "/api/practice/attempt",
+        json={"skill": "reading", "band": 7.0, "correct": 9, "total": 10},
+    )
+    assert r.status_code == 200
+    assert isinstance(r.get_json()["savedId"], int)
+
+    tr = client_with_seed.get("/api/stats/trends").get_json()
+    assert "reading" in tr and "listening" in tr
+    assert len(tr["reading"]) == 1
+    assert tr["reading"][0]["overall"] == 7.0

@@ -22,6 +22,28 @@ def practice_status():
     return jsonify(JobStatusOut(done=True, progress=100).model_dump(by_alias=True)), 200
 
 
+@bp.post("/api/practice/attempt")
+def practice_attempt():
+    """Persist a Reading/Listening practice score so it shows in Progress trends."""
+    b = request.get_json(force=True) or {}
+    skill = b.get("skill")
+    if skill not in ("reading", "listening"):
+        raise ApiError("VALIDATION", "skill must be reading or listening", 422)
+    correct, total = int(b.get("correct", 0)), int(b.get("total", 0))
+    band = float(b.get("band", 0.0))
+    saved_id = _repo().save_attempt(
+        type=skill,
+        task=f"{correct}/{total}",
+        prompt=b.get("title", ""),
+        body="",
+        bands={"overall": band},
+        criteria={},
+        cefr="",
+        metrics={"correct": correct, "total": total},
+    )
+    return jsonify({"savedId": saved_id}), 200
+
+
 @bp.get("/api/practice/set")
 def practice_set():
     skill = request.args.get("skill")

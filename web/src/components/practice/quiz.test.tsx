@@ -3,10 +3,13 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { QuizRunner } from "./QuizRunner";
 
 vi.mock("../../lib/api/client", () => ({
-  api: { practiceSet: vi.fn().mockResolvedValue({
-    title: "Set", passage: "A passage.",
-    questions: [{ stem: "Sky color?", options: ["Blue","Green"], answer: "Blue", explanation: "It is blue." }],
-  }) },
+  api: {
+    practiceSet: vi.fn().mockResolvedValue({
+      title: "Set", passage: "A passage.",
+      questions: [{ stem: "Sky color?", options: ["Blue","Green"], answer: "Blue", explanation: "It is blue." }],
+    }),
+    practiceAttempt: vi.fn().mockResolvedValue({ savedId: 1 }),
+  },
   ApiError: class extends Error {},
 }));
 

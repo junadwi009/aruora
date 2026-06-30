@@ -332,7 +332,7 @@ class Repository:
         """Per-skill time series (oldest first) for the Progress chart."""
         with self._sf() as s:
             rows = s.execute(select(Attempt).order_by(Attempt.id.asc())).scalars().all()
-            out: dict[str, list] = {"writing": [], "speaking": []}
+            out: dict[str, list] = {"writing": [], "speaking": [], "reading": [], "listening": []}
             for r in rows:
                 bucket = out.get(r.type)
                 if bucket is None:

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { api } from "../../lib/api/client";
+import { bandFromPct } from "../../lib/band";
 import type { QuizQuestion, QuizSet } from "../../lib/types";
 import type { CefrBand } from "../ui/LevelChip";
 import { LevelChip } from "../ui/LevelChip";
@@ -92,6 +93,13 @@ export const QuizRunner: React.FC<QuizRunnerProps> = ({ skill, band, mode }) => 
     if (!set) return;
     setSubmitted(true);
     if (mode === "listening") setShowTranscript(true);
+    // Persist the score so it shows in Progress trends (fire-and-forget).
+    const total = set.questions.length;
+    if (total > 0) {
+      const correct = correctCount();
+      const band = bandFromPct(Math.round((correct / total) * 100));
+      api.practiceAttempt({ skill: mode, band, correct, total }).catch(() => {});
+    }
   };
 
   const getStatus = (qi: number): QuizStatus => {
