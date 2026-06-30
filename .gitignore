@@ -6,6 +6,10 @@ __pycache__/
 web/dist/
 *.db
 .pytest_cache/
+web/test-results/
+web/playwright-report/
+web/blob-report/
+web/.playwright/
 
 # local-only project context & env template
 CLAUDE.md
