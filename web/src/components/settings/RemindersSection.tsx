@@ -7,27 +7,56 @@ import { useT } from "../../lib/i18n";
 
 const HOURS = Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, "0")}:00`);
 
+// A curated spread of IANA zones; the learner's detected zone is added on top.
+const COMMON_TZ = [
+  "Asia/Jakarta", "Asia/Makassar", "Asia/Jayapura", "Asia/Singapore", "Asia/Kuala_Lumpur",
+  "Asia/Bangkok", "Asia/Ho_Chi_Minh", "Asia/Manila", "Asia/Hong_Kong", "Asia/Shanghai",
+  "Asia/Tokyo", "Asia/Seoul", "Asia/Kolkata", "Asia/Dubai", "Asia/Riyadh",
+  "Europe/London", "Europe/Paris", "Europe/Berlin", "Europe/Moscow",
+  "Australia/Perth", "Australia/Sydney", "Pacific/Auckland",
+  "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", "America/Sao_Paulo",
+  "UTC",
+];
+
+function detectTz(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Jakarta";
+  } catch {
+    return "Asia/Jakarta";
+  }
+}
+
 export const RemindersSection: React.FC = () => {
   const { t } = useT();
   const [anon, setAnon] = useState(false);
   const [enabled, setEnabled] = useState(false);
   const [time, setTime] = useState("09:00");
+  const [tz, setTz] = useState(detectTz());
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     api.accountMe()
-      .then((u) => { if (u.reminderTime) { setEnabled(true); setTime(u.reminderTime); } })
+      .then((u) => {
+        if (u.reminderTime) { setEnabled(true); setTime(u.reminderTime); }
+        if (u.reminderTz) setTz(u.reminderTz);
+      })
       .catch(() => setAnon(true));
   }, []);
 
   if (anon) return null;
 
+  // Ensure the detected/saved zone is selectable even if not in the curated list.
+  const zones = COMMON_TZ.includes(tz) ? COMMON_TZ : [tz, ...COMMON_TZ];
+
   const save = async () => {
     setBusy(true);
     setSaved(false);
     try {
-      await api.accountProfile({ reminderTime: enabled ? time : null });
+      await api.accountProfile({
+        reminderTime: enabled ? time : null,
+        reminderTz: enabled ? tz : null,
+      });
       setSaved(true);
     } finally {
       setBusy(false);
@@ -52,6 +81,16 @@ export const RemindersSection: React.FC = () => {
           <select value={time} onChange={(e) => setTime(e.target.value)}
             className="min-h-9 px-2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]">
             {HOURS.map((h) => <option key={h} value={h}>{h}</option>)}
+          </select>
+        </label>
+      )}
+
+      {enabled && (
+        <label className="flex items-center justify-between gap-3">
+          <span className="text-sm text-[var(--color-text)]">{t("set.timezone")}</span>
+          <select value={tz} onChange={(e) => setTz(e.target.value)} aria-label={t("set.timezone")}
+            className="min-h-9 px-2 max-w-[60%] rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]">
+            {zones.map((z) => <option key={z} value={z}>{z.replace(/_/g, " ")}</option>)}
           </select>
         </label>
       )}

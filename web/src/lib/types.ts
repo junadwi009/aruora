@@ -254,6 +254,7 @@ export interface AccountUser {
   avatar?: string | null;
   skillTargets?: Record<string, string>;
   reminderTime?: string | null;
+  reminderTz?: string | null;
   isAdmin?: boolean;
 }
 

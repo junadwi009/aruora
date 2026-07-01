@@ -99,7 +99,7 @@ export const api = {
   accountLogin: (b: { email: string; password: string; remember?: boolean }) => post<AccountUser>("/api/account/login", b),
   accountLogout: () => post<{ ok: boolean }>("/api/account/logout", {}),
   accountMe: () => get<AccountUser>("/api/account/me"),
-  accountProfile: (b: { name?: string; country?: string; examDate?: string; bio?: string; targetBand?: number; skillTargets?: Record<string, string>; reminderTime?: string | null }) =>
+  accountProfile: (b: { name?: string; country?: string; examDate?: string; bio?: string; targetBand?: number; skillTargets?: Record<string, string>; reminderTime?: string | null; reminderTz?: string | null }) =>
     request<AccountUser>("/api/account/profile", { method: "PATCH", body: JSON.stringify(b) }),
   accountAvatar: (dataUrl: string) => post<{ ok: boolean }>("/api/account/avatar", { dataUrl }),
   accountPassword: (b: { currentPassword: string; newPassword: string }) =>
