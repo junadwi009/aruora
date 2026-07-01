@@ -3,7 +3,7 @@ POST /api/writing/evaluate — score a writing attempt via the gateway.
 """
 from flask import Blueprint, jsonify, request
 
-from app.routes._deps import _gateway, _repo, _require_uid
+from app.routes._deps import _gateway, _lang, _repo, _require_uid
 from app.services.essay_metrics import compute_metrics
 
 bp = Blueprint("writing", __name__)
@@ -36,6 +36,7 @@ def writing_evaluate():
     gateway = _gateway()
     out = gateway.score(
         "writing",
+        lang=_lang(),
         taskType=body.get("taskType"),
         prompt=body.get("prompt"),
         essay=essay,

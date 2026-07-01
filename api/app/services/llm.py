@@ -127,6 +127,7 @@ class LlmGateway:
         task: str,
         skill: str | None = None,
         band: str | None = None,
+        lang: str = "en",
         **kw,
     ) -> dict:
         """
@@ -156,9 +157,9 @@ class LlmGateway:
             return self._stub_generate(task, skill, band)
 
         # ---- Live path (Phase 2) ----
-        return self._live_generate(task, skill, band, **kw)
+        return self._live_generate(task, skill, band, lang=lang, **kw)
 
-    def score(self, task: str, **kw) -> dict:
+    def score(self, task: str, lang: str = "en", **kw) -> dict:
         """
         Score a learner's written or spoken response.
 
@@ -185,7 +186,7 @@ class LlmGateway:
             return self._stub_score(task)
 
         # ---- Live path (Phase 2) ----
-        return self._live_score(task, **kw)
+        return self._live_score(task, lang=lang, **kw)
 
     # ------------------------------------------------------------------
     # Live-mode resolution
@@ -196,10 +197,11 @@ class LlmGateway:
         task: str,
         skill: str | None,
         band: str | None,
+        lang: str = "en",
         **kw,
     ) -> dict:
         """Build prompt, call MODEL_GENERATE, return parsed result."""
-        from app.services.prompts import GENERATE_PROMPTS
+        from app.services.prompts import GENERATE_PROMPTS, lang_note
         from app.domain.leveling import band_params
 
         # Pick template: try skill first, fall back to task name
@@ -211,8 +213,10 @@ class LlmGateway:
                 502,
             )
 
-        # Build params dict for template formatting
+        # Build params dict for template formatting. langNote is always present
+        # so templates carrying the {langNote} placeholder never KeyError.
         fmt_kw: dict = dict(kw)
+        fmt_kw["langNote"] = lang_note(lang)
         if band:
             fmt_kw["band"] = band
             # Include difficulty params if skill is provided
@@ -237,9 +241,9 @@ class LlmGateway:
 
         return self._chat(self._config.MODEL_GENERATE, system=system_prompt, user=user_msg)
 
-    def _live_score(self, task: str, **kw) -> dict:
+    def _live_score(self, task: str, lang: str = "en", **kw) -> dict:
         """Build scoring prompt, call MODEL_SCORE, return parsed result."""
-        from app.services.prompts import SCORE_PROMPTS
+        from app.services.prompts import SCORE_PROMPTS, lang_note
 
         tmpl = SCORE_PROMPTS.get(task)
         if tmpl is None:
@@ -248,6 +252,9 @@ class LlmGateway:
                 f"no score prompt for {task!r}",
                 502,
             )
+
+        # langNote always present so templates with {langNote} never KeyError.
+        kw["langNote"] = lang_note(lang)
 
         # Format the template with provided kwargs
         # str.format(**kw) only fails if a placeholder in the template is MISSING

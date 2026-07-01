@@ -7,7 +7,37 @@ No inline prompts are permitted in routes, services, or any other module.
 Two dictionaries are exported:
   GENERATE_PROMPTS  — for content generation (reading, listening, vocab, lesson)
   SCORE_PROMPTS     — for IELTS examiner scoring (writing, speaking)
+
+Localization: templates that address the learner directly (lesson, writing/
+speaking/pronounce feedback) carry a {langNote} placeholder. `lang_note(lang)`
+fills it — Indonesian guidance prose when lang == "id", empty otherwise. The
+English the learner is being tested on (passages, transcripts, questions,
+prompts, model answers, examples, quoted/corrected text) always stays English.
 """
+
+
+def lang_note(lang: str | None) -> str:
+    """Localization instruction injected into learner-facing prompts.
+
+    For Indonesian, instruct the model to write explanatory PROSE in Indonesian
+    while keeping all English-language material (model answers, examples,
+    vocabulary, and any verbatim/corrected learner text) in English. JSON keys
+    and enum values stay in English. For any other language → no instruction.
+    """
+    if (lang or "").strip().lower() != "id":
+        return ""
+    return (
+        "LOCALIZATION — The learner's interface language is Indonesian. Write ALL "
+        "explanatory prose in Bahasa Indonesia: feedback, summary, notes, "
+        "explanations, instructions, goals, tips, and warm-up/produce text. "
+        "KEEP IN ENGLISH (never translate): every model answer, rewrite, example "
+        "sentence, vocabulary word/phrase, collocation, prefill text, and any "
+        "verbatim or corrected excerpt of the learner's own English (e.g. the "
+        "'original', 'fixed', 'from', 'to', 'word', 'examples', 'prefill' fields). "
+        "All JSON keys and enum values (cefr, skill, type, ...) stay in English "
+        "exactly as specified."
+    )
+
 
 # ---------------------------------------------------------------------------
 # Generation prompts
@@ -129,6 +159,8 @@ Rules:
     "lesson": """\
 You are a Cambridge CELTA-trained IELTS instructor designing a guided micro-lesson.
 
+{langNote}
+
 Day:   {day}
 Focus: {focus}
 Tasks: {tasks}
@@ -189,6 +221,8 @@ Rules:
 SCORE_PROMPTS: dict[str, str] = {
     "writing": """\
 You are a fully trained IELTS examiner scoring an Academic Writing response.
+
+{langNote}
 
 Deterministic language metrics (computed externally, for your reference only — do not let them override your judgement):
 {metricsSummary}
@@ -277,6 +311,8 @@ Rules:
 
     "speaking": """\
 You are a fully trained IELTS examiner evaluating a Speaking response.
+
+{langNote}
 
 Part: {part}
 Question: {question}
@@ -384,6 +420,8 @@ Rules:
 
     "pronounce": """\
 You are a pronunciation coach giving feedback on a read-aloud attempt.
+
+{langNote}
 
 Target sentence : {target}
 Recogniser heard: {transcript}

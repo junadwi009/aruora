@@ -8,7 +8,7 @@ Scoring is approximate (browser recogniser word-match + LLM tips), not phoneme-l
 """
 from flask import Blueprint, jsonify, request
 
-from app.routes._deps import _gateway
+from app.routes._deps import _gateway, _lang
 
 bp = Blueprint("pronounce", __name__)
 
@@ -26,6 +26,7 @@ def pronounce_feedback():
     b = request.get_json(force=True) or {}
     out = _gateway().score(
         "pronounce",
+        lang=_lang(),
         target=b.get("target", ""),
         transcript=b.get("transcript", ""),
         accuracy=b.get("accuracy", 0),
