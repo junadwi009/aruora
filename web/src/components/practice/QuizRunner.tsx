@@ -8,6 +8,7 @@ import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { QuizNavigator } from "../ui/QuizNavigator";
 import type { QuizStatus } from "../ui/QuizNavigator";
+import { useT } from "../../lib/i18n";
 
 // ---------------------------------------------------------------------------
 // helpers
@@ -34,6 +35,7 @@ export interface QuizRunnerProps {
 // component
 // ---------------------------------------------------------------------------
 export const QuizRunner: React.FC<QuizRunnerProps> = ({ skill, band, mode }) => {
+  const { t } = useT();
   const [set, setSet] = useState<QuizSet | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +68,7 @@ export const QuizRunner: React.FC<QuizRunnerProps> = ({ skill, band, mode }) => 
         setLoading(false);
       })
       .catch((e: unknown) => {
-        setError(e instanceof Error ? e.message : "Failed to load set");
+        setError(e instanceof Error ? e.message : t("quiz.loadError"));
         setLoading(false);
       });
   };
@@ -78,7 +80,7 @@ export const QuizRunner: React.FC<QuizRunnerProps> = ({ skill, band, mode }) => 
   const handlePlay = () => {
     if (!set?.transcript) return;
     if (!window.speechSynthesis) {
-      alert("Speech synthesis is not available in this browser.");
+      alert(t("quiz.ttsUnavailableAlert"));
       return;
     }
     const utt = new SpeechSynthesisUtterance(set.transcript);
@@ -123,7 +125,7 @@ export const QuizRunner: React.FC<QuizRunnerProps> = ({ skill, band, mode }) => 
   if (loading) {
     return (
       <main className="flex-1 flex items-center justify-center p-6">
-        <p className="text-[var(--color-muted)]">Loading {skill} set…</p>
+        <p className="text-[var(--color-muted)]">{t("quiz.loadingSet")}</p>
       </main>
     );
   }
@@ -131,8 +133,8 @@ export const QuizRunner: React.FC<QuizRunnerProps> = ({ skill, band, mode }) => 
   if (error || !set) {
     return (
       <main className="flex-1 flex flex-col items-center justify-center p-6 gap-4">
-        <p className="text-[var(--color-danger)]">{error ?? "No set available."}</p>
-        <Button onClick={load}>Retry</Button>
+        <p className="text-[var(--color-danger)]">{error ?? t("quiz.noSet")}</p>
+        <Button onClick={load}>{t("quiz.retry")}</Button>
       </main>
     );
   }
@@ -156,7 +158,7 @@ export const QuizRunner: React.FC<QuizRunnerProps> = ({ skill, band, mode }) => 
         {band && <LevelChip band={band} />}
         {band && (
           <span className="text-xs text-[var(--color-muted)] hidden sm:inline">
-            Level: {band} · targeting {NEXT_BAND[band]}
+            {t("quiz.level")}: {band} · {t("quiz.targeting")} {NEXT_BAND[band]}
           </span>
         )}
       </div>
@@ -191,11 +193,11 @@ export const QuizRunner: React.FC<QuizRunnerProps> = ({ skill, band, mode }) => 
                 {correct}/{n}
               </span>
               <span className="text-sm text-[var(--color-muted)] mt-1">
-                {pct}% correct
+                {pct}% {t("quiz.correct")}
               </span>
             </div>
             <Button variant="secondary" size="sm" className="ml-auto" onClick={load}>
-              New set
+              {t("quiz.newSet")}
             </Button>
           </Card>
         )}
@@ -227,19 +229,19 @@ export const QuizRunner: React.FC<QuizRunnerProps> = ({ skill, band, mode }) => 
                     size="sm"
                     onClick={handlePlay}
                     disabled={speaking}
-                    aria-label={speaking ? "Playing…" : "Play audio"}
+                    aria-label={speaking ? t("quiz.playing") : t("quiz.playAudio")}
                   >
-                    {speaking ? "Playing…" : "▶ Play"}
+                    {speaking ? t("quiz.playing") : `▶ ${t("test.play")}`}
                   </Button>
                   {!window.speechSynthesis && (
                     <span className="text-xs text-[var(--color-warning)]">
-                      TTS not available in this browser
+                      {t("quiz.ttsUnavailable")}
                     </span>
                   )}
                 </div>
                 {showTranscript && set.transcript && (
                   <div className="mt-3 border-t border-[var(--color-border)] pt-3">
-                    <p className="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest mb-2">Transcript</p>
+                    <p className="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest mb-2">{t("quiz.transcript")}</p>
                     <p
                       className="text-sm text-[var(--color-text)] leading-relaxed"
                       style={{ fontFamily: "var(--font-reading)" }}
@@ -281,7 +283,7 @@ export const QuizRunner: React.FC<QuizRunnerProps> = ({ skill, band, mode }) => 
                 onClick={handleSubmit}
                 disabled={Object.keys(answers).length === 0}
               >
-                Submit
+                {t("quiz.submit")}
               </Button>
             )}
           </div>
@@ -311,6 +313,7 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
   status,
   onChange,
 }) => {
+  const { t } = useT();
   const borderColor =
     submitted
       ? status === "correct"
@@ -327,7 +330,7 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
 
       {question.options ? (
         <fieldset>
-          <legend className="sr-only">Question {index + 1} options</legend>
+          <legend className="sr-only">{t("quiz.question")} {index + 1} {t("quiz.options")}</legend>
           <div className="flex flex-col gap-2">
             {question.options.map((opt) => {
               const selected = answer === opt;
@@ -363,8 +366,8 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
           value={answer ?? ""}
           disabled={submitted}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Type your answer…"
-          aria-label={`Answer for question ${index + 1}`}
+          placeholder={t("quiz.typeAnswer")}
+          aria-label={`${t("quiz.answerForQuestion")} ${index + 1}`}
           className="min-h-11 w-full px-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-600)]"
         />
       )}

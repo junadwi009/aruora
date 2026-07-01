@@ -1,5 +1,6 @@
 import React from "react";
 import { Timer, Button } from "../ui";
+import { useT } from "../../lib/i18n";
 
 export interface TestFrameProps {
   sectionName: string;
@@ -20,10 +21,11 @@ export const TestFrame: React.FC<TestFrameProps> = ({
   seconds,
   onTimeUp,
   onNext,
-  nextLabel = "Next",
+  nextLabel,
   children,
   running = true,
 }) => {
+  const { t } = useT();
   return (
     <div className="flex flex-col min-h-full">
       {/* Sticky header — real test-chrome feel */}
@@ -37,7 +39,7 @@ export const TestFrame: React.FC<TestFrameProps> = ({
               {sectionName}
             </span>
             <span className="text-sm font-medium text-[var(--color-muted)] tabular-nums">
-              {stepIndex} of {stepCount}
+              {stepIndex} {t("place.ofStep")} {stepCount}
             </span>
           </div>
           <Timer seconds={seconds} onExpire={onTimeUp} running={running} />
@@ -51,7 +53,7 @@ export const TestFrame: React.FC<TestFrameProps> = ({
             aria-valuenow={stepIndex}
             aria-valuemin={0}
             aria-valuemax={stepCount}
-            aria-label={`Section ${stepIndex} of ${stepCount}`}
+            aria-label={`${t("place.section")} ${stepIndex} ${t("place.ofStep")} ${stepCount}`}
           />
         </div>
       </header>
@@ -67,7 +69,7 @@ export const TestFrame: React.FC<TestFrameProps> = ({
         style={{ boxShadow: "0 -2px 8px -4px rgba(15,23,42,.08)" }}
       >
         <Button onClick={onNext} size="lg">
-          {nextLabel}
+          {nextLabel ?? t("common.next")}
         </Button>
       </footer>
     </div>

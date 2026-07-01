@@ -1,22 +1,24 @@
 import React from "react";
 import { Card, Button } from "../ui";
 import { ClipboardList, Clock, Mic } from "lucide-react";
+import { useT } from "../../lib/i18n";
 
 export interface PlacementIntroProps {
   onBegin: () => void;
 }
 
 export const PlacementIntro: React.FC<PlacementIntroProps> = ({ onBegin }) => {
+  const { t } = useT();
   return (
     <div className="journey-bg flex min-h-full items-center justify-center p-6">
       <Card className="animate-fade-slide-in w-full max-w-lg flex flex-col gap-7">
         {/* Heading */}
         <div className="flex flex-col gap-2">
           <h1 className="text-2xl font-bold text-[var(--color-text)] tracking-tight leading-tight">
-            Placement Test
+            {t("place.introTitle")}
           </h1>
           <p className="text-[var(--color-muted)] text-base leading-relaxed">
-            A short diagnostic — not pass/fail. It just finds where you are so we can build you the right plan.
+            {t("place.introSubtitle")}
           </p>
         </div>
 
@@ -31,7 +33,7 @@ export const PlacementIntro: React.FC<PlacementIntroProps> = ({ onBegin }) => {
               <Clock size={16} className="text-[var(--color-primary-600)]" />
             </span>
             <span className="pt-1">
-              <strong>~50 minutes</strong> · four short sections, each timed independently
+              <strong>{t("place.factTimeStrong")}</strong> {t("place.factTimeRest")}
             </span>
           </li>
           <li className="flex items-start gap-3">
@@ -43,8 +45,7 @@ export const PlacementIntro: React.FC<PlacementIntroProps> = ({ onBegin }) => {
               <ClipboardList size={16} className="text-[var(--color-primary-600)]" />
             </span>
             <span className="pt-1">
-              Covers <strong>Listening, Reading, Writing, and Speaking</strong> — your result sets
-              a personalised study plan
+              {t("place.factCoversPre")} <strong>{t("place.factCoversStrong")}</strong> {t("place.factCoversRest")}
             </span>
           </li>
           <li className="flex items-start gap-3">
@@ -56,22 +57,21 @@ export const PlacementIntro: React.FC<PlacementIntroProps> = ({ onBegin }) => {
               <Mic size={16} className="text-[var(--color-primary-600)]" />
             </span>
             <span className="pt-1">
-              For Speaking you can <strong>record</strong> your answer (transcribed automatically) or
-              type it — whichever you prefer.
+              {t("place.factSpeakingPre")} <strong>{t("place.factSpeakingStrong")}</strong> {t("place.factSpeakingRest")}
             </span>
           </li>
         </ul>
 
         {/* Footer note */}
         <p className="text-xs text-[var(--color-muted)] border-t border-[var(--color-border)] pt-5">
-          Need extended time or other accommodations? Adjust in{" "}
-          <strong>Settings → Accommodations</strong> before starting.
+          {t("place.accommodationsPre")}{" "}
+          <strong>{t("place.accommodationsStrong")}</strong> {t("place.accommodationsRest")}
         </p>
 
         {/* CTA */}
         <div className="flex justify-end">
           <Button size="lg" onClick={onBegin}>
-            Begin
+            {t("place.begin")}
           </Button>
         </div>
       </Card>

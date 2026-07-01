@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { api } from "../../lib/api/client";
 import { useJourney } from "../../lib/journey";
+import { useT } from "../../lib/i18n";
 import type { PlacementStart } from "../../lib/types";
 import { PlacementIntro } from "./PlacementIntro";
 import { TestFrame } from "./TestFrame";
@@ -19,15 +20,16 @@ type Phase =
   | "submitting";
 
 const SECTION_ORDER: Phase[] = ["listening", "reading", "writing", "speaking"];
-const SECTION_LABELS: Record<string, string> = {
-  listening: "Listening",
-  reading: "Reading",
-  writing: "Writing",
-  speaking: "Speaking",
+const SECTION_LABEL_KEYS: Record<string, string> = {
+  listening: "nav.listening",
+  reading: "nav.reading",
+  writing: "nav.writing",
+  speaking: "nav.speaking",
 };
 
 export const PlacementRunner: React.FC = () => {
   const { go, setPlacementResult } = useJourney();
+  const { t } = useT();
 
   const [phase, setPhase] = useState<Phase>("loading");
   const [combo, setCombo] = useState<PlacementStart | null>(null);
@@ -51,7 +53,7 @@ export const PlacementRunner: React.FC = () => {
       .catch((e) => {
         if (!active) return;
         setError(
-          e instanceof Error ? e.message : "Failed to load placement test."
+          e instanceof Error ? e.message : t("place.errLoad")
         );
       });
     return () => {
@@ -103,7 +105,7 @@ export const PlacementRunner: React.FC = () => {
       })
       .catch((e) => {
         setError(
-          e instanceof Error ? e.message : "Submission failed. Please retry."
+          e instanceof Error ? e.message : t("place.errSubmit")
         );
         setPhase("speaking"); // go back so user can retry
       });
@@ -125,7 +127,7 @@ export const PlacementRunner: React.FC = () => {
   if (phase === "loading" || !combo) {
     return (
       <div className="flex min-h-full items-center justify-center p-6">
-        <p className="text-[var(--color-muted)]">Loading placement test…</p>
+        <p className="text-[var(--color-muted)]">{t("place.loadingTest")}</p>
       </div>
     );
   }
@@ -133,7 +135,7 @@ export const PlacementRunner: React.FC = () => {
   if (phase === "submitting") {
     return (
       <div className="flex min-h-full items-center justify-center p-6">
-        <p className="text-[var(--color-muted)]">Submitting your answers…</p>
+        <p className="text-[var(--color-muted)]">{t("place.submitting")}</p>
       </div>
     );
   }
@@ -177,7 +179,7 @@ export const PlacementRunner: React.FC = () => {
 
   const stepIndex = SECTION_ORDER.indexOf(phase) + 1;
   const stepCount = SECTION_ORDER.length;
-  const sectionLabel = SECTION_LABELS[phase] ?? phase;
+  const sectionLabel = SECTION_LABEL_KEYS[phase] ? t(SECTION_LABEL_KEYS[phase]) : phase;
   const isLastSection = phase === "speaking";
 
   const getSectionSeconds = (): number => {
@@ -198,7 +200,7 @@ export const PlacementRunner: React.FC = () => {
       seconds={getSectionSeconds()}
       onTimeUp={advancePhase}
       onNext={advancePhase}
-      nextLabel={isLastSection ? "Submit" : "Next"}
+      nextLabel={isLastSection ? t("place.submit") : t("common.next")}
       running={true}
     >
       {phase === "listening" && (

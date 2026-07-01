@@ -29,6 +29,18 @@ import type {
 
 const BASE = (import.meta as { env?: { VITE_API_BASE?: string } }).env?.VITE_API_BASE ?? "http://localhost:5050";
 
+// Current UI language, read straight from localStorage so the API layer has no
+// React dependency. Sent as X-Lang on every request; the backend uses it to
+// localize learner-facing guidance prose (Tips, feedback, lessons). Practice
+// content the learner is tested on stays English regardless.
+function currentLang(): string {
+  try {
+    return localStorage.getItem("ielts.lang") === "id" ? "id" : "en";
+  } catch {
+    return "en";
+  }
+}
+
 export class ApiError extends Error {
   code: string;
   details: unknown;
@@ -42,7 +54,7 @@ export class ApiError extends Error {
 async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
   const res = await fetch(BASE + path, {
     credentials: "include", // send the passcode session cookie when set
-    headers: { "Content-Type": "application/json", ...(opts.headers ?? {}) },
+    headers: { "Content-Type": "application/json", "X-Lang": currentLang(), ...(opts.headers ?? {}) },
     ...opts,
   });
   const text = await res.text();
@@ -65,7 +77,10 @@ const get = <T>(p: string) => request<T>(p);
 // Multipart upload — let the browser set the multipart boundary; do NOT force
 // a JSON Content-Type (that would corrupt the form encoding).
 async function upload<T>(path: string, form: FormData): Promise<T> {
-  const res = await fetch(BASE + path, { method: "POST", body: form, credentials: "include" });
+  const res = await fetch(BASE + path, {
+    method: "POST", body: form, credentials: "include",
+    headers: { "X-Lang": currentLang() },
+  });
   const text = await res.text();
   const body = text ? (JSON.parse(text) as { error?: { code: string; message: string; details?: unknown } }) : null;
   if (!res.ok) {

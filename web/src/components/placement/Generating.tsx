@@ -2,16 +2,19 @@ import React, { useEffect, useRef, useState } from "react";
 import { api } from "../../lib/api/client";
 import { useJourney } from "../../lib/journey";
 import { ProgressBar } from "../ui/ProgressBar";
+import { useT } from "../../lib/i18n";
 
-const STEPS = [
-  "Building your Reading set…",
-  "Preparing Listening clips…",
-  "Drafting Speaking prompts…",
-  "Assembling Writing tasks…",
+const STEP_KEYS = [
+  "place.genStepReading",
+  "place.genStepListening",
+  "place.genStepSpeaking",
+  "place.genStepWriting",
 ];
 
 export const Generating: React.FC = () => {
   const { go } = useJourney();
+  const { t } = useT();
+  const STEPS = STEP_KEYS.map((k) => t(k));
   const [progress, setProgress] = useState(0);
   const [stepIdx, setStepIdx] = useState(0);
   const mounted = useRef(true);
@@ -68,10 +71,10 @@ export const Generating: React.FC = () => {
         {/* Heading */}
         <div className="text-center flex flex-col gap-2">
           <h1 className="text-2xl font-bold text-[var(--color-text)] tracking-tight">
-            Building your plan…
+            {t("place.genTitle")}
           </h1>
           <p className="text-sm text-[var(--color-muted)]">
-            Usually a few seconds. Hang tight!
+            {t("place.genSubtitle")}
           </p>
         </div>
 
@@ -124,7 +127,7 @@ export const Generating: React.FC = () => {
         </ul>
 
         {/* Progress bar */}
-        <ProgressBar value={progress} max={100} label="Generating practice content" />
+        <ProgressBar value={progress} max={100} label={t("place.genProgressLabel")} />
 
         {/* aria-live status for screen readers */}
         <p

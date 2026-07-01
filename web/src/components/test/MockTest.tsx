@@ -7,6 +7,7 @@ import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { Timer } from "../ui/Timer";
 import { useView } from "../menu/viewContext";
+import { useT } from "../../lib/i18n";
 
 type Stage = "intro" | "listening" | "reading" | "result";
 
@@ -24,6 +25,7 @@ const MOCK_SECONDS = 30 * 60;
 
 export const MockTest: React.FC = () => {
   const { setView } = useView();
+  const { t } = useT();
   const [stage, setStage] = useState<Stage>("intro");
   const [listeningSet, setListeningSet] = useState<QuizSet | null>(null);
   const [readingSet, setReadingSet] = useState<QuizSet | null>(null);
@@ -45,7 +47,7 @@ export const MockTest: React.FC = () => {
       setReadingSet(r);
       setStage("listening");
     } catch {
-      setError("Could not load the mock sets. Try again.");
+      setError(t("test.loadError"));
     } finally {
       setLoading(false);
     }
@@ -69,7 +71,7 @@ export const MockTest: React.FC = () => {
       <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 py-3 z-10 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <ClipboardCheck size={18} className="text-[var(--color-primary-600)]" aria-hidden="true" />
-          <h1 className="text-base font-semibold text-[var(--color-text)]">Mock Test</h1>
+          <h1 className="text-base font-semibold text-[var(--color-text)]">{t("test.title")}</h1>
         </div>
         {(stage === "listening" || stage === "reading") && (
           <Timer seconds={MOCK_SECONDS} onExpire={finish} />
@@ -81,59 +83,58 @@ export const MockTest: React.FC = () => {
 
         {stage === "intro" && (
           <Card className="flex flex-col items-center gap-4 py-10 text-center">
-            <p className="text-base font-semibold text-[var(--color-text)]">Listening + Reading mock</p>
+            <p className="text-base font-semibold text-[var(--color-text)]">{t("test.introTitle")}</p>
             <p className="text-sm text-[var(--color-muted)] max-w-sm">
-              One Listening section then one Reading section, 30 minutes total. You'll get an estimated
-              band for each and an overall score, saved to your Progress.
+              {t("test.introBody")}
             </p>
             <Button onClick={start} loading={loading}>
-              {loading ? "Loading…" : "Start mock"}
+              {loading ? t("common.loading") : t("test.startMock")}
             </Button>
           </Card>
         )}
 
         {stage === "listening" && listeningSet && (
           <Section
-            title="Section 1 — Listening"
+            title={t("test.section1Listening")}
             set={listeningSet}
             answers={lAnswers}
             onAnswer={(i, v) => setLAnswers((p) => ({ ...p, [i]: v }))}
             isListening
             onNext={() => setStage("reading")}
-            nextLabel="Go to Reading"
+            nextLabel={t("test.goToReading")}
           />
         )}
 
         {stage === "reading" && readingSet && (
           <Section
-            title="Section 2 — Reading"
+            title={t("test.section2Reading")}
             set={readingSet}
             answers={rAnswers}
             onAnswer={(i, v) => setRAnswers((p) => ({ ...p, [i]: v }))}
             onNext={finish}
-            nextLabel="Finish & score"
+            nextLabel={t("test.finishScore")}
           />
         )}
 
         {stage === "result" && result && (
           <Card className="flex flex-col gap-4 py-8">
             <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide text-center">
-              Estimated result
+              {t("test.estimatedResult")}
             </p>
             <div className="flex items-center justify-center gap-8">
-              <ScorePill label="Listening" band={result.l} />
-              <ScorePill label="Reading" band={result.r} />
-              <ScorePill label="Overall" band={result.overall} highlight />
+              <ScorePill label={t("nav.listening")} band={result.l} />
+              <ScorePill label={t("nav.reading")} band={result.r} />
+              <ScorePill label={t("test.overall")} band={result.overall} highlight />
             </div>
             <p className="text-[11px] text-[var(--color-muted)] text-center">
-              Estimates from short practice sets — not an official band score.
+              {t("test.estimateNote")}
             </p>
             <div className="flex justify-center gap-2">
               <Button variant="secondary" onClick={() => { setStage("intro"); setResult(null); setLAnswers({}); setRAnswers({}); }}>
-                New mock
+                {t("test.newMock")}
               </Button>
               <Button onClick={() => setView("progress")}>
-                View Progress <ArrowRight size={14} className="ml-1" />
+                {t("test.viewProgress")} <ArrowRight size={14} className="ml-1" />
               </Button>
             </div>
           </Card>
@@ -166,6 +167,7 @@ interface SectionProps {
 }
 
 const Section: React.FC<SectionProps> = ({ title, set, answers, onAnswer, onNext, nextLabel, isListening }) => {
+  const { t } = useT();
   const play = () => {
     if (!set.transcript || !window.speechSynthesis) return;
     window.speechSynthesis.speak(new SpeechSynthesisUtterance(set.transcript));
@@ -175,7 +177,7 @@ const Section: React.FC<SectionProps> = ({ title, set, answers, onAnswer, onNext
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-[var(--color-text)]">{title}</h2>
         {isListening && set.transcript && (
-          <Button variant="secondary" size="sm" onClick={play}>▶ Play</Button>
+          <Button variant="secondary" size="sm" onClick={play}>▶ {t("test.play")}</Button>
         )}
       </div>
 
@@ -209,8 +211,8 @@ const Section: React.FC<SectionProps> = ({ title, set, answers, onAnswer, onNext
                 type="text"
                 value={answers[qi] ?? ""}
                 onChange={(e) => onAnswer(qi, e.target.value)}
-                placeholder="Your answer…"
-                aria-label={`Answer ${qi + 1}`}
+                placeholder={t("test.yourAnswer")}
+                aria-label={`${t("test.answer")} ${qi + 1}`}
                 className="min-h-10 w-full px-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] text-sm text-[var(--color-text)]"
               />
             )}

@@ -4,28 +4,29 @@ import { api } from "../../lib/api/client";
 import { RadioCard } from "../ui/RadioCard";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
+import { useT } from "../../lib/i18n";
 
 interface PlanOption {
   days: number;
-  intensity: string;
-  note: string;
+  intensityKey: string;
+  noteKey: string;
 }
 
 const PLANS: PlanOption[] = [
   {
     days: 30,
-    intensity: "~45 min/day",
-    note: "Intensive sprint — best for a small gap or upcoming exam.",
+    intensityKey: "program.intensity30",
+    noteKey: "program.note30",
   },
   {
     days: 90,
-    intensity: "~25 min/day",
-    note: "Steady progress — enough depth to move up one CEFR level.",
+    intensityKey: "program.intensity90",
+    noteKey: "program.note90",
   },
   {
     days: 180,
-    intensity: "~15 min/day",
-    note: "Long game — comfortable pace for a larger gap.",
+    intensityKey: "program.intensity180",
+    noteKey: "program.note180",
   },
 ];
 
@@ -37,6 +38,7 @@ function getRecommended(gap: number): number {
 
 export const Program: React.FC = () => {
   const { go, placementResult, setMilestones } = useJourney();
+  const { t } = useT();
   const gap = placementResult?.gapToTarget ?? 1.0;
   const recommended = getRecommended(gap);
 
@@ -58,27 +60,27 @@ export const Program: React.FC = () => {
     <div className="journey-bg flex min-h-full flex-col gap-7 p-6 max-w-lg mx-auto">
       <div className="animate-fade-slide-in flex flex-col gap-2">
         <h1 className="text-2xl font-bold text-[var(--color-text)] tracking-tight leading-tight">
-          Choose your program
+          {t("program.choose")}
         </h1>
         <p className="text-sm text-[var(--color-muted)] leading-relaxed">
-          We recommend the{" "}
-          <strong className="text-[var(--color-text)]">{recommended}-day plan</strong>{" "}
-          based on your gap to target.
+          {t("program.recommendPre")}{" "}
+          <strong className="text-[var(--color-text)]">{recommended}{t("program.dayPlanSuffix")}</strong>{" "}
+          {t("program.recommendRest")}
         </p>
       </div>
 
       <div
         role="radiogroup"
-        aria-label="Program duration"
+        aria-label={t("program.durationAria")}
         className="flex flex-col gap-3"
       >
-        {PLANS.map(({ days, intensity, note }) => {
+        {PLANS.map(({ days, intensityKey, noteKey }) => {
           const isRecommended = days === recommended;
           return (
             <div key={days} className="relative">
               {isRecommended && (
                 <div className="absolute -top-2.5 right-4 z-10">
-                  <Badge tone="success">Recommended</Badge>
+                  <Badge tone="success">{t("program.recommended")}</Badge>
                 </div>
               )}
               <div
@@ -89,8 +91,8 @@ export const Program: React.FC = () => {
                 <RadioCard
                   selected={selected === days}
                   onSelect={() => setSelected(days)}
-                  title={`${days}-day plan`}
-                  description={`${intensity} · ${note}`}
+                  title={`${days}${t("program.dayPlanSuffix")}`}
+                  description={`${t(intensityKey)} · ${t(noteKey)}`}
                 />
               </div>
             </div>
@@ -105,7 +107,7 @@ export const Program: React.FC = () => {
           onClick={handleStart}
           className="w-full"
         >
-          Start {selected}-day plan
+          {t("program.start")} {selected}{t("program.dayPlanSuffix")}
         </Button>
       </div>
     </div>

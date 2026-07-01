@@ -9,21 +9,23 @@ import { LevelChip } from "../ui/LevelChip";
 import type { CefrBand } from "../ui/LevelChip";
 import { Badge } from "../ui/Badge";
 import { Recorder } from "./Recorder";
+import { useT } from "../../lib/i18n";
 
 const STATIC_QUESTION =
   "Describe a place you have visited that made a strong impression on you. You should say: where it is, when you went there, what you did there, and explain why it made such a strong impression.";
 
 type Phase = "editor" | "loading" | "feedback";
 
-const CRIT_LABELS: Record<string, string> = {
-  fluency: "Fluency & Coherence",
-  lexicalResource: "Lexical Resource",
-  grammaticalRange: "Grammatical Range",
-  pronunciation: "Pronunciation",
+const CRIT_LABEL_KEYS: Record<string, string> = {
+  fluency: "speak.crit.fluency",
+  lexicalResource: "speak.crit.lexicalResource",
+  grammaticalRange: "speak.crit.grammaticalRange",
+  pronunciation: "speak.crit.pronunciation",
 };
 
 export const Speaking: React.FC = () => {
   const { consumePrefill } = useView();
+  const { t } = useT();
   const [phase, setPhase] = useState<Phase>("editor");
   const [transcript, setTranscript] = useState("");
   const [question, setQuestion] = useState(STATIC_QUESTION);
@@ -49,7 +51,7 @@ export const Speaking: React.FC = () => {
       setResult(data);
       setPhase("feedback");
     } catch (e: unknown) {
-      setApiError(e instanceof Error ? e.message : "Evaluation failed");
+      setApiError(e instanceof Error ? e.message : t("speak.evalFailed"));
       setPhase("editor");
     }
   };
@@ -62,14 +64,14 @@ export const Speaking: React.FC = () => {
   return (
     <main className="flex-1 overflow-y-auto">
       <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 py-3 z-10">
-        <h1 className="text-base font-semibold text-[var(--color-text)]">Speaking</h1>
+        <h1 className="text-base font-semibold text-[var(--color-text)]">{t("nav.speaking")}</h1>
       </div>
 
       <div className="p-4 md:p-6 max-w-2xl mx-auto flex flex-col gap-4">
         {/* Cue card */}
         <Card>
           <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-1">
-            Part 2 — Cue Card
+            {t("speak.part2CueCard")}
           </p>
           <p className="text-sm text-[var(--color-text)] leading-relaxed">{question}</p>
         </Card>
@@ -85,11 +87,11 @@ export const Speaking: React.FC = () => {
             />
 
             <Textarea
-              label="Your spoken response (transcript)"
+              label={t("speak.transcriptLabel")}
               value={transcript}
               onChange={(e) => setTranscript(e.target.value)}
               rows={8}
-              placeholder="Record above, or type what you would say…"
+              placeholder={t("speak.transcriptPlaceholder")}
               disabled={phase === "loading"}
             />
             {apiError && (
@@ -100,7 +102,7 @@ export const Speaking: React.FC = () => {
               loading={phase === "loading"}
               disabled={transcript.trim().length < 10 || phase === "loading"}
             >
-              Evaluate
+              {t("speak.evaluate")}
             </Button>
           </>
         )}
@@ -121,13 +123,15 @@ interface SpeakingFeedbackProps {
   onRetry?: () => void;
 }
 
-export const SpeakingFeedback: React.FC<SpeakingFeedbackProps> = ({ result, onRetry }) => (
+export const SpeakingFeedback: React.FC<SpeakingFeedbackProps> = ({ result, onRetry }) => {
+  const { t } = useT();
+  return (
   <div className="flex flex-col gap-4">
     <Card>
       <div className="flex items-center gap-3 mb-3">
         <LevelChip band={result.cefr as CefrBand} />
         <span className="text-xs text-[var(--color-muted)]">
-          CEFR estimate — bands are approximate
+          {t("speak.cefrEstimate")}
         </span>
       </div>
 
@@ -136,11 +140,11 @@ export const SpeakingFeedback: React.FC<SpeakingFeedbackProps> = ({ result, onRe
           {Object.entries(result.bands).map(([key, val]) => (
             <div key={key} className="flex flex-col">
               <span className="text-xs text-[var(--color-muted)]">
-                {CRIT_LABELS[key] ?? key}
+                {CRIT_LABEL_KEYS[key] ? t(CRIT_LABEL_KEYS[key]) : key}
               </span>
               <span className="text-sm font-semibold text-[var(--color-text)]">
                 {val}
-                <Badge tone="neutral" className="ml-1 text-[10px]">estimate</Badge>
+                <Badge tone="neutral" className="ml-1 text-[10px]">{t("common.estimate")}</Badge>
               </span>
             </div>
           ))}
@@ -151,7 +155,7 @@ export const SpeakingFeedback: React.FC<SpeakingFeedbackProps> = ({ result, onRe
     {result.feedback && (
       <Card>
         <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-2">
-          Feedback
+          {t("speak.feedback")}
         </p>
         <p className="text-sm text-[var(--color-text)] leading-relaxed">{result.feedback}</p>
       </Card>
@@ -160,7 +164,7 @@ export const SpeakingFeedback: React.FC<SpeakingFeedbackProps> = ({ result, onRe
     {result.modelAnswer && (
       <Card>
         <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-2">
-          Model Answer
+          {t("speak.modelAnswer")}
         </p>
         <p className="text-sm text-[var(--color-text)] leading-relaxed whitespace-pre-wrap">
           {result.modelAnswer}
@@ -170,8 +174,9 @@ export const SpeakingFeedback: React.FC<SpeakingFeedbackProps> = ({ result, onRe
 
     {onRetry && (
       <Button variant="secondary" onClick={onRetry}>
-        ↩ Try again
+        ↩ {t("speak.tryAgain")}
       </Button>
     )}
   </div>
-);
+  );
+};

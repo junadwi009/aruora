@@ -1,4 +1,5 @@
 import React from "react";
+import { useT } from "../../lib/i18n";
 
 export type QuizStatus = "unanswered" | "answered" | "correct" | "wrong";
 
@@ -24,8 +25,15 @@ export const QuizNavigator: React.FC<QuizNavigatorProps> = ({
   statuses,
   onJump,
 }) => {
+  const { t } = useT();
+  const statusLabel: Record<QuizStatus, string> = {
+    unanswered: t("quiz.statusUnanswered"),
+    answered: t("quiz.statusAnswered"),
+    correct: t("quiz.statusCorrect"),
+    wrong: t("quiz.statusWrong"),
+  };
   return (
-    <nav aria-label="Quiz questions">
+    <nav aria-label={t("quiz.navLabel")}>
       <ol className="flex flex-wrap gap-1">
         {Array.from({ length: count }, (_, i) => {
           const status = statuses[i] ?? "unanswered";
@@ -36,7 +44,7 @@ export const QuizNavigator: React.FC<QuizNavigatorProps> = ({
               <button
                 type="button"
                 onClick={() => onJump(i)}
-                aria-label={`Question ${i + 1}, ${status}`}
+                aria-label={`${t("quiz.question")} ${i + 1}, ${statusLabel[status]}`}
                 aria-current={isCurrent ? "true" : undefined}
                 className={[
                   "min-w-[2.75rem] min-h-11 w-11 h-11 rounded-[var(--radius-md)] text-sm font-medium transition-colors",

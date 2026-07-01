@@ -8,6 +8,7 @@ import { LevelChip } from "../ui/LevelChip";
 import type { CefrBand } from "../ui/LevelChip";
 import { Badge } from "../ui/Badge";
 import { useView } from "../menu/viewContext";
+import { useT } from "../../lib/i18n";
 
 const STATIC_PROMPT =
   "Some people think that the best way to increase road safety is to increase the minimum legal age for driving cars or riding motorbikes. To what extent do you agree or disagree?";
@@ -20,6 +21,7 @@ function countWords(text: string): number {
 
 export const Writing: React.FC = () => {
   const { consumePrefill } = useView();
+  const { t } = useT();
   const [phase, setPhase] = useState<Phase>("editor");
   const [essay, setEssay] = useState("");
   const [result, setResult] = useState<WritingEval | null>(null);
@@ -46,7 +48,7 @@ export const Writing: React.FC = () => {
       setResult(data);
       setPhase("feedback");
     } catch (e: unknown) {
-      setApiError(e instanceof Error ? e.message : "Evaluation failed");
+      setApiError(e instanceof Error ? e.message : t("write.evalFailed"));
       setPhase("editor");
     }
   };
@@ -58,14 +60,14 @@ export const Writing: React.FC = () => {
   return (
     <main className="flex-1 overflow-y-auto">
       <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 py-3 z-10">
-        <h1 className="text-base font-semibold text-[var(--color-text)]">Writing</h1>
+        <h1 className="text-base font-semibold text-[var(--color-text)]">{t("nav.writing")}</h1>
       </div>
 
       <div className="p-4 md:p-6 max-w-2xl mx-auto flex flex-col gap-4">
         {/* Prompt */}
         <Card>
           <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-1">
-            Task 2 Prompt
+            {t("write.task2Prompt")}
           </p>
           <p className="text-sm text-[var(--color-text)] leading-relaxed">{STATIC_PROMPT}</p>
         </Card>
@@ -73,13 +75,13 @@ export const Writing: React.FC = () => {
         {(phase === "editor" || phase === "loading") && (
           <>
             <Textarea
-              label="Your essay"
+              label={t("write.yourEssay")}
               value={essay}
               onChange={(e) => setEssay(e.target.value)}
               wordCount={wordCount}
               targetWords={250}
               rows={12}
-              placeholder="Write your response here…"
+              placeholder={t("write.essayPlaceholder")}
               disabled={phase === "loading"}
             />
             {apiError && (
@@ -90,7 +92,7 @@ export const Writing: React.FC = () => {
               loading={phase === "loading"}
               disabled={wordCount < 10 || phase === "loading"}
             >
-              Evaluate
+              {t("write.evaluate")}
             </Button>
           </>
         )}
@@ -111,11 +113,11 @@ interface FeedbackViewProps {
   onRevise?: () => void;
 }
 
-const CRIT_LABELS: Record<string, string> = {
-  taskAchievement: "Task Achievement",
-  coherenceCohesion: "Coherence & Cohesion",
-  lexicalResource: "Lexical Resource",
-  grammaticalRange: "Grammatical Range",
+const CRIT_LABEL_KEYS: Record<string, string> = {
+  taskAchievement: "write.crit.taskAchievement",
+  coherenceCohesion: "write.crit.coherenceCohesion",
+  lexicalResource: "write.crit.lexicalResource",
+  grammaticalRange: "write.crit.grammaticalRange",
 };
 
 // ---------------------------------------------------------------------------
@@ -139,64 +141,67 @@ const StatRow: React.FC<StatRowProps> = ({ label, value }) => {
 };
 
 const MetricsPanel: React.FC<{ metrics: EssayMetrics }> = ({ metrics }) => {
+  const { t } = useT();
   const { wordCount, sentenceCount, readability, lexicalDiversity, syntax } = metrics;
   return (
     <Card variant="stat">
       <div className="flex items-center justify-between mb-3">
         <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">
-          Language Metrics
+          {t("write.languageMetrics")}
         </p>
         <Badge tone="neutral" className="text-[10px]">
-          supporting
+          {t("write.supporting")}
         </Badge>
       </div>
 
       <div className="flex flex-col">
-        <StatRow label="Word count" value={wordCount} />
-        <StatRow label="Sentence count" value={sentenceCount} />
+        <StatRow label={t("write.metric.wordCount")} value={wordCount} />
+        <StatRow label={t("write.metric.sentenceCount")} value={sentenceCount} />
         <StatRow
-          label="Flesch-Kincaid Grade"
+          label={t("write.metric.fleschKincaid")}
           value={readability.fleschKincaidGrade}
         />
-        <StatRow label="Gunning Fog" value={readability.gunningFog} />
+        <StatRow label={t("write.metric.gunningFog")} value={readability.gunningFog} />
         <StatRow
-          label="Lexical diversity (MTLD)"
+          label={t("write.metric.lexDiversityMtld")}
           value={lexicalDiversity.mtld !== null ? lexicalDiversity.mtld : "—"}
         />
         <StatRow
-          label="Lexical diversity (TTR)"
+          label={t("write.metric.lexDiversityTtr")}
           value={lexicalDiversity.ttr}
         />
         {syntax && (
           <>
             <StatRow
-              label="Mean sentence length"
+              label={t("write.metric.meanSentenceLength")}
               value={syntax.meanSentenceLength}
             />
             <StatRow
-              label="Mean dependency depth"
+              label={t("write.metric.meanDependencyDepth")}
               value={syntax.meanDependencyDepth}
             />
-            <StatRow label="Long words (≥7 chars)" value={syntax.nLongWords} />
+            <StatRow label={t("write.metric.longWords")} value={syntax.nLongWords} />
           </>
         )}
       </div>
 
       <p className="mt-3 text-[11px] text-[var(--color-muted)] leading-snug">
-        Supporting language metrics — they inform the examiner, not replace the band.
+        {t("write.metricsNote")}
       </p>
     </Card>
   );
 };
 
-export const FeedbackView: React.FC<FeedbackViewProps> = ({ result, onRevise }) => (
+export const FeedbackView: React.FC<FeedbackViewProps> = ({ result, onRevise }) => {
+  const { t } = useT();
+  return (
   <div className="flex flex-col gap-4">
     {/* CEFR + band summary */}
     <Card>
       <div className="flex items-center gap-3 mb-3">
         <LevelChip band={result.cefr as CefrBand} />
         <span className="text-xs text-[var(--color-muted)]">
-          CEFR estimate — bands are approximate
+          {t("write.cefrEstimate")}
         </span>
       </div>
 
@@ -205,11 +210,11 @@ export const FeedbackView: React.FC<FeedbackViewProps> = ({ result, onRevise }) 
           {Object.entries(result.bands).map(([key, val]) => (
             <div key={key} className="flex flex-col">
               <span className="text-xs text-[var(--color-muted)]">
-                {CRIT_LABELS[key] ?? key}
+                {CRIT_LABEL_KEYS[key] ? t(CRIT_LABEL_KEYS[key]) : key}
               </span>
               <span className="text-sm font-semibold text-[var(--color-text)]">
                 {val}
-                <Badge tone="neutral" className="ml-1 text-[10px]">estimate</Badge>
+                <Badge tone="neutral" className="ml-1 text-[10px]">{t("common.estimate")}</Badge>
               </span>
             </div>
           ))}
@@ -221,7 +226,7 @@ export const FeedbackView: React.FC<FeedbackViewProps> = ({ result, onRevise }) 
     {Array.isArray(result.corrections) && result.corrections.length > 0 && (
       <Card>
         <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-2">
-          Corrections
+          {t("write.corrections")}
         </p>
         <ul className="flex flex-col gap-1 text-sm text-[var(--color-text)]">
           {result.corrections.map((c, i) => (
@@ -237,7 +242,7 @@ export const FeedbackView: React.FC<FeedbackViewProps> = ({ result, onRevise }) 
     {result.rewrite && (
       <Card>
         <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-2">
-          Model Rewrite
+          {t("write.modelRewrite")}
         </p>
         <p className="text-sm text-[var(--color-text)] leading-relaxed whitespace-pre-wrap">
           {result.rewrite}
@@ -250,8 +255,9 @@ export const FeedbackView: React.FC<FeedbackViewProps> = ({ result, onRevise }) 
 
     {onRevise && (
       <Button variant="secondary" onClick={onRevise}>
-        ↩ Revise
+        ↩ {t("write.revise")}
       </Button>
     )}
   </div>
-);
+  );
+};

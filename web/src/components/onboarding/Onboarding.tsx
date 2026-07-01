@@ -3,33 +3,36 @@ import { Briefcase, GraduationCap, Circle } from "lucide-react";
 import { Button, Field, RadioCard, Slider, StepIndicator, Card } from "../ui";
 import { api, ApiError } from "../../lib/api/client";
 import { useJourney } from "../../lib/journey";
+import { useT } from "../../lib/i18n";
 import type { Goal } from "../../lib/types";
 
-const STEPS = ["Name", "Goal", "Target"];
+const STEP_KEYS = ["onb.name", "onb.goal", "onb.target"];
 
-const GOALS: { value: Goal; title: string; description: string; icon: React.ReactNode }[] = [
+const GOALS: { value: Goal; titleKey: string; descKey: string; icon: React.ReactNode }[] = [
   {
     value: "work",
-    title: "Work",
-    description: "Professional registration or a job abroad.",
+    titleKey: "onb.goalWork",
+    descKey: "onb.goalWorkDesc",
     icon: <Briefcase size={20} />,
   },
   {
     value: "study_abroad",
-    title: "Study abroad",
-    description: "University or college admission.",
+    titleKey: "onb.goalStudy",
+    descKey: "onb.goalStudyDesc",
     icon: <GraduationCap size={20} />,
   },
   {
     value: "other",
-    title: "Other",
-    description: "Migration, personal goals, or something else.",
+    titleKey: "onb.goalOther",
+    descKey: "onb.goalOtherDesc",
     icon: <Circle size={20} />,
   },
 ];
 
 export const Onboarding: React.FC = () => {
   const { go } = useJourney();
+  const { t } = useT();
+  const STEPS = STEP_KEYS.map((k) => t(k));
   const [current, setCurrent] = useState(0);
   const [name, setName] = useState("");
   const [goal, setGoal] = useState<Goal | null>(null);
@@ -58,7 +61,7 @@ export const Onboarding: React.FC = () => {
       const msg =
         e instanceof ApiError
           ? e.message
-          : "Something went wrong. Please try again.";
+          : t("onb.errorGeneric");
       setError(msg);
       setSubmitting(false);
     }
@@ -82,11 +85,11 @@ export const Onboarding: React.FC = () => {
         {current === 0 && (
           <div className="flex flex-col gap-2">
             <h2 className="text-lg font-semibold text-[var(--color-text)] tracking-tight">
-              What should we call you?
+              {t("onb.nameHeading")}
             </h2>
             <Field
-              label="Your name"
-              placeholder="e.g. Arjuna"
+              label={t("onb.nameLabel")}
+              placeholder={t("onb.namePlaceholder")}
               value={name}
               onChange={(e) => setName(e.target.value)}
               autoFocus
@@ -97,17 +100,17 @@ export const Onboarding: React.FC = () => {
         {current === 1 && (
           <div className="flex flex-col gap-2">
             <h2 className="text-lg font-semibold text-[var(--color-text)] tracking-tight">
-              What&apos;s your goal?
+              {t("onb.goalHeading")}
             </h2>
-            <div role="radiogroup" aria-label="Goal" className="flex flex-col gap-3">
+            <div role="radiogroup" aria-label={t("onb.goal")} className="flex flex-col gap-3">
               {GOALS.map((g) => (
                 <RadioCard
                   key={g.value}
                   selected={goal === g.value}
                   onSelect={() => setGoal(g.value)}
                   icon={g.icon}
-                  title={g.title}
-                  description={g.description}
+                  title={t(g.titleKey)}
+                  description={t(g.descKey)}
                 />
               ))}
             </div>
@@ -117,10 +120,10 @@ export const Onboarding: React.FC = () => {
         {current === 2 && (
           <div className="flex flex-col gap-2">
             <h2 className="text-lg font-semibold text-[var(--color-text)] tracking-tight">
-              What&apos;s your target band?
+              {t("onb.targetHeading")}
             </h2>
             <Slider
-              label="Target band"
+              label={t("onb.targetLabel")}
               min={4.0}
               max={9.0}
               step={0.5}
@@ -142,10 +145,10 @@ export const Onboarding: React.FC = () => {
             onClick={back}
             disabled={current === 0 || submitting}
           >
-            Back
+            {t("common.back")}
           </Button>
           <Button onClick={next} disabled={!stepValid || submitting} loading={submitting}>
-            {isLast ? "Start placement" : "Next"}
+            {isLast ? t("onb.startPlacement") : t("common.next")}
           </Button>
         </div>
       </Card>

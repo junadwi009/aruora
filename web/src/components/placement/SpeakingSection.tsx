@@ -1,6 +1,7 @@
 import React from "react";
 import { Card, Textarea } from "../ui";
 import { Recorder } from "../speaking/Recorder";
+import { useT } from "../../lib/i18n";
 
 interface SpeakingPart2Cue {
   cue: string;
@@ -24,13 +25,14 @@ export const SpeakingSection: React.FC<SpeakingSectionProps> = ({
   value,
   setValue,
 }) => {
+  const { t } = useT();
   return (
     <div className="flex flex-col gap-7 max-w-2xl">
       {/* Part 1 */}
       {section.part1.length > 0 && (
         <div className="flex flex-col gap-3">
           <h2 className="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">
-            Part 1 — Introduction &amp; Interview
+            {t("place.speakingPart1")}
           </h2>
           <ol className="flex flex-col gap-2">
             {section.part1.map((q, i) => (
@@ -51,7 +53,7 @@ export const SpeakingSection: React.FC<SpeakingSectionProps> = ({
       {section.part2?.cue && (
         <div className="flex flex-col gap-3">
           <h2 className="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">
-            Part 2 — Individual Long Turn
+            {t("place.speakingPart2")}
           </h2>
           <Card variant="stat" className="text-sm text-[var(--color-text)] leading-relaxed border-l-4 border-l-[var(--color-primary-600)]">
             {section.part2.cue}
@@ -63,7 +65,7 @@ export const SpeakingSection: React.FC<SpeakingSectionProps> = ({
       {section.part3.length > 0 && (
         <div className="flex flex-col gap-3">
           <h2 className="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">
-            Part 3 — Two-way Discussion
+            {t("place.speakingPart3")}
           </h2>
           <ol className="flex flex-col gap-2">
             {section.part3.map((q, i) => (
@@ -88,14 +90,14 @@ export const SpeakingSection: React.FC<SpeakingSectionProps> = ({
       {/* Transcript (recorded above, or typed) — editable */}
       <div className="flex flex-col gap-2">
         <p className="text-xs font-semibold text-[var(--color-primary-600)] uppercase tracking-widest">
-          Your response (transcript)
+          {t("place.yourResponseTranscript")}
         </p>
         <Textarea
-          label="Record above, or type what you would say — covering all three parts"
+          label={t("place.speakingTextareaLabel")}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           rows={8}
-          placeholder="Record your spoken responses, or type them here…"
+          placeholder={t("place.speakingTextareaPlaceholder")}
         />
       </div>
     </div>

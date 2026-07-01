@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { QuizNavigator } from "../ui";
+import { useT } from "../../lib/i18n";
 import type { PlacementItem } from "../../lib/types";
 
 interface ReadingSectionData {
@@ -21,6 +22,7 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({
   answers,
   setAnswer,
 }) => {
+  const { t } = useT();
   const [currentQ, setCurrentQ] = useState(0);
 
   const statuses = items.map((item) =>
@@ -37,7 +39,7 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({
           {section.title}
         </h2>
         <div
-          aria-label="Reading passage"
+          aria-label={t("place.readingPassage")}
           className="text-[18px] leading-[1.7] max-w-[66ch] text-[var(--color-text)]"
           style={{ fontFamily: "var(--font-reading)" }}
         >
@@ -52,7 +54,7 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({
       {/* Right pane: questions */}
       <div className="flex flex-col gap-4">
         <h2 className="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">
-          Questions
+          {t("place.questions")}
         </h2>
 
         {items.length > 0 && (
@@ -84,7 +86,7 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({
 
                 {hasOptions ? (
                   <fieldset>
-                    <legend className="sr-only">Question {qi + 1}</legend>
+                    <legend className="sr-only">{t("place.question")} {qi + 1}</legend>
                     <div className="flex flex-col gap-2">
                       {payload.options!.map((opt) => (
                         <label
@@ -115,14 +117,14 @@ export const ReadingSection: React.FC<ReadingSectionProps> = ({
                 ) : (
                   <input
                     type="text"
-                    aria-label={`Answer for question ${qi + 1}`}
+                    aria-label={`${t("place.answerForQuestion")} ${qi + 1}`}
                     value={answers[item.id] ?? ""}
                     onChange={(e) => {
                       setAnswer(item.id, e.target.value);
                       setCurrentQ(qi);
                     }}
                     className="min-h-11 px-3 py-2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] text-sm text-[var(--color-text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-600)]"
-                    placeholder="Your answer"
+                    placeholder={t("place.yourAnswer")}
                   />
                 )}
               </div>

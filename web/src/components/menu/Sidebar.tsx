@@ -47,7 +47,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ levels }) => {
 
   return (
     <nav
-      aria-label="Main navigation"
+      aria-label={t("menu.mainNav")}
       className="flex flex-col h-full w-64 bg-[var(--color-surface)] border-r border-[var(--color-border)] py-4"
       style={{ boxShadow: "var(--shadow-e1)" }}
     >

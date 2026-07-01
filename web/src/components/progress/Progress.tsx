@@ -20,6 +20,7 @@ import type { CefrBand } from "../ui/LevelChip";
 import { useView } from "../menu/viewContext";
 import { FeedbackView } from "../writing/Writing";
 import { SpeakingFeedback } from "../speaking/Speaking";
+import { useT } from "../../lib/i18n";
 
 function fmtDate(iso: string | null): string {
   if (!iso) return "";
@@ -49,6 +50,7 @@ function buildChartData(trends: Trends) {
 
 export const Progress: React.FC = () => {
   const { setView } = useView();
+  const { t } = useT();
   const [loading, setLoading] = useState(true);
   const [trends, setTrends] = useState<Trends>({ writing: [], speaking: [] });
   const [history, setHistory] = useState<AttemptSummary[]>([]);
@@ -97,12 +99,12 @@ export const Progress: React.FC = () => {
         className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 py-3 z-10"
         style={{ boxShadow: "var(--shadow-e1)" }}
       >
-        <h1 className="text-base font-semibold text-[var(--color-text)] tracking-tight">Progress</h1>
+        <h1 className="text-base font-semibold text-[var(--color-text)] tracking-tight">{t("nav.progress")}</h1>
       </div>
 
       <div className="p-4 md:p-6 max-w-2xl mx-auto flex flex-col gap-4">
         {loading ? (
-          <Card className="py-12 text-center text-sm text-[var(--color-muted)]">Loading your history…</Card>
+          <Card className="py-12 text-center text-sm text-[var(--color-muted)]">{t("prog.loadingHistory")}</Card>
         ) : !hasData ? (
           <Card className="flex flex-col items-center gap-5 py-12 text-center">
             <div
@@ -113,13 +115,12 @@ export const Progress: React.FC = () => {
               <TrendingUp size={26} className="text-[var(--color-primary-600)]" />
             </div>
             <div className="flex flex-col gap-2">
-              <p className="text-base font-semibold text-[var(--color-text)]">No attempts yet</p>
+              <p className="text-base font-semibold text-[var(--color-text)]">{t("prog.noAttempts")}</p>
               <p className="text-sm text-[var(--color-muted)] max-w-xs leading-relaxed">
-                Your Writing and Speaking history, band trends, and analytics will appear here once you
-                complete your first practice session.
+                {t("prog.noAttemptsBody")}
               </p>
             </div>
-            <Button onClick={() => setView("writing")}>Start practising</Button>
+            <Button onClick={() => setView("writing")}>{t("prog.startPractising")}</Button>
           </Card>
         ) : (
           <>
@@ -128,9 +129,9 @@ export const Progress: React.FC = () => {
             <Card>
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">
-                  Band trend
+                  {t("prog.bandTrend")}
                 </p>
-                <span className="text-[11px] text-[var(--color-muted)]">estimates</span>
+                <span className="text-[11px] text-[var(--color-muted)]">{t("prog.estimates")}</span>
               </div>
               <div className="h-64" aria-hidden="true">
                 <ResponsiveContainer width="100%" height="100%">
@@ -140,18 +141,18 @@ export const Progress: React.FC = () => {
                     <YAxis domain={[0, 9]} ticks={[0, 3, 5, 6, 7, 9]} tick={{ fontSize: 11 }} stroke="var(--color-muted)" />
                     <Tooltip />
                     <Legend />
-                    <Line type="monotone" dataKey="writing" name="Writing" stroke="var(--color-primary-600)" connectNulls dot />
-                    <Line type="monotone" dataKey="speaking" name="Speaking" stroke="#0d9488" connectNulls dot />
-                    <Line type="monotone" dataKey="reading" name="Reading" stroke="#d97706" connectNulls dot />
-                    <Line type="monotone" dataKey="listening" name="Listening" stroke="#7c3aed" connectNulls dot />
+                    <Line type="monotone" dataKey="writing" name={t("nav.writing")} stroke="var(--color-primary-600)" connectNulls dot />
+                    <Line type="monotone" dataKey="speaking" name={t("nav.speaking")} stroke="#0d9488" connectNulls dot />
+                    <Line type="monotone" dataKey="reading" name={t("nav.reading")} stroke="#d97706" connectNulls dot />
+                    <Line type="monotone" dataKey="listening" name={t("nav.listening")} stroke="#7c3aed" connectNulls dot />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
               {/* a11y data table mirror */}
               <table className="sr-only">
-                <caption>Band estimates over time</caption>
+                <caption>{t("prog.bandEstimatesOverTime")}</caption>
                 <thead>
-                  <tr><th>Date</th><th>Writing</th><th>Speaking</th><th>Reading</th><th>Listening</th></tr>
+                  <tr><th>{t("prog.date")}</th><th>{t("nav.writing")}</th><th>{t("nav.speaking")}</th><th>{t("nav.reading")}</th><th>{t("nav.listening")}</th></tr>
                 </thead>
                 <tbody>
                   {chartData.map((r, i) => (
@@ -172,7 +173,7 @@ export const Progress: React.FC = () => {
             {mocks.length > 0 && (
               <Card>
                 <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-2">
-                  Mock tests
+                  {t("prog.mockTests")}
                 </p>
                 <ul className="flex flex-col divide-y divide-[var(--color-border)]">
                   {mocks.map((m) => (
@@ -193,7 +194,7 @@ export const Progress: React.FC = () => {
             {history.length > 0 && (
             <Card>
               <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-2">
-                History
+                {t("prog.history")}
               </p>
               <ul className="flex flex-col divide-y divide-[var(--color-border)]">
                 {history.map((a) => (
@@ -230,10 +231,10 @@ export const Progress: React.FC = () => {
       <Dialog
         open={detail !== null || detailLoading}
         onClose={() => setDetail(null)}
-        title={detail ? `${detail.type === "writing" ? "Writing" : "Speaking"} feedback` : "Loading…"}
+        title={detail ? `${detail.type === "writing" ? t("nav.writing") : t("nav.speaking")} ${t("prog.feedback")}` : t("common.loading")}
       >
         <div className="max-h-[70vh] overflow-y-auto">
-          {detailLoading && <p className="text-sm text-[var(--color-muted)]">Loading…</p>}
+          {detailLoading && <p className="text-sm text-[var(--color-muted)]">{t("common.loading")}</p>}
           {detail && detail.type === "writing" && <FeedbackView result={detail as WritingEval} />}
           {detail && detail.type === "speaking" && <SpeakingFeedback result={detail as SpeakingEval} />}
         </div>

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { QuizNavigator } from "../ui";
 import { Play } from "lucide-react";
+import { useT } from "../../lib/i18n";
 import type { PlacementItem } from "../../lib/types";
 
 interface ListeningClip {
@@ -26,6 +27,7 @@ export const ListeningSection: React.FC<ListeningSectionProps> = ({
   answers,
   setAnswer,
 }) => {
+  const { t } = useT();
   const [played, setPlayed] = useState<Set<number>>(new Set());
   const [currentQ, setCurrentQ] = useState(0);
 
@@ -51,11 +53,11 @@ export const ListeningSection: React.FC<ListeningSectionProps> = ({
       {/* Audio clips */}
       <div className="flex flex-col gap-3">
         <h2 className="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">
-          Audio Clips
+          {t("place.audioClips")}
         </h2>
         {!hasSpeechSynthesis && (
           <p className="text-sm text-[var(--color-muted)] italic">
-            Speech synthesis is not available in this environment. Read the questions below.
+            {t("place.noSpeechSynthesis")}
           </p>
         )}
         {section.clips.map((clip, i) => (
@@ -69,7 +71,7 @@ export const ListeningSection: React.FC<ListeningSectionProps> = ({
               type="button"
               onClick={() => playClip(i)}
               disabled={played.has(i) || !hasSpeechSynthesis}
-              aria-label={`Play clip: ${clip.title}`}
+              aria-label={`${t("place.playClip")}: ${clip.title}`}
               className={[
                 "inline-flex items-center justify-center w-10 h-10 rounded-full shrink-0 transition-[background-color,box-shadow,transform]",
                 "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-600)]",
@@ -83,7 +85,7 @@ export const ListeningSection: React.FC<ListeningSectionProps> = ({
             <div className="flex flex-col min-w-0">
               <span className="text-sm font-medium text-[var(--color-text)] truncate">{clip.title}</span>
               <span className="text-xs text-[var(--color-muted)]">
-                {played.has(i) ? "Played" : "Tap to play once"}
+                {played.has(i) ? t("place.played") : t("place.tapToPlayOnce")}
               </span>
             </div>
           </div>
@@ -121,7 +123,7 @@ export const ListeningSection: React.FC<ListeningSectionProps> = ({
 
               {hasOptions ? (
                 <fieldset>
-                  <legend className="sr-only">Question {qi + 1}</legend>
+                  <legend className="sr-only">{t("place.question")} {qi + 1}</legend>
                   <div className="flex flex-col gap-2">
                     {payload.options!.map((opt) => (
                       <label
@@ -152,14 +154,14 @@ export const ListeningSection: React.FC<ListeningSectionProps> = ({
               ) : (
                 <input
                   type="text"
-                  aria-label={`Answer for question ${qi + 1}`}
+                  aria-label={`${t("place.answerForQuestion")} ${qi + 1}`}
                   value={answers[item.id] ?? ""}
                   onChange={(e) => {
                     setAnswer(item.id, e.target.value);
                     setCurrentQ(qi);
                   }}
                   className="min-h-11 px-3 py-2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] text-sm text-[var(--color-text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-600)]"
-                  placeholder="Your answer"
+                  placeholder={t("place.yourAnswer")}
                 />
               )}
             </div>

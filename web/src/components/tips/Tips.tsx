@@ -2,16 +2,17 @@ import React, { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { api } from "../../lib/api/client";
 import type { Tips as TipsData } from "../../lib/types";
+import { useT } from "../../lib/i18n";
 import { Card } from "../ui/Card";
 
 const SKILLS = ["reading", "listening", "writing", "speaking"] as const;
 type Skill = (typeof SKILLS)[number];
 
-const SKILL_LABELS: Record<Skill, string> = {
-  reading: "Reading",
-  listening: "Listening",
-  writing: "Writing",
-  speaking: "Speaking",
+const SKILL_LABEL_KEYS: Record<Skill, string> = {
+  reading: "nav.reading",
+  listening: "nav.listening",
+  writing: "nav.writing",
+  speaking: "nav.speaking",
 };
 
 interface AccordionState {
@@ -22,6 +23,7 @@ interface AccordionState {
 }
 
 export const Tips: React.FC = () => {
+  const { t } = useT();
   const [sections, setSections] = useState<Record<Skill, AccordionState>>(() =>
     Object.fromEntries(
       SKILLS.map((s) => [s, { open: false, data: null, loading: false, error: null }])
@@ -52,7 +54,7 @@ export const Tips: React.FC = () => {
             [skill]: {
               ...prev[skill],
               loading: false,
-              error: e instanceof Error ? e.message : "Failed to load",
+              error: e instanceof Error ? e.message : t("tips.loadError"),
             },
           }));
         });
@@ -69,7 +71,7 @@ export const Tips: React.FC = () => {
       <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 md:px-6 py-3 z-10"
         style={{ boxShadow: "var(--shadow-e1)" }}
       >
-        <h1 className="text-base font-semibold text-[var(--color-text)] tracking-tight">Tips</h1>
+        <h1 className="text-base font-semibold text-[var(--color-text)] tracking-tight">{t("nav.tips")}</h1>
       </div>
 
       <div className="p-4 md:p-6 max-w-2xl flex flex-col gap-3">
@@ -94,7 +96,7 @@ export const Tips: React.FC = () => {
                   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-600)]",
                 ].join(" ")}
               >
-                <span>{SKILL_LABELS[skill]}</span>
+                <span>{t(SKILL_LABEL_KEYS[skill])}</span>
                 <ChevronDown
                   size={16}
                   aria-hidden="true"
@@ -114,7 +116,7 @@ export const Tips: React.FC = () => {
                   className="px-5 pb-5 border-t border-[var(--color-border)]"
                 >
                   {section.loading && (
-                    <p className="text-xs text-[var(--color-muted)] pt-4">Loading…</p>
+                    <p className="text-xs text-[var(--color-muted)] pt-4">{t("common.loading")}</p>
                   )}
                   {section.error && (
                     <p className="text-xs text-[var(--color-danger)] pt-4">{section.error}</p>

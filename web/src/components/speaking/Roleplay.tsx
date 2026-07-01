@@ -6,17 +6,19 @@ import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { Recorder } from "./Recorder";
 import { SpeakingFeedback } from "./Speaking";
+import { useT } from "../../lib/i18n";
 
 type Msg = { role: "assistant" | "user"; text: string };
 
-const SCENARIOS: { name: string; opener: string }[] = [
-  { name: "Hometown chat", opener: "Hi! Let's talk about where you're from. Where is your hometown, and what's it like?" },
-  { name: "Job interview", opener: "Welcome. Thanks for coming in. To start, could you tell me a little about yourself?" },
-  { name: "Coffee shop", opener: "Hi there! What can I get for you today — and is this your usual order?" },
-  { name: "Travel plans", opener: "So, I heard you're planning a trip! Where are you thinking of going, and why there?" },
+const SCENARIOS: { name: string; labelKey: string; opener: string }[] = [
+  { name: "Hometown chat", labelKey: "roleplay.scenario.hometown", opener: "Hi! Let's talk about where you're from. Where is your hometown, and what's it like?" },
+  { name: "Job interview", labelKey: "roleplay.scenario.jobInterview", opener: "Welcome. Thanks for coming in. To start, could you tell me a little about yourself?" },
+  { name: "Coffee shop", labelKey: "roleplay.scenario.coffeeShop", opener: "Hi there! What can I get for you today — and is this your usual order?" },
+  { name: "Travel plans", labelKey: "roleplay.scenario.travelPlans", opener: "So, I heard you're planning a trip! Where are you thinking of going, and why there?" },
 ];
 
 export const Roleplay: React.FC = () => {
+  const { t } = useT();
   const [scenario, setScenario] = useState<string | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -41,7 +43,7 @@ export const Roleplay: React.FC = () => {
       const r = await api.speakingRoleplay({ scenario, history, userText: text });
       setMessages((m) => [...m, { role: "assistant", text: r.reply }]);
     } catch {
-      setMessages((m) => [...m, { role: "assistant", text: "(Sorry, I didn't catch that — could you say it again?)" }]);
+      setMessages((m) => [...m, { role: "assistant", text: t("roleplay.didntCatch") }]);
     } finally {
       setBusy(false);
     }
@@ -63,16 +65,16 @@ export const Roleplay: React.FC = () => {
     <main className="flex-1 overflow-y-auto">
       <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 py-3 z-10 flex items-center gap-2">
         <MessagesSquare size={18} className="text-[var(--color-primary-600)]" aria-hidden="true" />
-        <h1 className="text-base font-semibold text-[var(--color-text)]">Speaking roleplay</h1>
+        <h1 className="text-base font-semibold text-[var(--color-text)]">{t("roleplay.title")}</h1>
       </div>
 
       <div className="p-4 md:p-6 max-w-2xl mx-auto flex flex-col gap-4">
         {!scenario ? (
           <Card className="flex flex-col gap-3">
-            <p className="text-sm text-[var(--color-text)]">Pick a scenario to practise a real conversation. Speak or type your replies; finish to get examiner-style feedback.</p>
+            <p className="text-sm text-[var(--color-text)]">{t("roleplay.pickScenario")}</p>
             <div className="grid grid-cols-2 gap-2">
               {SCENARIOS.map((s) => (
-                <Button key={s.name} variant="secondary" onClick={() => start(s.name, s.opener)}>{s.name}</Button>
+                <Button key={s.name} variant="secondary" onClick={() => start(s.name, s.opener)}>{t(s.labelKey)}</Button>
               ))}
             </div>
           </Card>
@@ -80,7 +82,7 @@ export const Roleplay: React.FC = () => {
           <>
             <SpeakingFeedback result={feedback} />
             <Button variant="secondary" onClick={() => { setScenario(null); setMessages([]); setFeedback(null); }}>
-              ↩ New conversation
+              ↩ {t("roleplay.newConversation")}
             </Button>
           </>
         ) : (
@@ -105,15 +107,15 @@ export const Roleplay: React.FC = () => {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && send()}
-                placeholder="Type or record your reply…"
-                aria-label="Your reply"
+                placeholder={t("roleplay.replyPlaceholder")}
+                aria-label={t("roleplay.yourReply")}
                 className="flex-1 min-h-11 px-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] text-sm text-[var(--color-text)]"
               />
-              <Button onClick={send} disabled={!input.trim() || busy} aria-label="Send"><Send size={16} /></Button>
+              <Button onClick={send} disabled={!input.trim() || busy} aria-label={t("roleplay.send")}><Send size={16} /></Button>
             </div>
 
             <Button variant="ghost" size="sm" onClick={endConversation} loading={scoring} className="self-end">
-              End & get feedback
+              {t("roleplay.endGetFeedback")}
             </Button>
           </>
         )}

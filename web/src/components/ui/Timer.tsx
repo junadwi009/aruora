@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Clock } from "lucide-react";
+import { useT } from "../../lib/i18n";
 
 export interface TimerProps {
   seconds: number;
@@ -18,6 +19,7 @@ export const Timer: React.FC<TimerProps> = ({
   onExpire,
   running = true,
 }) => {
+  const { t } = useT();
   const [remaining, setRemaining] = useState(seconds);
   const expiredCalled = useRef(false);
 
@@ -58,11 +60,11 @@ export const Timer: React.FC<TimerProps> = ({
       }`}
     >
       <Clock size={14} aria-hidden="true" />
-      <span aria-live="polite" aria-label={`${remaining} seconds remaining`}>
+      <span aria-live="polite" aria-label={t("timer.remaining")}>
         {formatTime(remaining)}
       </span>
       {isLow && remaining > 0 && (
-        <span className="text-xs font-sans">time low</span>
+        <span className="text-xs font-sans">{t("timer.timeLow")}</span>
       )}
     </div>
   );

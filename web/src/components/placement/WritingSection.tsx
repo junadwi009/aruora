@@ -1,5 +1,6 @@
 import React from "react";
 import { Card, Textarea } from "../ui";
+import { useT } from "../../lib/i18n";
 
 interface WritingSectionData {
   seconds: number;
@@ -23,6 +24,7 @@ export const WritingSection: React.FC<WritingSectionProps> = ({
   value,
   setValue,
 }) => {
+  const { t } = useT();
   const wordCount = countWords(value);
 
   const metTarget = wordCount >= section.targetWords;
@@ -33,7 +35,7 @@ export const WritingSection: React.FC<WritingSectionProps> = ({
       <Card className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
           <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]">
-            {section.taskType === "task1" ? "Task 1" : "Task 2"}
+            {section.taskType === "task1" ? t("place.task1") : t("place.task2")}
           </span>
           {/* Word count chip */}
           <span
@@ -44,7 +46,7 @@ export const WritingSection: React.FC<WritingSectionProps> = ({
                 : "bg-[var(--color-surface-2)] text-[var(--color-muted)]",
             ].join(" ")}
           >
-            {wordCount} / {section.targetWords} words
+            {wordCount} / {section.targetWords} {t("place.words")}
           </span>
         </div>
         <p className="text-sm text-[var(--color-text)] leading-relaxed">
@@ -53,13 +55,13 @@ export const WritingSection: React.FC<WritingSectionProps> = ({
       </Card>
 
       <Textarea
-        label="Your response"
+        label={t("place.yourResponse")}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         wordCount={wordCount}
         targetWords={section.targetWords}
         rows={14}
-        placeholder="Write your response here…"
+        placeholder={t("place.writeResponsePlaceholder")}
       />
     </div>
   );

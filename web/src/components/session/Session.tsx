@@ -5,18 +5,20 @@ import type { Lesson, LessonToday, LessonExercise } from "../../lib/types";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { useView } from "../menu/viewContext";
+import { useT } from "../../lib/i18n";
 
 type Stage = "teach" | "exercises" | "produce" | "review";
 const STAGES: Stage[] = ["teach", "exercises", "produce", "review"];
-const STAGE_LABEL: Record<Stage, string> = {
-  teach: "Learn",
-  exercises: "Practice",
-  produce: "Produce",
-  review: "Review",
+const STAGE_LABEL_KEY: Record<Stage, string> = {
+  teach: "session.stageLearn",
+  exercises: "session.stagePractice",
+  produce: "session.stageProduce",
+  review: "session.stageReview",
 };
 
 export const Session: React.FC = () => {
   const { goWithPrefill, setView } = useView();
+  const { t } = useT();
   const [meta, setMeta] = useState<LessonToday | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -28,7 +30,7 @@ export const Session: React.FC = () => {
     api
       .lessonToday()
       .then((m) => !cancelled && setMeta(m))
-      .catch(() => !cancelled && setError("Could not load today's session."))
+      .catch(() => !cancelled && setError(t("session.loadError")))
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
@@ -44,7 +46,7 @@ export const Session: React.FC = () => {
       setMeta(m);
       setStage("teach");
     } catch {
-      setError("Generation failed. Please try again.");
+      setError(t("session.generateError"));
     } finally {
       setGenerating(false);
     }
@@ -58,29 +60,29 @@ export const Session: React.FC = () => {
         <div className="flex items-center gap-2">
           <GraduationCap size={18} className="text-[var(--color-primary-600)]" aria-hidden="true" />
           <h1 className="text-base font-semibold text-[var(--color-text)]">
-            Guided session{meta ? ` · Day ${meta.day}` : ""}
+            {t("session.guidedSession")}{meta ? ` · ${t("session.day")} ${meta.day}` : ""}
           </h1>
         </div>
         {lesson && (
-          <Button variant="ghost" size="sm" onClick={() => generate(true)} loading={generating} aria-label="Regenerate lesson">
-            <RefreshCw size={14} className="mr-1" /> Regenerate
+          <Button variant="ghost" size="sm" onClick={() => generate(true)} loading={generating} aria-label={t("session.regenerateLesson")}>
+            <RefreshCw size={14} className="mr-1" /> {t("session.regenerate")}
           </Button>
         )}
       </div>
 
       <div className="p-4 md:p-6 max-w-2xl mx-auto flex flex-col gap-4">
-        {loading && <Card className="py-12 text-center text-sm text-[var(--color-muted)]">Loading…</Card>}
+        {loading && <Card className="py-12 text-center text-sm text-[var(--color-muted)]">{t("common.loading")}</Card>}
 
         {!loading && error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
 
         {!loading && !lesson && (
           <Card className="flex flex-col items-center gap-4 py-10 text-center">
-            <p className="text-base font-semibold text-[var(--color-text)]">Today's focus: {meta?.focus}</p>
+            <p className="text-base font-semibold text-[var(--color-text)]">{t("session.todaysFocus")}: {meta?.focus}</p>
             <p className="text-sm text-[var(--color-muted)] max-w-xs">
-              A short Teach → Practice → Produce → Review session, generated for your current level.
+              {t("session.introBody")}
             </p>
             <Button onClick={() => generate(false)} loading={generating}>
-              {generating ? "Generating…" : "Generate today's lesson"}
+              {generating ? t("session.generating") : t("session.generateLesson")}
             </Button>
           </Card>
         )}
@@ -89,9 +91,9 @@ export const Session: React.FC = () => {
           <>
             {/* Goal + stage stepper */}
             <Card variant="stat">
-              <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-1">Goal</p>
+              <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-1">{t("session.goal")}</p>
               <p className="text-sm text-[var(--color-text)]">{lesson.goal}</p>
-              <div className="flex gap-1.5 mt-3" role="tablist" aria-label="Session stages">
+              <div className="flex gap-1.5 mt-3" role="tablist" aria-label={t("session.stages")}>
                 {STAGES.map((s) => (
                   <button
                     key={s}
@@ -105,7 +107,7 @@ export const Session: React.FC = () => {
                         : "bg-[var(--color-surface-2)] text-[var(--color-muted)]",
                     ].join(" ")}
                   >
-                    {STAGE_LABEL[s]}
+                    {t(STAGE_LABEL_KEY[s])}
                   </button>
                 ))}
               </div>
@@ -131,9 +133,11 @@ export const Session: React.FC = () => {
 };
 
 // ── Teach ────────────────────────────────────────────────────────────────────
-const Teach: React.FC<{ lesson: Lesson; onNext: () => void }> = ({ lesson, onNext }) => (
+const Teach: React.FC<{ lesson: Lesson; onNext: () => void }> = ({ lesson, onNext }) => {
+  const { t } = useT();
+  return (
   <Card className="flex flex-col gap-3">
-    <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">Learn</p>
+    <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("session.stageLearn")}</p>
     <p className="text-sm text-[var(--color-text)] leading-relaxed whitespace-pre-wrap">
       {lesson.teach.explanation}
     </p>
@@ -147,22 +151,26 @@ const Teach: React.FC<{ lesson: Lesson; onNext: () => void }> = ({ lesson, onNex
       </ul>
     )}
     <Button className="self-end mt-2" onClick={onNext}>
-      Practice <ArrowRight size={14} className="ml-1" />
+      {t("session.stagePractice")} <ArrowRight size={14} className="ml-1" />
     </Button>
   </Card>
-);
+  );
+};
 
 // ── Exercises (auto-checked, immediate feedback) ──────────────────────────────
-const Exercises: React.FC<{ lesson: Lesson; onNext: () => void }> = ({ lesson, onNext }) => (
+const Exercises: React.FC<{ lesson: Lesson; onNext: () => void }> = ({ lesson, onNext }) => {
+  const { t } = useT();
+  return (
   <div className="flex flex-col gap-4">
     {lesson.exercises.map((ex, i) => (
       <ExerciseBlock key={i} exercise={ex} />
     ))}
     <Button className="self-end" onClick={onNext}>
-      Produce <ArrowRight size={14} className="ml-1" />
+      {t("session.stageProduce")} <ArrowRight size={14} className="ml-1" />
     </Button>
   </div>
-);
+  );
+};
 
 const ExerciseBlock: React.FC<{ exercise: LessonExercise }> = ({ exercise }) => (
   <Card className="flex flex-col gap-3">
@@ -178,6 +186,7 @@ const ExerciseItem: React.FC<{ prompt: string; answer: string; feedback?: string
   answer,
   feedback,
 }) => {
+  const { t } = useT();
   const [value, setValue] = useState("");
   const [checked, setChecked] = useState(false);
   const correct = value.trim().toLowerCase() === answer.trim().toLowerCase();
@@ -193,11 +202,11 @@ const ExerciseItem: React.FC<{ prompt: string; answer: string; feedback?: string
             setChecked(false);
           }}
           className="flex-1 min-h-10 px-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] text-sm text-[var(--color-text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-600)]"
-          placeholder="Your answer…"
-          aria-label="Your answer"
+          placeholder={t("session.yourAnswer")}
+          aria-label={t("session.yourAnswerLabel")}
         />
         <Button variant="secondary" size="sm" onClick={() => setChecked(true)} disabled={!value.trim()}>
-          Check
+          {t("session.check")}
         </Button>
       </div>
       {checked && (
@@ -208,7 +217,7 @@ const ExerciseItem: React.FC<{ prompt: string; answer: string; feedback?: string
           role="status"
         >
           {correct ? <Check size={14} className="mt-0.5" /> : <X size={14} className="mt-0.5" />}
-          {correct ? "Correct!" : `Answer: ${answer}. ${feedback ?? ""}`}
+          {correct ? t("session.correct") : `${t("session.answer")}: ${answer}. ${feedback ?? ""}`}
         </p>
       )}
     </div>
@@ -220,9 +229,11 @@ const Produce: React.FC<{ lesson: Lesson; onOpenSkill: () => void; onNext: () =>
   lesson,
   onOpenSkill,
   onNext,
-}) => (
+}) => {
+  const { t } = useT();
+  return (
   <Card className="flex flex-col gap-3">
-    <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">Produce</p>
+    <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("session.stageProduce")}</p>
     <p className="text-sm text-[var(--color-text)] leading-relaxed">{lesson.produce.instruction}</p>
     {lesson.produce.prefill && (
       <p className="text-sm text-[var(--color-muted)] italic pl-3 border-l-2 border-[var(--color-border)]">
@@ -231,19 +242,22 @@ const Produce: React.FC<{ lesson: Lesson; onOpenSkill: () => void; onNext: () =>
     )}
     <div className="flex gap-2 justify-end">
       <Button variant="ghost" size="sm" onClick={onNext}>
-        Skip to review
+        {t("session.skipToReview")}
       </Button>
       <Button onClick={onOpenSkill} className="capitalize">
-        Open {lesson.skill} <ArrowRight size={14} className="ml-1" />
+        {t("session.open")} {lesson.skill} <ArrowRight size={14} className="ml-1" />
       </Button>
     </div>
   </Card>
-);
+  );
+};
 
 // ── Review (collocations + tip) ───────────────────────────────────────────────
-const Review: React.FC<{ lesson: Lesson; onDone: () => void }> = ({ lesson, onDone }) => (
+const Review: React.FC<{ lesson: Lesson; onDone: () => void }> = ({ lesson, onDone }) => {
+  const { t } = useT();
+  return (
   <Card className="flex flex-col gap-3">
-    <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">Review — keep these</p>
+    <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("session.reviewKeep")}</p>
     <ul className="flex flex-wrap gap-2">
       {lesson.review.collocations.map((c, i) => (
         <li
@@ -258,7 +272,8 @@ const Review: React.FC<{ lesson: Lesson; onDone: () => void }> = ({ lesson, onDo
       <p className="text-sm text-[var(--color-text)] mt-1">💡 {lesson.review.tip}</p>
     )}
     <Button className="self-end mt-2" onClick={onDone}>
-      Finish
+      {t("session.finish")}
     </Button>
   </Card>
-);
+  );
+};

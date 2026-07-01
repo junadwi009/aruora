@@ -3,6 +3,7 @@ import { Mic, Square, Loader2, AlertCircle } from "lucide-react";
 import { api } from "../../lib/api/client";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
+import { useT } from "../../lib/i18n";
 
 interface RecorderProps {
   /** Called with the transcribed text once ASR returns. */
@@ -19,6 +20,7 @@ const supportsRecording = () =>
   typeof window.MediaRecorder !== "undefined";
 
 export const Recorder: React.FC<RecorderProps> = ({ onTranscript, disabled }) => {
+  const { t } = useT();
   const [state, setState] = useState<State>("checking");
   const [error, setError] = useState<string | null>(null);
   const [elapsed, setElapsed] = useState(0);
@@ -78,7 +80,7 @@ export const Recorder: React.FC<RecorderProps> = ({ onTranscript, disabled }) =>
       timerRef.current = setInterval(() => setElapsed((s) => s + 1), 1000);
       setState("recording");
     } catch {
-      setError("Microphone access was blocked. You can type your answer instead.");
+      setError(t("rec.micBlocked"));
       setState("error");
     }
   };
@@ -99,10 +101,10 @@ export const Recorder: React.FC<RecorderProps> = ({ onTranscript, disabled }) =>
       const text = (out.transcript || "").trim();
       if (text) onTranscript(text);
       setState("idle");
-      if (!text) setError("No speech was detected. Try recording again, or type your answer.");
+      if (!text) setError(t("rec.noSpeech"));
     } catch (e: unknown) {
       setError(
-        e instanceof Error ? e.message : "Transcription failed. You can type your answer instead."
+        e instanceof Error ? e.message : t("rec.transcribeFailed")
       );
       setState("error");
     }
@@ -120,11 +122,10 @@ export const Recorder: React.FC<RecorderProps> = ({ onTranscript, disabled }) =>
           <AlertCircle size={16} className="mt-0.5 text-[var(--color-muted)]" />
           <div>
             <p className="text-xs font-medium text-[var(--color-text)]">
-              Voice recording unavailable
+              {t("rec.unavailableTitle")}
             </p>
             <p className="text-xs text-[var(--color-muted)]">
-              Speech transcription isn’t enabled on this server (or your browser blocks
-              recording). Type your spoken answer below instead.
+              {t("rec.unavailableBody")}
             </p>
           </div>
         </div>
@@ -137,7 +138,7 @@ export const Recorder: React.FC<RecorderProps> = ({ onTranscript, disabled }) =>
       <div className="flex items-center gap-3">
         {state === "recording" ? (
           <Button variant="destructive" size="sm" onClick={stopRecording} disabled={disabled}>
-            <Square size={14} className="mr-1.5" /> Stop ({mmss})
+            <Square size={14} className="mr-1.5" /> {t("rec.stop")} ({mmss})
           </Button>
         ) : (
           <Button
@@ -149,11 +150,11 @@ export const Recorder: React.FC<RecorderProps> = ({ onTranscript, disabled }) =>
           >
             {state === "transcribing" ? (
               <>
-                <Loader2 size={14} className="mr-1.5 animate-spin" /> Transcribing…
+                <Loader2 size={14} className="mr-1.5 animate-spin" /> {t("rec.transcribing")}
               </>
             ) : (
               <>
-                <Mic size={14} className="mr-1.5" /> Record answer
+                <Mic size={14} className="mr-1.5" /> {t("rec.recordAnswer")}
               </>
             )}
           </Button>
@@ -161,10 +162,10 @@ export const Recorder: React.FC<RecorderProps> = ({ onTranscript, disabled }) =>
 
         <p className="text-xs text-[var(--color-muted)]" aria-live="polite">
           {state === "recording"
-            ? "Recording — speak now, then Stop."
+            ? t("rec.statusRecording")
             : state === "transcribing"
-            ? "Converting your speech to text…"
-            : "Record your answer; the transcript appears below and stays editable."}
+            ? t("rec.statusTranscribing")
+            : t("rec.statusIdle")}
         </p>
       </div>
 

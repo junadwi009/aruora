@@ -23,7 +23,7 @@ export const BottomTabs: React.FC = () => {
 
   return (
     <nav
-      aria-label="Bottom navigation"
+      aria-label={t("menu.bottomNav")}
       className="fixed bottom-0 left-0 right-0 bg-[var(--color-surface)] border-t border-[var(--color-border)] pb-[env(safe-area-inset-bottom)] z-50"
       style={{ boxShadow: "0 -2px 12px -4px rgba(15,23,42,.10)" }}
     >

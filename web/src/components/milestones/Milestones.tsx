@@ -3,25 +3,27 @@ import { useJourney } from "../../lib/journey";
 import { Button } from "../ui/Button";
 import { LevelChip } from "../ui/LevelChip";
 import type { CefrBand } from "../ui/LevelChip";
+import { useT } from "../../lib/i18n";
 
-const SKILL_LABELS: Record<string, string> = {
-  listening: "Listening",
-  reading: "Reading",
-  writing: "Writing",
-  speaking: "Speaking",
+const SKILL_LABEL_KEYS: Record<string, string> = {
+  listening: "nav.listening",
+  reading: "nav.reading",
+  writing: "nav.writing",
+  speaking: "nav.speaking",
 };
 
 export const Milestones: React.FC = () => {
   const { milestones, go } = useJourney();
+  const { t } = useT();
 
   if (!milestones || milestones.length === 0) {
     return (
       <div className="flex min-h-full flex-col items-center justify-center gap-4 p-6">
         <p className="text-[var(--color-muted)]">
-          No milestones found. Please choose a program first.
+          {t("mile.empty")}
         </p>
         <Button variant="secondary" onClick={() => go("program")}>
-          Back to program
+          {t("mile.backToProgram")}
         </Button>
       </div>
     );
@@ -31,10 +33,10 @@ export const Milestones: React.FC = () => {
     <div className="journey-bg flex min-h-full flex-col gap-7 p-6 max-w-lg mx-auto">
       <div className="animate-fade-slide-in flex flex-col gap-2">
         <h1 className="text-2xl font-bold text-[var(--color-text)] tracking-tight">
-          Your milestones
+          {t("mile.title")}
         </h1>
         <p className="text-sm text-[var(--color-muted)] leading-relaxed">
-          Each milestone is a checkpoint — reach the target levels by the day shown.
+          {t("mile.subtitle")}
         </p>
       </div>
 
@@ -72,7 +74,7 @@ export const Milestones: React.FC = () => {
                         className="inline-flex items-center gap-1.5"
                       >
                         <span className="text-xs text-[var(--color-muted)]">
-                          {SKILL_LABELS[skill] ?? skill}
+                          {SKILL_LABEL_KEYS[skill] ? t(SKILL_LABEL_KEYS[skill]) : skill}
                         </span>
                         <LevelChip band={band as CefrBand} />
                       </span>
@@ -91,7 +93,7 @@ export const Milestones: React.FC = () => {
           onClick={() => go("app")}
           className="w-full"
         >
-          Go to my dashboard
+          {t("mile.goToDashboard")}
         </Button>
       </div>
     </div>

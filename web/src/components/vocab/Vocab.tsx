@@ -2,12 +2,14 @@ import React, { useEffect, useState } from "react";
 import { Layers, Plus, RotateCcw } from "lucide-react";
 import { api } from "../../lib/api/client";
 import type { VocabWord, Flashcard, CardStats } from "../../lib/types";
+import { useT } from "../../lib/i18n";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 
 type Mode = "build" | "review";
 
 export const Vocab: React.FC = () => {
+  const { t } = useT();
   const [mode, setMode] = useState<Mode>("build");
   const [stats, setStats] = useState<CardStats>({ total: 0, due: 0 });
 
@@ -19,20 +21,20 @@ export const Vocab: React.FC = () => {
       <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 py-3 z-10 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Layers size={18} className="text-[var(--color-primary-600)]" aria-hidden="true" />
-          <h1 className="text-base font-semibold text-[var(--color-text)]">Vocabulary</h1>
+          <h1 className="text-base font-semibold text-[var(--color-text)]">{t("vocab.title")}</h1>
         </div>
         <div className="flex gap-1.5">
           <Button variant={mode === "build" ? "primary" : "secondary"} size="sm" onClick={() => setMode("build")}>
-            Build
+            {t("vocab.build")}
           </Button>
           <Button variant={mode === "review" ? "primary" : "secondary"} size="sm" onClick={() => { setMode("review"); }}>
-            Review{stats.due > 0 ? ` (${stats.due})` : ""}
+            {t("vocab.review")}{stats.due > 0 ? ` (${stats.due})` : ""}
           </Button>
         </div>
       </div>
 
       <div className="p-4 md:p-6 max-w-2xl mx-auto flex flex-col gap-4">
-        <p className="text-xs text-[var(--color-muted)]">Deck: {stats.total} cards · {stats.due} due</p>
+        <p className="text-xs text-[var(--color-muted)]">{t("vocab.deckLabel")}: {stats.total} {t("vocab.cards")} · {stats.due} {t("vocab.due")}</p>
         {mode === "build" ? <Build onChange={refreshStats} /> : <Review onChange={refreshStats} />}
       </div>
     </main>
@@ -41,6 +43,7 @@ export const Vocab: React.FC = () => {
 
 // ── Build: generate vocab + add to deck ───────────────────────────────────────
 const Build: React.FC<{ onChange: () => void }> = ({ onChange }) => {
+  const { t } = useT();
   const [topic, setTopic] = useState("environment");
   const [words, setWords] = useState<VocabWord[]>([]);
   const [loading, setLoading] = useState(false);
@@ -55,7 +58,7 @@ const Build: React.FC<{ onChange: () => void }> = ({ onChange }) => {
       setWords(r.words ?? []);
       setAdded(new Set());
     } catch {
-      setError("Could not generate vocabulary.");
+      setError(t("vocab.generateError"));
     } finally {
       setLoading(false);
     }
@@ -81,12 +84,12 @@ const Build: React.FC<{ onChange: () => void }> = ({ onChange }) => {
         <input
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
-          placeholder="Topic (e.g. technology)"
-          aria-label="Vocabulary topic"
+          placeholder={t("vocab.topicPlaceholder")}
+          aria-label={t("vocab.topicAria")}
           className="flex-1 min-h-10 px-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] text-sm text-[var(--color-text)]"
         />
         <Button onClick={generate} loading={loading} disabled={!topic.trim()}>
-          Generate
+          {t("vocab.generate")}
         </Button>
       </div>
       {error && <p className="text-xs text-[var(--color-danger)]">{error}</p>}
@@ -94,7 +97,7 @@ const Build: React.FC<{ onChange: () => void }> = ({ onChange }) => {
       {words.length > 0 && (
         <div className="flex justify-end">
           <Button variant="secondary" size="sm" onClick={addAll}>
-            <Plus size={14} className="mr-1" /> Add all
+            <Plus size={14} className="mr-1" /> {t("vocab.addAll")}
           </Button>
         </div>
       )}
@@ -114,9 +117,9 @@ const Build: React.FC<{ onChange: () => void }> = ({ onChange }) => {
               size="sm"
               onClick={() => addOne(w)}
               disabled={added.has(w.word)}
-              aria-label={`Add ${w.word}`}
+              aria-label={`${t("vocab.add")} ${w.word}`}
             >
-              {added.has(w.word) ? "Added" : <Plus size={16} />}
+              {added.has(w.word) ? t("vocab.added") : <Plus size={16} />}
             </Button>
           </Card>
         ))}
@@ -126,14 +129,15 @@ const Build: React.FC<{ onChange: () => void }> = ({ onChange }) => {
 };
 
 // ── Review: SM-2 flip + grade ─────────────────────────────────────────────────
-const GRADES: { label: string; quality: number; variant: "secondary" | "primary" | "destructive" | "ghost" }[] = [
-  { label: "Again", quality: 1, variant: "destructive" },
-  { label: "Hard", quality: 3, variant: "secondary" },
-  { label: "Good", quality: 4, variant: "primary" },
-  { label: "Easy", quality: 5, variant: "ghost" },
+const GRADES: { labelKey: string; quality: number; variant: "secondary" | "primary" | "destructive" | "ghost" }[] = [
+  { labelKey: "vocab.gradeAgain", quality: 1, variant: "destructive" },
+  { labelKey: "vocab.gradeHard", quality: 3, variant: "secondary" },
+  { labelKey: "vocab.gradeGood", quality: 4, variant: "primary" },
+  { labelKey: "vocab.gradeEasy", quality: 5, variant: "ghost" },
 ];
 
 const Review: React.FC<{ onChange: () => void }> = ({ onChange }) => {
+  const { t } = useT();
   const [queue, setQueue] = useState<Flashcard[] | null>(null);
   const [idx, setIdx] = useState(0);
   const [flipped, setFlipped] = useState(false);
@@ -143,15 +147,15 @@ const Review: React.FC<{ onChange: () => void }> = ({ onChange }) => {
   };
   useEffect(() => { load(); }, []);
 
-  if (queue === null) return <Card className="text-sm text-[var(--color-muted)]">Loading…</Card>;
+  if (queue === null) return <Card className="text-sm text-[var(--color-muted)]">{t("common.loading")}</Card>;
 
   if (queue.length === 0 || idx >= queue.length) {
     return (
       <Card className="flex flex-col items-center gap-3 py-10 text-center">
-        <p className="text-base font-semibold text-[var(--color-text)]">All caught up 🎉</p>
-        <p className="text-sm text-[var(--color-muted)]">No cards are due for review right now.</p>
+        <p className="text-base font-semibold text-[var(--color-text)]">{t("vocab.allCaughtUp")} 🎉</p>
+        <p className="text-sm text-[var(--color-muted)]">{t("vocab.noCardsDue")}</p>
         <Button variant="secondary" size="sm" onClick={load}>
-          <RotateCcw size={14} className="mr-1" /> Refresh
+          <RotateCcw size={14} className="mr-1" /> {t("vocab.refresh")}
         </Button>
       </Card>
     );
@@ -168,20 +172,20 @@ const Review: React.FC<{ onChange: () => void }> = ({ onChange }) => {
 
   return (
     <>
-      <p className="text-xs text-[var(--color-muted)] text-center">{idx + 1} of {queue.length}</p>
+      <p className="text-xs text-[var(--color-muted)] text-center">{idx + 1} {t("vocab.of")} {queue.length}</p>
       <Card className="min-h-40 flex flex-col items-center justify-center text-center gap-3 py-8">
         <p className="text-lg font-semibold text-[var(--color-text)]">{card.front}</p>
         {flipped ? (
           <p className="text-sm text-[var(--color-text)] whitespace-pre-wrap">{card.back}</p>
         ) : (
-          <Button variant="secondary" size="sm" onClick={() => setFlipped(true)}>Show answer</Button>
+          <Button variant="secondary" size="sm" onClick={() => setFlipped(true)}>{t("vocab.showAnswer")}</Button>
         )}
       </Card>
       {flipped && (
         <div className="grid grid-cols-4 gap-2">
           {GRADES.map((g) => (
-            <Button key={g.label} variant={g.variant} size="sm" onClick={() => grade(g.quality)}>
-              {g.label}
+            <Button key={g.labelKey} variant={g.variant} size="sm" onClick={() => grade(g.quality)}>
+              {t(g.labelKey)}
             </Button>
           ))}
         </div>
