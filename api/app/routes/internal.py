@@ -24,20 +24,26 @@ def run_reminders():
     if not token or request.headers.get("X-Reminder-Token") != token:
         raise ApiError("UNAUTHORIZED", "Invalid reminder token", 401)
 
+    # Current UTC instant; ?now=<iso> overrides it (for testing / replays).
     now = datetime.now(timezone.utc)
-    hour = int(request.args.get("hour", now.hour))
-    today = request.args.get("today", now.date().isoformat())
+    now_arg = request.args.get("now")
+    if now_arg:
+        now = datetime.fromisoformat(now_arg)
+        if now.tzinfo is None:
+            now = now.replace(tzinfo=timezone.utc)
 
     repo = _repo()
     sent = 0
-    for u in repo.due_reminders(hour, today):
+    # Each due user carries its own local `date` (timezones differ), so mark 'sent'
+    # against that user's calendar day.
+    for u in repo.due_reminders(now, cfg.REMINDER_DEFAULT_TZ):
         ok = mailer.send_email(
             cfg, u["email"], "Your IELTS Coach study reminder",
             f"Hi {u['name'] or 'there'}, time for today's practice. "
             f"Open {cfg.APP_BASE_URL} and keep your streak alive!",
         )
         # Mark sent regardless of SMTP delivery so dev (no SMTP) doesn't loop.
-        repo.mark_reminder_sent(u["id"], today)
+        repo.mark_reminder_sent(u["id"], u["date"])
         sent += 1
         _ = ok
     return jsonify({"sent": sent}), 200

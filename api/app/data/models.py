@@ -24,9 +24,11 @@ class UserProfile(Base):
     exam_date: Mapped[str | None] = mapped_column(String(20), nullable=True)  # ISO yyyy-mm-dd
     bio: Mapped[str | None] = mapped_column(String, nullable=True)
     avatar: Mapped[str | None] = mapped_column(String, nullable=True)
-    # Phase 4a — study reminder ("HH:MM" local-ish hour, or null = off) + last-sent date.
+    # Phase 4a — study reminder ("HH:MM" local hour, or null = off) + last-sent date.
     reminder_time: Mapped[str | None] = mapped_column(String(5), nullable=True)
     reminder_last_sent: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    # Per-user IANA timezone (e.g. "Asia/Jakarta") the reminder hour is local to.
+    reminder_tz: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 class SkillLevel(Base):

@@ -131,10 +131,27 @@ class Repository:
                 u.skill_targets = fields["skillTargets"]
             if "reminderTime" in fields:  # "" or null clears it
                 u.reminder_time = fields["reminderTime"] or None
+            if "reminderTz" in fields:  # IANA tz; "" or null clears it
+                u.reminder_tz = fields["reminderTz"] or None
             s.commit()
 
-    def due_reminders(self, hour: int, today: str) -> list[dict]:
-        """Users whose reminder hour == `hour` and who haven't been sent today."""
+    def due_reminders(self, now_utc, default_tz: str = "UTC") -> list[dict]:
+        """Users whose LOCAL reminder hour matches the current local hour and who
+        haven't been emailed on their local date yet.
+
+        Each user's local time is computed from their `reminder_tz` (falling back
+        to `default_tz`, then UTC). Returns each due user's local `date` so the
+        caller marks 'sent' against the correct calendar day for that timezone.
+        """
+        from zoneinfo import ZoneInfo
+
+        def _zone(name):
+            try:
+                return ZoneInfo(name) if name else None
+            except Exception:
+                return None
+
+        default_zone = _zone(default_tz) or ZoneInfo("UTC")
         with self._sf() as s:
             rows = s.execute(
                 select(UserProfile).where(UserProfile.reminder_time.is_not(None))
@@ -147,8 +164,10 @@ class Repository:
                     rh = int(u.reminder_time.split(":")[0])
                 except (ValueError, IndexError):
                     continue
-                if rh == hour and u.reminder_last_sent != today:
-                    out.append({"id": u.id, "email": u.email, "name": u.name})
+                local = now_utc.astimezone(_zone(u.reminder_tz) or default_zone)
+                local_date = local.date().isoformat()
+                if local.hour == rh and u.reminder_last_sent != local_date:
+                    out.append({"id": u.id, "email": u.email, "name": u.name, "date": local_date})
             return out
 
     def mark_reminder_sent(self, user_id: int, today: str) -> None:

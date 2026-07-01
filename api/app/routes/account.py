@@ -40,6 +40,7 @@ def _public(u) -> dict:
             "skillTargets": u.skill_targets or {},
             "country": u.country, "examDate": u.exam_date, "bio": u.bio,
             "avatar": u.avatar, "reminderTime": u.reminder_time,
+            "reminderTz": u.reminder_tz,
             "isAdmin": _is_admin(u.email)}
 
 
