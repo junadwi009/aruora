@@ -18,6 +18,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode, onSuccess, onSwitch, o
   const isLogin = mode === "login";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -31,7 +32,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode, onSuccess, onSwitch, o
     setError(null);
     try {
       const user = isLogin
-        ? await api.accountLogin({ email: email.trim(), password })
+        ? await api.accountLogin({ email: email.trim(), password, remember })
         : await api.accountRegister({ email: email.trim(), password });
       onSuccess(user);
     } catch (err) {
@@ -83,6 +84,19 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode, onSuccess, onSwitch, o
             placeholder="At least 6 characters"
           />
         </label>
+
+        {isLogin && (
+          <label className="flex items-center gap-2 text-sm text-[var(--color-text)] cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={(e) => setRemember(e.target.checked)}
+              className="h-4 w-4 accent-[var(--color-primary-600)]"
+            />
+            <span>{t("auth.remember")}</span>
+            <span className="text-xs text-[var(--color-muted)]">{t("auth.rememberHint")}</span>
+          </label>
+        )}
 
         {error && <p className="text-xs text-[var(--color-danger)]" role="alert">{error}</p>}
 
