@@ -75,8 +75,8 @@ export const Tips: React.FC = () => {
         <h1 className="text-base font-semibold text-[var(--color-text)] tracking-tight">{t("nav.tips")}</h1>
       </div>
 
-      <div className="p-4 md:p-6 flex flex-col gap-6 lg:grid lg:grid-cols-[1fr_18rem] lg:items-start">
-      <div className="flex flex-col gap-3 min-w-0">
+      <div className="p-4 md:p-6 flex flex-col gap-6 lg:grid lg:grid-cols-[1fr_19rem] xl:grid-cols-[1fr_19rem_19rem] lg:items-start">
+      <div className="flex flex-col gap-3 min-w-0 lg:row-span-2 xl:row-span-1">
         {SKILLS.map((skill) => {
           const section = sections[skill];
           const headingId = `tips-heading-${skill}`;

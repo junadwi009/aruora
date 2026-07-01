@@ -41,9 +41,9 @@ export const TipsSidePanel: React.FC = () => {
   const current = levels[skill];
 
   return (
-    <aside className="w-full min-w-0 flex flex-col gap-4 lg:sticky lg:top-20">
+    <>
       {/* Your level & target */}
-      <Card className="flex flex-col gap-3">
+      <Card className="flex flex-col gap-3 min-w-0">
         <div className="flex items-center gap-2">
           <Target size={16} className="text-[var(--color-primary-600)]" />
           <p className="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wide">{t("tips.levelTarget")}</p>
@@ -82,14 +82,14 @@ export const TipsSidePanel: React.FC = () => {
       </Card>
 
       {/* Per-skill self-assessment criteria ladder */}
-      <Card className="flex flex-col gap-3">
+      <Card className="flex flex-col gap-3 min-w-0">
         <div className="flex items-center gap-2">
           <GraduationCap size={16} className="text-[var(--color-primary-600)]" />
           <p className="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wide">{t("tips.criteria")}</p>
         </div>
 
-        {/* Skill toggle */}
-        <div className="grid grid-cols-4 gap-1" role="tablist" aria-label={t("tips.criteria")}>
+        {/* Skill toggle — 2×2 so the Indonesian labels never truncate */}
+        <div className="grid grid-cols-2 gap-1.5" role="tablist" aria-label={t("tips.criteria")}>
           {SKILLS.map((s) => (
             <button
               key={s}
@@ -139,6 +139,6 @@ export const TipsSidePanel: React.FC = () => {
         </ul>
         <p className="text-[11px] text-[var(--color-muted)] opacity-80">{t("tips.criteriaHint")}</p>
       </Card>
-    </aside>
+    </>
   );
 };
