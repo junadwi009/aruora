@@ -25,7 +25,7 @@ def create_app(overrides=None):
     _TIMEOUT_OPEN = {
         "/api/health", "/api/auth/status", "/api/auth/login", "/api/auth/logout",
         "/api/account/login", "/api/account/register", "/api/account/logout",
-        "/api/account/forgot", "/api/account/reset",
+        "/api/account/forgot", "/api/account/reset", "/api/account/google",
     }
 
     @app.before_request

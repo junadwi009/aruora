@@ -36,6 +36,9 @@ class Config:
         # signed-in account is admin iff its email is in this set. No is_admin DB
         # column, so admin can't be granted by a DB write — only by deployment config.
         self.ADMIN_EMAILS = _email_set(o.get("ADMIN_EMAILS", os.getenv("ADMIN_EMAILS", "")))
+        # Google Sign-In: the OAuth Web-client ID. Public (embedded in the frontend);
+        # the backend verifies ID tokens against it. Empty = Google sign-in disabled.
+        self.GOOGLE_CLIENT_ID = o.get("GOOGLE_CLIENT_ID", os.getenv("GOOGLE_CLIENT_ID", ""))
         # SMTP (optional) for password reset + reminders. Empty SMTP_HOST = dev (log only).
         self.SMTP_HOST = os.getenv("SMTP_HOST", "")
         self.SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))

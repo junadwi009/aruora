@@ -86,6 +86,37 @@ def logout():
     return jsonify({"ok": True}), 200
 
 
+def verify_google_id_token(token: str, client_id: str):
+    """Verify a Google ID token against client_id; return its claims, or None.
+
+    Isolated as a module function so tests can monkeypatch it. google-auth is
+    imported lazily so importing this module needs no Google dependency.
+    """
+    try:
+        from google.oauth2 import id_token
+        from google.auth.transport import requests as google_requests
+        return id_token.verify_oauth2_token(token, google_requests.Request(), client_id)
+    except Exception:
+        return None
+
+
+@bp.post("/api/account/google")
+def google_login():
+    """Sign in with Google: verify the ID token, then find/create by google_sub."""
+    cfg = _cfg()
+    if not cfg.GOOGLE_CLIENT_ID:
+        raise ApiError("NOT_CONFIGURED", "Google sign-in is not configured", 501)
+    token = (request.get_json(force=True) or {}).get("credential") or ""
+    claims = verify_google_id_token(token, cfg.GOOGLE_CLIENT_ID)
+    if not claims or not claims.get("sub"):
+        raise ApiError("UNAUTHORIZED", "Invalid Google token", 401)
+    u = _repo().upsert_google_user(
+        claims["sub"], (claims.get("email") or "").strip().lower(), claims.get("name") or "",
+    )
+    login_session(u.id)
+    return jsonify(_public(u)), 200
+
+
 @bp.post("/api/account/forgot")
 def forgot():
     """Email a reset link if the account exists. Always 200 (no enumeration)."""

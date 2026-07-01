@@ -7,6 +7,8 @@ psycopg[binary]==3.2.3
 flask-cors==5.0.0
 # tz database for zoneinfo (per-user reminder timezone); slim Linux + Windows lack it
 tzdata==2024.2
+# Google Sign-In: verify OAuth ID tokens server-side
+google-auth==2.35.0
 pytest==8.3.3
 openai==1.59.6
 # Phase 2b-1: deterministic essay-quality metrics

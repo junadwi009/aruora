@@ -12,4 +12,5 @@ def health():
         "llmMode": cfg.LLM_MODE,
         "providerConfigured": cfg.provider_configured,
         "asrReady": asr_ready(cfg),
+        "googleClientId": cfg.GOOGLE_CLIENT_ID,
     })

@@ -81,6 +81,32 @@ class Repository:
             s.expunge(u)
         return u
 
+    def upsert_google_user(self, sub: str, email: str = "", name: str = "") -> UserProfile:
+        """Find a user by google_sub; else link to an existing same-email account;
+        else create a new (password-less) account. Returns the detached user."""
+        with self._sf() as s:
+            row = s.execute(
+                select(UserProfile).where(UserProfile.google_sub == sub)
+            ).scalars().first()
+            if row is None and email:
+                row = s.execute(
+                    select(UserProfile).where(UserProfile.email == email)
+                ).scalars().first()
+                if row is not None:
+                    row.google_sub = sub  # link Google to the existing email account
+            if row is None:
+                row = UserProfile(
+                    name=name or "", goal="other", target_band=6.0, skill_targets={},
+                    email=email or None, google_sub=sub,
+                )
+                s.add(row)
+            elif name and not row.name:
+                row.name = name
+            s.commit()
+            s.refresh(row)
+            s.expunge(row)
+        return row
+
     def get_account_by_email(self, email) -> UserProfile | None:
         with self._sf() as s:
             row = s.execute(
