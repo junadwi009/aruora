@@ -7,22 +7,24 @@ export interface StepIndicatorProps {
   current: number;
 }
 
-export const StepIndicator: React.FC<StepIndicatorProps> = ({
-  steps,
-  current,
-}) => {
+/**
+ * Responsive step indicator: each step is a fixed-width centred column whose
+ * label wraps (never nowrap), and the connectors flex to fill the remaining
+ * space — so it always fits its container regardless of label length/language.
+ */
+export const StepIndicator: React.FC<StepIndicatorProps> = ({ steps, current }) => {
   const { t } = useT();
   return (
-    <ol className="flex items-center gap-0" aria-label={t("ui.progressSteps")}>
+    <ol className="flex w-full items-start" aria-label={t("ui.progressSteps")}>
       {steps.map((step, i) => {
         const done = i < current;
         const active = i === current;
         const isLast = i === steps.length - 1;
 
         return (
-          <li key={i} className="flex items-center">
-            {/* Circle */}
-            <span className="flex flex-col items-center gap-1">
+          <React.Fragment key={i}>
+            {/* Step: circle + wrapping label */}
+            <li className="flex w-20 shrink-0 flex-col items-center gap-1 text-center">
               <span
                 className={[
                   "inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-semibold",
@@ -33,20 +35,14 @@ export const StepIndicator: React.FC<StepIndicatorProps> = ({
                     ? "bg-[var(--color-primary-600)] text-white shadow-[var(--shadow-e3)] " +
                       "ring-4 ring-[var(--color-primary-100)]"
                     : "bg-[var(--color-surface-2)] text-[var(--color-muted)] border border-[var(--color-border)]",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
+                ].join(" ")}
                 aria-current={active ? "step" : undefined}
               >
-                {done ? (
-                  <Check size={14} aria-label={t("ui.completed")} />
-                ) : (
-                  i + 1
-                )}
+                {done ? <Check size={14} aria-label={t("ui.completed")} /> : i + 1}
               </span>
               <span
                 className={[
-                  "text-xs whitespace-nowrap",
+                  "text-[11px] leading-tight break-words",
                   active
                     ? "font-semibold text-[var(--color-text)]"
                     : done
@@ -56,22 +52,19 @@ export const StepIndicator: React.FC<StepIndicatorProps> = ({
               >
                 {step}
               </span>
-            </span>
+            </li>
 
-            {/* Connector line */}
+            {/* Connector line — flexes to absorb remaining width, aligned to the circle */}
             {!isLast && (
               <span
                 className={[
-                  "h-px w-8 mx-1 mb-5 flex-shrink-0 rounded-full",
-                  "transition-colors",
-                  done
-                    ? "bg-[var(--color-primary-600)]"
-                    : "bg-[var(--color-border)]",
+                  "mt-4 h-px flex-1 min-w-2 rounded-full transition-colors",
+                  done ? "bg-[var(--color-primary-600)]" : "bg-[var(--color-border)]",
                 ].join(" ")}
                 aria-hidden="true"
               />
             )}
-          </li>
+          </React.Fragment>
         );
       })}
     </ol>
