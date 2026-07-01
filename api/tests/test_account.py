@@ -74,6 +74,29 @@ def test_wrong_password_401():
     assert c.post("/api/account/login", json={"email": "z@y.com", "password": "nope"}).status_code == 401
 
 
+def test_remember_me_extends_timeout_to_seven_days(monkeypatch):
+    import app.session as sess
+    from datetime import timedelta
+    real_now = sess._now
+
+    c, _ = _client(timeout_min=30)
+    c.post("/api/account/register", json={"email": "r@y.com", "password": "secret123"})
+    c.post("/api/account/logout")
+
+    # Without remember: 31 min idle expires the session (as before).
+    c.post("/api/account/login", json={"email": "r@y.com", "password": "secret123"})
+    monkeypatch.setattr(sess, "_now", lambda: real_now() + timedelta(minutes=31))
+    assert c.get("/api/account/me").status_code == 401
+    monkeypatch.setattr(sess, "_now", real_now)
+
+    # With remember: 31 min idle is fine; 8 days idle forgets the session.
+    c.post("/api/account/login", json={"email": "r@y.com", "password": "secret123", "remember": True})
+    monkeypatch.setattr(sess, "_now", lambda: real_now() + timedelta(minutes=31))
+    assert c.get("/api/account/me").status_code == 200
+    monkeypatch.setattr(sess, "_now", lambda: real_now() + timedelta(days=8))
+    assert c.get("/api/account/me").status_code == 401
+
+
 def test_idle_timeout_expires_session(monkeypatch):
     c, _ = _client(timeout_min=30)
     c.post("/api/account/register", json={"email": "t@y.com", "password": "secret123"})

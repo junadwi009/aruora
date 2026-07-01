@@ -75,7 +75,7 @@ def login():
     u = _repo().verify_login(email, b.get("password") or "")
     if u is None:
         raise ApiError("UNAUTHORIZED", "Incorrect email or password", 401)
-    login_session(u.id)
+    login_session(u.id, remember=bool(b.get("remember")))
     return jsonify(_public(u)), 200
 
 

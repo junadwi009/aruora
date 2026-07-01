@@ -11,9 +11,13 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def login_session(uid: int) -> None:
+def login_session(uid: int, remember: bool = False) -> None:
     session["uid"] = uid
     session["last_seen"] = _now().isoformat()
+    session["remember"] = bool(remember)
+    # A remembered session is permanent, so its cookie survives a browser restart
+    # (bounded by app.permanent_session_lifetime); otherwise it's a session cookie.
+    session.permanent = bool(remember)
 
 
 def current_uid():

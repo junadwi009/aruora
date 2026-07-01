@@ -11,6 +11,9 @@ def create_app(overrides=None):
     cfg = Config(overrides)
     app.config["APP_CONFIG"] = cfg
     app.secret_key = cfg.SESSION_SECRET
+    # Upper bound for a "remembered" cookie's lifetime (sliding, refreshed each request).
+    from datetime import timedelta as _timedelta
+    app.permanent_session_lifetime = _timedelta(days=cfg.REMEMBER_DAYS)
 
     # supports_credentials so the passcode session cookie works cross-origin (dev).
     CORS(app, origins=[cfg.CORS_ORIGIN], supports_credentials=True)
@@ -36,7 +39,9 @@ def create_app(overrides=None):
         except (TypeError, ValueError):
             return None
         idle_min = (auth_session._now() - last_dt).total_seconds() / 60.0
-        if idle_min > cfg.SESSION_TIMEOUT_MIN:
+        # Remembered sessions use a 7-day (REMEMBER_DAYS) sliding window; others 30 min.
+        timeout_min = cfg.REMEMBER_DAYS * 24 * 60 if flask_session.get("remember") else cfg.SESSION_TIMEOUT_MIN
+        if idle_min > timeout_min:
             flask_session.clear()
             if request.path.startswith("/api/") and request.path not in _TIMEOUT_OPEN:
                 return error_response(ApiError("SESSION_EXPIRED", "Session expired — please sign in again", 401))

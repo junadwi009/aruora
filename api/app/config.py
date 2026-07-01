@@ -29,6 +29,9 @@ class Config:
         self.APP_PASSCODE = o.get("APP_PASSCODE", os.getenv("APP_PASSCODE", ""))
         self.SESSION_SECRET = o.get("SESSION_SECRET", os.getenv("SESSION_SECRET", "dev-secret-change-me"))
         self.SESSION_TIMEOUT_MIN = int(o.get("SESSION_TIMEOUT_MIN", os.getenv("SESSION_TIMEOUT_MIN", "30")))
+        # "Remember me": a remembered session survives browser restarts and is
+        # forgotten only after this many days of inactivity (sliding).
+        self.REMEMBER_DAYS = int(o.get("REMEMBER_DAYS", os.getenv("REMEMBER_DAYS", "7")))
         # Master-admin allow-list. Designation is env-only (never self-service): a
         # signed-in account is admin iff its email is in this set. No is_admin DB
         # column, so admin can't be granted by a DB write — only by deployment config.
