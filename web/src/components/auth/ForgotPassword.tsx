@@ -36,8 +36,7 @@ export const ForgotPassword: React.FC<{ onBack: () => void }> = ({ onBack }) => 
         {sent ? (
           <>
             <p className="text-sm text-[var(--color-muted)]">
-              If an account exists for <strong>{email}</strong>, we've sent a reset link. Check your
-              inbox (and spam). The link works for 1 hour.
+              {t("auth.resetSentBefore")}<strong>{email}</strong>{t("auth.resetSentAfter")}
             </p>
             <Button variant="secondary" onClick={onBack} className="w-full">{t("auth.backToSignin")}</Button>
           </>
@@ -51,7 +50,7 @@ export const ForgotPassword: React.FC<{ onBack: () => void }> = ({ onBack }) => 
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              aria-label="Email"
+              aria-label={t("auth.email")}
               placeholder="you@example.com"
               className="min-h-11 px-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-600)]"
             />

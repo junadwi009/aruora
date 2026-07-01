@@ -18,10 +18,10 @@ import { HelpSection } from "./HelpSection";
 import { AdminSection } from "./AdminSection";
 import type { AccountUser } from "../../lib/types";
 
-const FONTS: { value: Font; label: string; hint: string }[] = [
-  { value: "default", label: "Default", hint: "Inter · Lexend" },
-  { value: "dyslexic", label: "Dyslexia-friendly", hint: "OpenDyslexic" },
-  { value: "hyperlegible", label: "Hyperlegible", hint: "Atkinson Hyperlegible" },
+const FONTS: { value: Font; labelKey: string; hint: string }[] = [
+  { value: "default", labelKey: "set.fontDefault", hint: "Inter · Lexend" },
+  { value: "dyslexic", labelKey: "set.fontDyslexic", hint: "OpenDyslexic" },
+  { value: "hyperlegible", labelKey: "set.fontHyper", hint: "Atkinson Hyperlegible" },
 ];
 
 export const Settings: React.FC = () => {
@@ -73,7 +73,7 @@ export const Settings: React.FC = () => {
 
         {/* Font */}
         <Card className="flex flex-col gap-3">
-          <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">Reading font</p>
+          <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("settings.font")}</p>
           <div className="flex flex-col gap-2">
             {FONTS.map((f) => (
               <button
@@ -88,13 +88,13 @@ export const Settings: React.FC = () => {
                     : "border-[var(--color-border)]",
                 ].join(" ")}
               >
-                <span className="text-sm font-medium text-[var(--color-text)]">{f.label}</span>
+                <span className="text-sm font-medium text-[var(--color-text)]">{t(f.labelKey)}</span>
                 <span className="text-xs text-[var(--color-muted)]">{f.hint}</span>
               </button>
             ))}
           </div>
           <p className="text-[11px] text-[var(--color-muted)]">
-            Dyslexia-friendly and Hyperlegible improve readability for some learners.
+            {t("set.fontHint")}
           </p>
         </Card>
 
@@ -125,7 +125,7 @@ export const Settings: React.FC = () => {
         {/* Account */}
         {hasAccount && (
           <Card className="flex items-center justify-between">
-            <p className="text-sm text-[var(--color-text)]">Signed in</p>
+            <p className="text-sm text-[var(--color-text)]">{t("set.signedIn")}</p>
             <Button variant="secondary" size="sm" onClick={logout}>
               <LogOut size={14} className="mr-1.5" /> {t("common.signOut")}
             </Button>

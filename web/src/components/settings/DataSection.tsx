@@ -40,28 +40,28 @@ export const DataSection: React.FC = () => {
     <Card className="flex flex-col gap-3">
       <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("settings.data")}</p>
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-[var(--color-text)]">Download all your data as JSON</p>
+        <p className="text-sm text-[var(--color-text)]">{t("set.dataDownload")}</p>
         <Button variant="secondary" size="sm" onClick={exportData} loading={busy}>
-          <Download size={14} className="mr-1.5" /> Export
+          <Download size={14} className="mr-1.5" /> {t("set.export")}
         </Button>
       </div>
 
       <div className="border-t border-[var(--color-border)] pt-3">
         {!confirming ? (
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-[var(--color-text)]">Delete account &amp; all data</p>
+            <p className="text-sm text-[var(--color-text)]">{t("set.deleteAccount")}</p>
             <Button variant="destructive" size="sm" onClick={() => setConfirming(true)}>
-              <Trash2 size={14} className="mr-1.5" /> Delete
+              <Trash2 size={14} className="mr-1.5" /> {t("set.delete")}
             </Button>
           </div>
         ) : (
           <div className="flex flex-col gap-2">
             <p className="text-sm text-[var(--color-danger)]">
-              This permanently deletes your account and all attempts, cards, lessons and progress. This can't be undone.
+              {t("set.deleteWarning")}
             </p>
             <div className="flex gap-2">
-              <Button variant="destructive" size="sm" onClick={deleteAccount} loading={busy}>Yes, delete everything</Button>
-              <Button variant="ghost" size="sm" onClick={() => setConfirming(false)}>Cancel</Button>
+              <Button variant="destructive" size="sm" onClick={deleteAccount} loading={busy}>{t("set.deleteConfirm")}</Button>
+              <Button variant="ghost" size="sm" onClick={() => setConfirming(false)}>{t("common.cancel")}</Button>
             </div>
           </div>
         )}

@@ -42,13 +42,13 @@ export const RemindersSection: React.FC = () => {
       </div>
 
       <label className="flex items-center justify-between gap-3">
-        <span className="text-sm text-[var(--color-text)]">Daily email reminder</span>
-        <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} aria-label="Enable reminder" className="w-5 h-5" />
+        <span className="text-sm text-[var(--color-text)]">{t("set.reminderDaily")}</span>
+        <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} aria-label={t("set.enableReminder")} className="w-5 h-5" />
       </label>
 
       {enabled && (
         <label className="flex items-center justify-between gap-3">
-          <span className="text-sm text-[var(--color-text)]">Time</span>
+          <span className="text-sm text-[var(--color-text)]">{t("set.time")}</span>
           <select value={time} onChange={(e) => setTime(e.target.value)}
             className="min-h-9 px-2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]">
             {HOURS.map((h) => <option key={h} value={h}>{h}</option>)}
@@ -57,12 +57,12 @@ export const RemindersSection: React.FC = () => {
       )}
 
       <p className="text-[11px] text-[var(--color-muted)]">
-        Emails require SMTP on the server; the time is by the server's clock.
+        {t("set.reminderHint")}
       </p>
 
       <div className="flex items-center gap-3">
-        <Button onClick={save} loading={busy}>Save reminder</Button>
-        {saved && <span className="text-xs text-[var(--color-success)]">Saved</span>}
+        <Button onClick={save} loading={busy}>{t("set.saveReminder")}</Button>
+        {saved && <span className="text-xs text-[var(--color-success)]">{t("common.saved")}</span>}
       </div>
     </Card>
   );

@@ -3,27 +3,12 @@ import { ChevronDown, HelpCircle } from "lucide-react";
 import { Card } from "../ui/Card";
 import { useT } from "../../lib/i18n";
 
-const FAQ: { q: string; a: string }[] = [
-  {
-    q: "How does the placement test work?",
-    a: "You answer Listening, Reading, Writing and Speaking tasks once. We estimate a CEFR level per skill and an overall band, then build a study plan around your weak skills.",
-  },
-  {
-    q: "Why do bands say “estimate”?",
-    a: "Reading/Listening bands come from short practice sets (not a full 40-question paper), and Writing/Speaking are AI-scored. Treat them as guidance, not an official IELTS result.",
-  },
-  {
-    q: "Is speech recognition exact?",
-    a: "No — pronunciation feedback is approximate (a browser recogniser plus AI tips), not phoneme-level scoring. Use it to spot patterns, not as a precise grade.",
-  },
-  {
-    q: "Where is my data stored?",
-    a: "Everything stays in this app’s own database, scoped to your account. Other accounts can’t see your attempts, cards or progress.",
-  },
-  {
-    q: "Does the app work offline?",
-    a: "The journey and practice run on built-in sample content with no internet. Generating fresh material and AI scoring need a connection.",
-  },
+const FAQ: { qKey: string; aKey: string }[] = [
+  { qKey: "set.faqQ1", aKey: "set.faqA1" },
+  { qKey: "set.faqQ2", aKey: "set.faqA2" },
+  { qKey: "set.faqQ3", aKey: "set.faqA3" },
+  { qKey: "set.faqQ4", aKey: "set.faqA4" },
+  { qKey: "set.faqQ5", aKey: "set.faqA5" },
 ];
 
 export const HelpSection: React.FC = () => {
@@ -39,10 +24,10 @@ export const HelpSection: React.FC = () => {
         <div key={i} className="border-b border-[var(--color-border)] last:border-0">
           <button type="button" onClick={() => setOpen(open === i ? null : i)} aria-expanded={open === i}
             className="w-full flex items-center justify-between gap-2 py-2.5 text-left min-h-11">
-            <span className="text-sm font-medium text-[var(--color-text)]">{item.q}</span>
+            <span className="text-sm font-medium text-[var(--color-text)]">{t(item.qKey)}</span>
             <ChevronDown size={16} className={`shrink-0 text-[var(--color-muted)] transition-transform ${open === i ? "rotate-180" : ""}`} />
           </button>
-          {open === i && <p className="text-sm text-[var(--color-muted)] leading-relaxed pb-3">{item.a}</p>}
+          {open === i && <p className="text-sm text-[var(--color-muted)] leading-relaxed pb-3">{t(item.aKey)}</p>}
         </div>
       ))}
     </Card>

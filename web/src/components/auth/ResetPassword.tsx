@@ -14,14 +14,14 @@ export const ResetPassword: React.FC<{ token: string; onDone: () => void }> = ({
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (pw.length < 6) { setError("Password must be at least 6 characters."); return; }
+    if (pw.length < 6) { setError(t("auth.pwTooShort")); return; }
     setBusy(true);
     setError(null);
     try {
       await api.accountReset({ token, newPassword: pw });
       setDone(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "This reset link is invalid or expired.");
+      setError(err instanceof Error ? err.message : t("auth.resetLinkInvalid"));
     } finally {
       setBusy(false);
     }
@@ -50,8 +50,8 @@ export const ResetPassword: React.FC<{ token: string; onDone: () => void }> = ({
               autoComplete="new-password"
               value={pw}
               onChange={(e) => setPw(e.target.value)}
-              aria-label="New password"
-              placeholder="New password (min 6 chars)"
+              aria-label={t("auth.newPasswordAria")}
+              placeholder={t("auth.newPasswordPlaceholder")}
               className="min-h-11 px-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-600)]"
             />
             {error && <p className="text-xs text-[var(--color-danger)]" role="alert">{error}</p>}

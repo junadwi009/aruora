@@ -13,15 +13,15 @@ export const SecuritySection: React.FC<{ hasAccount: boolean }> = ({ hasAccount 
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (next.length < 6) { setMsg({ ok: false, text: "New password must be at least 6 characters." }); return; }
+    if (next.length < 6) { setMsg({ ok: false, text: t("set.passwordMinChars") }); return; }
     setBusy(true);
     setMsg(null);
     try {
       await api.accountPassword({ currentPassword: current, newPassword: next });
-      setMsg({ ok: true, text: "Password changed." });
+      setMsg({ ok: true, text: t("set.passwordChanged") });
       setCurrent(""); setNext("");
     } catch (err) {
-      setMsg({ ok: false, text: err instanceof Error ? err.message : "Could not change password." });
+      setMsg({ ok: false, text: err instanceof Error ? err.message : t("set.passwordChangeError") });
     } finally {
       setBusy(false);
     }
@@ -31,17 +31,17 @@ export const SecuritySection: React.FC<{ hasAccount: boolean }> = ({ hasAccount 
     <Card className="flex flex-col gap-3">
       <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("settings.security")}</p>
       {!hasAccount ? (
-        <p className="text-sm text-[var(--color-muted)]">Register an email/password account to set a password.</p>
+        <p className="text-sm text-[var(--color-muted)]">{t("set.securityAnon")}</p>
       ) : (
         <form onSubmit={submit} className="flex flex-col gap-3">
           <input type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)}
-            placeholder="Current password"
+            placeholder={t("set.currentPassword")}
             className="min-h-10 px-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]" />
           <input type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)}
-            placeholder="New password (min 6 chars)"
+            placeholder={t("set.newPassword")}
             className="min-h-10 px-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]" />
           {msg && <p className={`text-xs ${msg.ok ? "text-[var(--color-success)]" : "text-[var(--color-danger)]"}`} role="status">{msg.text}</p>}
-          <Button type="submit" loading={busy} disabled={!current || !next} className="self-start">Change password</Button>
+          <Button type="submit" loading={busy} disabled={!current || !next} className="self-start">{t("set.changePassword")}</Button>
         </form>
       )}
     </Card>

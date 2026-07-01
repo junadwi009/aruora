@@ -25,8 +25,8 @@ export const TargetsSection: React.FC = () => {
   if (anon) {
     return (
       <Card>
-        <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-2">Targets</p>
-        <p className="text-sm text-[var(--color-muted)]">Create an account to set your band targets.</p>
+        <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-2">{t("settings.targets")}</p>
+        <p className="text-sm text-[var(--color-muted)]">{t("set.targetsAnon")}</p>
       </Card>
     );
   }
@@ -47,7 +47,7 @@ export const TargetsSection: React.FC = () => {
       <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("settings.targets")}</p>
 
       <label className="flex items-center justify-between gap-3">
-        <span className="text-sm text-[var(--color-text)]">Overall band target</span>
+        <span className="text-sm text-[var(--color-text)]">{t("set.targetsOverall")}</span>
         <select value={targetBand} onChange={(e) => setTargetBand(Number(e.target.value))}
           className="min-h-9 px-2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]">
           {TARGET_BANDS.map((b) => <option key={b} value={b}>{b.toFixed(1)}</option>)}
@@ -55,7 +55,7 @@ export const TargetsSection: React.FC = () => {
       </label>
 
       <div className="flex flex-col gap-2">
-        <p className="text-xs text-[var(--color-muted)]">Per-skill CEFR target</p>
+        <p className="text-xs text-[var(--color-muted)]">{t("set.targetsPerSkill")}</p>
         {SKILLS.map((sk) => (
           <label key={sk} className="flex items-center justify-between gap-3">
             <span className="text-sm capitalize text-[var(--color-text)]">{sk}</span>
@@ -69,8 +69,8 @@ export const TargetsSection: React.FC = () => {
       </div>
 
       <div className="flex items-center gap-3">
-        <Button onClick={save} loading={busy}>Save targets</Button>
-        {saved && <span className="text-xs text-[var(--color-success)]">Saved</span>}
+        <Button onClick={save} loading={busy}>{t("set.saveTargets")}</Button>
+        {saved && <span className="text-xs text-[var(--color-success)]">{t("common.saved")}</span>}
       </div>
     </Card>
   );

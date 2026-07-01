@@ -33,12 +33,12 @@ export const ProfileSection: React.FC = () => {
   if (anon) {
     return (
       <Card>
-        <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-2">Profile</p>
-        <p className="text-sm text-[var(--color-muted)]">Create an account to manage your profile.</p>
+        <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-2">{t("settings.profile")}</p>
+        <p className="text-sm text-[var(--color-muted)]">{t("set.profileAnon")}</p>
       </Card>
     );
   }
-  if (!user) return <Card className="text-sm text-[var(--color-muted)]">Loading profile…</Card>;
+  if (!user) return <Card className="text-sm text-[var(--color-muted)]">{t("set.loadingProfile")}</Card>;
 
   const save = async () => {
     setBusy(true);
@@ -55,7 +55,7 @@ export const ProfileSection: React.FC = () => {
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    if (f.size > 2_000_000) { alert("Image too large (max 2 MB)."); return; }
+    if (f.size > 2_000_000) { alert(t("set.imageTooLarge")); return; }
     const reader = new FileReader();
     reader.onload = async () => {
       const dataUrl = String(reader.result);
@@ -72,36 +72,36 @@ export const ProfileSection: React.FC = () => {
       <div className="flex items-center gap-4">
         <div className="w-16 h-16 rounded-full overflow-hidden bg-[var(--color-surface-2)] flex items-center justify-center shrink-0">
           {user.avatar ? (
-            <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+            <img src={user.avatar} alt={t("set.avatarAlt")} className="w-full h-full object-cover" />
           ) : (
             <UserRound size={28} className="text-[var(--color-muted)]" aria-hidden="true" />
           )}
         </div>
         <div>
           <Button variant="secondary" size="sm" onClick={() => fileRef.current?.click()}>
-            <Upload size={14} className="mr-1.5" /> Upload photo
+            <Upload size={14} className="mr-1.5" /> {t("set.uploadPhoto")}
           </Button>
-          <input ref={fileRef} type="file" accept="image/*" onChange={onFile} className="hidden" aria-label="Profile photo" />
-          <p className="text-[11px] text-[var(--color-muted)] mt-1">PNG/JPG, max 2 MB.</p>
+          <input ref={fileRef} type="file" accept="image/*" onChange={onFile} className="hidden" aria-label={t("set.profilePhoto")} />
+          <p className="text-[11px] text-[var(--color-muted)] mt-1">{t("set.photoHint")}</p>
         </div>
       </div>
 
-      <Field label="Display name" value={name} onChange={setName} placeholder="Your name" />
-      <Field label="Country" value={country} onChange={setCountry} placeholder="e.g. Indonesia" />
+      <Field label={t("set.displayName")} value={name} onChange={setName} placeholder={t("set.yourName")} />
+      <Field label={t("set.country")} value={country} onChange={setCountry} placeholder={t("set.countryEg")} />
       <label className="flex flex-col gap-1">
-        <span className="text-xs font-medium text-[var(--color-muted)]">Target exam date</span>
+        <span className="text-xs font-medium text-[var(--color-muted)]">{t("set.examDate")}</span>
         <input type="date" value={examDate} onChange={(e) => setExamDate(e.target.value)}
           className="min-h-10 px-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]" />
       </label>
       <label className="flex flex-col gap-1">
-        <span className="text-xs font-medium text-[var(--color-muted)]">Notes</span>
-        <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={2} placeholder="Your goal, focus areas…"
+        <span className="text-xs font-medium text-[var(--color-muted)]">{t("set.notes")}</span>
+        <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={2} placeholder={t("set.notesPlaceholder")}
           className="px-3 py-2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] text-sm text-[var(--color-text)]" />
       </label>
 
       <div className="flex items-center gap-3">
-        <Button onClick={save} loading={busy}>Save profile</Button>
-        {saved && <span className="text-xs text-[var(--color-success)]">Saved</span>}
+        <Button onClick={save} loading={busy}>{t("set.saveProfile")}</Button>
+        {saved && <span className="text-xs text-[var(--color-success)]">{t("common.saved")}</span>}
       </div>
     </Card>
   );

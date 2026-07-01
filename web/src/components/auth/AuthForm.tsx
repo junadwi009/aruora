@@ -36,7 +36,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode, onSuccess, onSwitch, o
         : await api.accountRegister({ email: email.trim(), password });
       onSuccess(user);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong. Try again.");
+      setError(err instanceof Error ? err.message : t("auth.genericError"));
     } finally {
       setBusy(false);
     }
@@ -81,7 +81,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode, onSuccess, onSwitch, o
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="min-h-11 px-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-600)]"
-            placeholder="At least 6 characters"
+            placeholder={t("auth.passwordPlaceholder")}
           />
         </label>
 

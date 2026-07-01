@@ -46,7 +46,7 @@ export const PasscodeGate: React.FC<{ onUnlock: () => void }> = ({ onUnlock }) =
           autoFocus
           value={passcode}
           onChange={(e) => setPasscode(e.target.value)}
-          aria-label="Passcode"
+          aria-label={t("auth.passcodeAria")}
           placeholder="••••"
           className="w-full min-h-11 px-3 text-center tracking-widest rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-600)]"
         />

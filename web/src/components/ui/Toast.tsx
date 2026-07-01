@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { X, CheckCircle2, AlertTriangle, XCircle, Info } from "lucide-react";
+import { useT } from "../../lib/i18n";
 
 export type ToastTone = "neutral" | "success" | "warning" | "danger" | "info";
 
@@ -42,6 +43,7 @@ export const Toast: React.FC<ToastProps> = ({
   tone = "neutral",
   onDismiss,
 }) => {
+  const { t } = useT();
   useEffect(() => {
     const id = setTimeout(onDismiss, 4000);
     return () => clearTimeout(id);
@@ -63,7 +65,7 @@ export const Toast: React.FC<ToastProps> = ({
       <button
         type="button"
         onClick={onDismiss}
-        aria-label="Dismiss notification"
+        aria-label={t("ui.dismissNotification")}
         className={[
           "min-h-11 min-w-11 flex items-center justify-center rounded",
           "opacity-60 hover:opacity-100",

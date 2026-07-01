@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { X } from "lucide-react";
+import { useT } from "../../lib/i18n";
 
 export interface DialogProps {
   open: boolean;
@@ -14,6 +15,7 @@ export const Dialog: React.FC<DialogProps> = ({
   title,
   children,
 }) => {
+  const { t } = useT();
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -63,7 +65,7 @@ export const Dialog: React.FC<DialogProps> = ({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close dialog"
+            aria-label={t("ui.closeDialog")}
             className={[
               "min-h-11 min-w-11 flex items-center justify-center rounded-[var(--radius-md)]",
               "text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)]",

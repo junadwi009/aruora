@@ -1,5 +1,6 @@
 import React from "react";
 import { Check } from "lucide-react";
+import { useT } from "../../lib/i18n";
 
 export interface StepIndicatorProps {
   steps: string[];
@@ -10,8 +11,9 @@ export const StepIndicator: React.FC<StepIndicatorProps> = ({
   steps,
   current,
 }) => {
+  const { t } = useT();
   return (
-    <ol className="flex items-center gap-0" aria-label="Progress steps">
+    <ol className="flex items-center gap-0" aria-label={t("ui.progressSteps")}>
       {steps.map((step, i) => {
         const done = i < current;
         const active = i === current;
@@ -37,7 +39,7 @@ export const StepIndicator: React.FC<StepIndicatorProps> = ({
                 aria-current={active ? "step" : undefined}
               >
                 {done ? (
-                  <Check size={14} aria-label="completed" />
+                  <Check size={14} aria-label={t("ui.completed")} />
                 ) : (
                   i + 1
                 )}
