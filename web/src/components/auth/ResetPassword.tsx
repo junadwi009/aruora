@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { KeyRound } from "lucide-react";
 import { api } from "../../lib/api/client";
 import { Button } from "../ui/Button";
+import { PasswordInput } from "../ui/PasswordInput";
 import { useT } from "../../lib/i18n";
 
 /** Shown when the app is opened via a ?reset_token=… link. */
@@ -45,8 +46,7 @@ export const ResetPassword: React.FC<{ token: string; onDone: () => void }> = ({
           </>
         ) : (
           <>
-            <input
-              type="password"
+            <PasswordInput
               autoComplete="new-password"
               value={pw}
               onChange={(e) => setPw(e.target.value)}

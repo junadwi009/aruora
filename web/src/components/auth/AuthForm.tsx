@@ -3,6 +3,7 @@ import { LogIn, UserPlus } from "lucide-react";
 import { api } from "../../lib/api/client";
 import type { AccountUser } from "../../lib/types";
 import { Button } from "../ui/Button";
+import { PasswordInput } from "../ui/PasswordInput";
 import { useT } from "../../lib/i18n";
 import { GoogleButton } from "./GoogleButton";
 
@@ -81,8 +82,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode, onSuccess, onSwitch, o
 
         <label className="flex flex-col gap-1">
           <span className="text-xs font-medium text-[var(--color-muted)]">{t("auth.password")}</span>
-          <input
-            type="password"
+          <PasswordInput
             autoComplete={isLogin ? "current-password" : "new-password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
