@@ -41,7 +41,7 @@ export const TipsSidePanel: React.FC = () => {
   const current = levels[skill];
 
   return (
-    <>
+    <aside className="w-full min-w-0 flex flex-col gap-4">
       {/* Your level & target */}
       <Card className="flex flex-col gap-3 min-w-0">
         <div className="flex items-center gap-2">
@@ -139,6 +139,6 @@ export const TipsSidePanel: React.FC = () => {
         </ul>
         <p className="text-[11px] text-[var(--color-muted)] opacity-80">{t("tips.criteriaHint")}</p>
       </Card>
-    </>
+    </aside>
   );
 };
