@@ -27,7 +27,7 @@ export const TipsSidePanel: React.FC = () => {
   const [targetBand, setTargetBand] = useState<number | null>(null);
   const [skillTargets, setSkillTargets] = useState<Record<string, string>>({});
   const [skill, setSkill] = useState<Skill>("reading");
-  const [criteriaOpen, setCriteriaOpen] = useState(true);
+  const [criteriaOpen, setCriteriaOpen] = useState(false);
 
   useEffect(() => {
     api.skillLevels()
