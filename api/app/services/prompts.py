@@ -35,7 +35,12 @@ def lang_note(lang: str | None) -> str:
         "verbatim or corrected excerpt of the learner's own English (e.g. the "
         "'original', 'fixed', 'from', 'to', 'word', 'examples', 'prefill' fields). "
         "All JSON keys and enum values (cefr, skill, type, ...) stay in English "
-        "exactly as specified."
+        "exactly as specified. "
+        "When you must use an English IELTS/technical term the learner may not know "
+        "(e.g. skimming, scanning, collocation, cohesive device, overview, cue card, "
+        "paraphrase), keep the term but add a brief Indonesian explanation in "
+        "parentheses the first time it appears, e.g. 'collocation (pasangan kata "
+        "yang lazim)'."
     )
 
 
