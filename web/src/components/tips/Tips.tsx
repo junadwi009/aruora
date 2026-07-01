@@ -4,6 +4,7 @@ import { api } from "../../lib/api/client";
 import type { Tips as TipsData } from "../../lib/types";
 import { useT } from "../../lib/i18n";
 import { Card } from "../ui/Card";
+import { TipsSidePanel } from "./TipsSidePanel";
 
 const SKILLS = ["reading", "listening", "writing", "speaking"] as const;
 type Skill = (typeof SKILLS)[number];
@@ -74,7 +75,8 @@ export const Tips: React.FC = () => {
         <h1 className="text-base font-semibold text-[var(--color-text)] tracking-tight">{t("nav.tips")}</h1>
       </div>
 
-      <div className="p-4 md:p-6 max-w-2xl flex flex-col gap-3">
+      <div className="p-4 md:p-6 flex flex-col xl:flex-row gap-6 items-start">
+      <div className="w-full max-w-2xl flex flex-col gap-3">
         {SKILLS.map((skill) => {
           const section = sections[skill];
           const headingId = `tips-heading-${skill}`;
@@ -147,6 +149,9 @@ export const Tips: React.FC = () => {
             </Card>
           );
         })}
+      </div>
+
+      <TipsSidePanel />
       </div>
     </main>
   );
