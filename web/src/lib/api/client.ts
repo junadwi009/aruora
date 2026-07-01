@@ -98,6 +98,7 @@ export const api = {
   accountRegister: (b: { email: string; password: string }) => post<AccountUser>("/api/account/register", b),
   accountLogin: (b: { email: string; password: string; remember?: boolean }) => post<AccountUser>("/api/account/login", b),
   accountLogout: () => post<{ ok: boolean }>("/api/account/logout", {}),
+  accountGoogle: (credential: string) => post<AccountUser>("/api/account/google", { credential }),
   accountMe: () => get<AccountUser>("/api/account/me"),
   accountProfile: (b: { name?: string; country?: string; examDate?: string; bio?: string; targetBand?: number; skillTargets?: Record<string, string>; reminderTime?: string | null; reminderTz?: string | null }) =>
     request<AccountUser>("/api/account/profile", { method: "PATCH", body: JSON.stringify(b) }),

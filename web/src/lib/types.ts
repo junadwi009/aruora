@@ -7,6 +7,7 @@ export interface Health {
   llmMode: string;
   providerConfigured: boolean;
   asrReady: boolean;
+  googleClientId?: string;
 }
 
 export interface OnboardingBody {

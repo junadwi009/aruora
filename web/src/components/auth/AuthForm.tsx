@@ -4,6 +4,7 @@ import { api } from "../../lib/api/client";
 import type { AccountUser } from "../../lib/types";
 import { Button } from "../ui/Button";
 import { useT } from "../../lib/i18n";
+import { GoogleButton } from "./GoogleButton";
 
 interface AuthFormProps {
   mode: "login" | "register";
@@ -21,6 +22,11 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode, onSuccess, onSwitch, o
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [googleClientId, setGoogleClientId] = useState("");
+
+  React.useEffect(() => {
+    api.health().then((h) => setGoogleClientId(h.googleClientId || "")).catch(() => {});
+  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,6 +109,17 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode, onSuccess, onSwitch, o
         <Button type="submit" loading={busy} className="w-full">
           {isLogin ? t("auth.signIn") : t("auth.createBtn")}
         </Button>
+
+        {googleClientId && (
+          <>
+            <div className="flex items-center gap-2 text-[11px] text-[var(--color-muted)]">
+              <span className="h-px flex-1 bg-[var(--color-border)]" />
+              {t("auth.or")}
+              <span className="h-px flex-1 bg-[var(--color-border)]" />
+            </div>
+            <GoogleButton clientId={googleClientId} onSuccess={onSuccess} onError={setError} />
+          </>
+        )}
 
         {isLogin && onForgot && (
           <button

@@ -5,7 +5,13 @@ import { api } from "../../lib/api/client";
 
 const USER = { id: 1, email: "a@b.com", name: "", goal: "other", targetBand: 6 };
 
-beforeEach(() => vi.restoreAllMocks());
+beforeEach(() => {
+  vi.restoreAllMocks();
+  // AuthForm fetches health on mount to decide whether to show the Google button.
+  vi.spyOn(api, "health").mockResolvedValue({
+    ok: true, llmMode: "stub", providerConfigured: false, asrReady: false, googleClientId: "",
+  });
+});
 
 describe("AuthForm", () => {
   it("logs in and calls onSuccess", async () => {
