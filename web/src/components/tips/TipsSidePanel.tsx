@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Target, GraduationCap } from "lucide-react";
+import { Target, GraduationCap, ChevronDown } from "lucide-react";
 import { api } from "../../lib/api/client";
 import { Card } from "../ui/Card";
 import { LevelChip } from "../ui/LevelChip";
@@ -27,6 +27,7 @@ export const TipsSidePanel: React.FC = () => {
   const [targetBand, setTargetBand] = useState<number | null>(null);
   const [skillTargets, setSkillTargets] = useState<Record<string, string>>({});
   const [skill, setSkill] = useState<Skill>("reading");
+  const [criteriaOpen, setCriteriaOpen] = useState(true);
 
   useEffect(() => {
     api.skillLevels()
@@ -81,36 +82,40 @@ export const TipsSidePanel: React.FC = () => {
         )}
       </Card>
 
-      {/* Per-skill self-assessment criteria ladder */}
-      <Card className="flex flex-col gap-3 min-w-0">
-        <div className="flex items-center gap-2">
+      {/* Per-skill self-assessment criteria ladder (collapsible) */}
+      <Card className="flex flex-col min-w-0 p-0 overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setCriteriaOpen((o) => !o)}
+          aria-expanded={criteriaOpen}
+          aria-controls="tips-criteria-panel"
+          className="flex items-center gap-2 px-4 py-3 text-left hover:bg-[var(--color-surface-2)] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-600)]"
+        >
           <GraduationCap size={16} className="text-[var(--color-primary-600)]" />
-          <p className="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wide">{t("tips.criteria")}</p>
-        </div>
+          <span className="flex-1 text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wide">{t("tips.criteria")}</span>
+          <ChevronDown
+            size={16}
+            aria-hidden="true"
+            className={["text-[var(--color-muted)] transition-transform", criteriaOpen ? "rotate-180" : ""].join(" ")}
+          />
+        </button>
 
-        {/* Skill toggle — 2×2 so the Indonesian labels never truncate */}
-        <div className="grid grid-cols-2 gap-1.5" role="tablist" aria-label={t("tips.criteria")}>
-          {SKILLS.map((s) => (
-            <button
-              key={s}
-              type="button"
-              role="tab"
-              aria-selected={skill === s}
-              onClick={() => setSkill(s)}
-              className={[
-                "text-xs font-medium rounded-[var(--radius-sm)] px-1.5 py-1.5 transition-colors",
-                skill === s
-                  ? "bg-[var(--color-primary-600)] text-white"
-                  : "text-[var(--color-muted)] hover:bg-[var(--color-surface-2)]",
-              ].join(" ")}
+        {criteriaOpen && (
+          <div id="tips-criteria-panel" className="flex flex-col gap-3 px-4 pb-4 pt-3 border-t border-[var(--color-border)]">
+            {/* Skill dropdown */}
+            <select
+              value={skill}
+              onChange={(e) => setSkill(e.target.value as Skill)}
+              aria-label={t("tips.criteria")}
+              className="min-h-9 px-2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] text-sm text-[var(--color-text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-600)]"
             >
-              {t("nav." + s)}
-            </button>
-          ))}
-        </div>
+              {SKILLS.map((s) => (
+                <option key={s} value={s}>{t("nav." + s)}</option>
+              ))}
+            </select>
 
-        {/* Ladder */}
-        <ul className="flex flex-col gap-1.5">
+            {/* Ladder */}
+            <ul className="flex flex-col gap-1.5">
           {LEVELS.map((lv) => {
             const isCurrent = current === lv.cefr;
             return (
@@ -137,7 +142,9 @@ export const TipsSidePanel: React.FC = () => {
             );
           })}
         </ul>
-        <p className="text-[11px] text-[var(--color-muted)] opacity-80">{t("tips.criteriaHint")}</p>
+            <p className="text-[11px] text-[var(--color-muted)] opacity-80">{t("tips.criteriaHint")}</p>
+          </div>
+        )}
       </Card>
     </aside>
   );
