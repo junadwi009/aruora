@@ -9,26 +9,24 @@ import type { Skill } from "../../lib/types";
 
 const SKILLS: Skill[] = ["reading", "listening", "writing", "speaking"];
 
-// Approximate IELTS band → CEFR mapping (same thresholds the examiner prompts use).
-const BAND_REF: { band: string; cefr: CefrBand; descKey: string }[] = [
-  { band: "8.0+", cefr: "C2", descKey: "tips.descC2" },
-  { band: "7.0–7.5", cefr: "C1", descKey: "tips.descC1" },
-  { band: "6.0–6.5", cefr: "B2", descKey: "tips.descB2" },
-  { band: "4.5–5.5", cefr: "B1", descKey: "tips.descB1" },
-  { band: "≤4.0", cefr: "A1A2", descKey: "tips.descA" },
+// Levels top → bottom (strongest first) with the approximate IELTS band range
+// (same thresholds the examiner prompts use). Descriptor text is per-skill so the
+// learner can self-assess — Reading/Listening cite a rough share of questions,
+// Writing/Speaking describe how far they can produce / be understood.
+const LEVELS: { cefr: CefrBand; band: string }[] = [
+  { cefr: "C2", band: "8.0+" },
+  { cefr: "C1", band: "7.0–7.5" },
+  { cefr: "B2", band: "6.0–6.5" },
+  { cefr: "B1", band: "4.5–5.5" },
+  { cefr: "A1A2", band: "≤4.0" },
 ];
 
-/**
- * Right-hand reference rail on the Tips page (fills the empty space on wide
- * screens): the learner's current level + target per skill, and a Band→CEFR
- * reference. Personalized cards are hidden gracefully when offline/anonymous;
- * the static Band→CEFR card always renders.
- */
 export const TipsSidePanel: React.FC = () => {
   const { t } = useT();
   const [levels, setLevels] = useState<Record<string, CefrBand>>({});
   const [targetBand, setTargetBand] = useState<number | null>(null);
   const [skillTargets, setSkillTargets] = useState<Record<string, string>>({});
+  const [skill, setSkill] = useState<Skill>("reading");
 
   useEffect(() => {
     api.skillLevels()
@@ -40,9 +38,10 @@ export const TipsSidePanel: React.FC = () => {
   }, []);
 
   const hasLevels = Object.keys(levels).length > 0;
+  const current = levels[skill];
 
   return (
-    <aside className="w-full xl:w-80 xl:shrink-0 flex flex-col gap-4 xl:sticky xl:top-20">
+    <aside className="w-full min-w-0 flex flex-col gap-4 lg:sticky lg:top-20">
       {/* Your level & target */}
       <Card className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
@@ -82,22 +81,63 @@ export const TipsSidePanel: React.FC = () => {
         )}
       </Card>
 
-      {/* Band → CEFR reference */}
+      {/* Per-skill self-assessment criteria ladder */}
       <Card className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
           <GraduationCap size={16} className="text-[var(--color-primary-600)]" />
-          <p className="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wide">{t("tips.bandRef")}</p>
+          <p className="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wide">{t("tips.criteria")}</p>
         </div>
-        <ul className="flex flex-col gap-2.5">
-          {BAND_REF.map((r) => (
-            <li key={r.cefr} className="flex items-start gap-3">
-              <span className="w-14 shrink-0 text-sm font-semibold text-[var(--color-text)] tabular-nums">{r.band}</span>
-              <LevelChip band={r.cefr} />
-              <span className="text-xs text-[var(--color-muted)] leading-snug">{t(r.descKey)}</span>
-            </li>
+
+        {/* Skill toggle */}
+        <div className="grid grid-cols-4 gap-1" role="tablist" aria-label={t("tips.criteria")}>
+          {SKILLS.map((s) => (
+            <button
+              key={s}
+              type="button"
+              role="tab"
+              aria-selected={skill === s}
+              onClick={() => setSkill(s)}
+              className={[
+                "text-xs font-medium rounded-[var(--radius-sm)] px-1.5 py-1.5 transition-colors",
+                skill === s
+                  ? "bg-[var(--color-primary-600)] text-white"
+                  : "text-[var(--color-muted)] hover:bg-[var(--color-surface-2)]",
+              ].join(" ")}
+            >
+              {t("nav." + s)}
+            </button>
           ))}
+        </div>
+
+        {/* Ladder */}
+        <ul className="flex flex-col gap-1.5">
+          {LEVELS.map((lv) => {
+            const isCurrent = current === lv.cefr;
+            return (
+              <li
+                key={lv.cefr}
+                className={[
+                  "rounded-[var(--radius-md)] border p-2.5",
+                  isCurrent
+                    ? "border-[var(--color-primary-600)] bg-[color-mix(in_srgb,var(--color-primary-600)_8%,transparent)]"
+                    : "border-[var(--color-border)]",
+                ].join(" ")}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <LevelChip band={lv.cefr} />
+                  <span className="text-xs font-semibold text-[var(--color-text)] tabular-nums">{lv.band}</span>
+                  {isCurrent && (
+                    <span className="ml-auto text-[10px] uppercase tracking-wide font-semibold text-[var(--color-primary-600)] border border-[var(--color-primary-600)] rounded px-1">
+                      {t("tips.here")}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-[var(--color-muted)] leading-snug">{t(`crit.${skill}.${lv.cefr}`)}</p>
+              </li>
+            );
+          })}
         </ul>
-        <p className="text-[11px] text-[var(--color-muted)] opacity-80">{t("tips.bandRefHint")}</p>
+        <p className="text-[11px] text-[var(--color-muted)] opacity-80">{t("tips.criteriaHint")}</p>
       </Card>
     </aside>
   );
