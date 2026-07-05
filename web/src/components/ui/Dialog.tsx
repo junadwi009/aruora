@@ -9,6 +9,10 @@ export interface DialogProps {
   children: React.ReactNode;
 }
 
+const FOCUSABLE =
+  'a[href],button:not([disabled]),textarea:not([disabled]),' +
+  'input:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])';
+
 export const Dialog: React.FC<DialogProps> = ({
   open,
   onClose,
@@ -16,18 +20,49 @@ export const Dialog: React.FC<DialogProps> = ({
   children,
 }) => {
   const { t } = useT();
-  const dialogRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const restoreRef = useRef<HTMLElement | null>(null);
 
+  // Save the element that had focus, move focus into the panel on open, and
+  // restore focus to that element when the dialog closes/unmounts.
   useEffect(() => {
-    if (open) {
-      dialogRef.current?.focus();
-    }
+    if (!open) return;
+    restoreRef.current = (document.activeElement as HTMLElement) ?? null;
+    const panel = panelRef.current;
+    const first = panel?.querySelector<HTMLElement>(FOCUSABLE);
+    (first ?? panel)?.focus();
+    return () => {
+      restoreRef.current?.focus?.();
+    };
   }, [open]);
 
+  // Escape to close + trap Tab/Shift+Tab within the panel.
   useEffect(() => {
     if (!open) return;
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const panel = panelRef.current;
+      if (!panel) return;
+      const nodes = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE));
+      if (nodes.length === 0) {
+        e.preventDefault();
+        panel.focus();
+        return;
+      }
+      const firstEl = nodes[0];
+      const lastEl = nodes[nodes.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey && (active === firstEl || active === panel)) {
+        e.preventDefault();
+        lastEl.focus();
+      } else if (!e.shiftKey && active === lastEl) {
+        e.preventDefault();
+        firstEl.focus();
+      }
     };
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
@@ -36,10 +71,7 @@ export const Dialog: React.FC<DialogProps> = ({
   if (!open) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      aria-modal="true"
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Overlay */}
       <div
         className="absolute inset-0 bg-black/40"
@@ -48,8 +80,9 @@ export const Dialog: React.FC<DialogProps> = ({
       />
       {/* Panel */}
       <div
-        ref={dialogRef}
+        ref={panelRef}
         role="dialog"
+        aria-modal="true"
         aria-label={title}
         tabIndex={-1}
         className={[

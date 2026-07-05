@@ -15,11 +15,24 @@ export const RadioCard: React.FC<RadioCardProps> = ({
   title,
   description,
 }) => {
-  const handleKey = (e: React.KeyboardEvent) => {
+  const handleKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       onSelect();
+      return;
     }
+    // Roving Arrow-key navigation within the enclosing role="radiogroup".
+    const NEXT = ["ArrowDown", "ArrowRight"];
+    const PREV = ["ArrowUp", "ArrowLeft"];
+    if (!NEXT.includes(e.key) && !PREV.includes(e.key)) return;
+    const group = e.currentTarget.closest('[role="radiogroup"]');
+    if (!group) return;
+    const radios = Array.from(group.querySelectorAll<HTMLElement>('[role="radio"]'));
+    const idx = radios.indexOf(e.currentTarget);
+    if (idx === -1) return;
+    e.preventDefault();
+    const delta = NEXT.includes(e.key) ? 1 : -1;
+    radios[(idx + delta + radios.length) % radios.length].focus();
   };
 
   return (

@@ -23,7 +23,8 @@
   --color-border: #E2E8F0;
   --color-text: #0F172A;
   --color-text-2: #334155;
-  --color-muted: #64748B;
+  /* Darkened from #64748B → WCAG AA for small text: ~5.3:1 on surface-2, ~5.8:1 on white. */
+  --color-muted: #5B6675;
 
   /* ── CEFR band colours ── */
   --color-cefr-a: #64748B;
