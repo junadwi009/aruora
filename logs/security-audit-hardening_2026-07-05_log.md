@@ -61,4 +61,4 @@ followed by remediation of all 12 findings. Analysis was approved before any cod
 - Live OpenRouter key + (unused, misspelled) Google client secret remain in `.env` by owner's choice — rotate + move to a secret manager before any public deploy.
 
 ## Commit
-- Pending (working tree). Not committed — awaiting owner go-ahead.
+- `40e537c` — fix(security): harden auth, secrets, rate limiting, and headers (15 files, +403/-14). Not pushed.
