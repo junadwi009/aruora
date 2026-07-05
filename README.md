@@ -35,7 +35,7 @@ Live OpenRouter LLM calls, faster-whisper ASR (real speech scoring), and essay-m
 
 | Service | Path | Description |
 |---------|------|-------------|
-| `api`   | `./api` | Python FastAPI backend (SQLAlchemy, Alembic, PostgreSQL) |
+| `api`   | `./api` | Python Flask backend, WSGI via `gunicorn wsgi:app` (SQLAlchemy, Alembic, PostgreSQL) |
 | `web`   | `./web` | React 19 + Vite + TypeScript frontend |
 | `db`    | Docker  | PostgreSQL 18 |
 
@@ -52,14 +52,15 @@ Copy `.env.example` to `.env` and fill in your values:
 ## Development
 
 ```bash
-# API (Python 3.11+)
+# API (Python 3.13)
 cd api
 python -m venv .venv
 .venv/Scripts/activate     # Windows
 # or: source .venv/bin/activate  (macOS/Linux)
 pip install -r requirements.txt
 alembic upgrade head
-uvicorn app.main:app --reload --port 5050
+gunicorn -b 0.0.0.0:5050 wsgi:app        # prod-style
+# or for dev with reload: flask --app wsgi run --debug --port 5050
 
 # Web (Node 18+)
 cd web
@@ -109,10 +110,14 @@ Env (in `.env`): `LLM_MODE` (`stub` offline / `live`), `OPENROUTER_API_KEY`,
 **Before exposing publicly — not included, decide per host:**
 - **TLS**: terminate HTTPS at a front proxy (Caddy/Traefik/nginx) or the platform's
   load balancer; this stack speaks plain HTTP on the web port.
-- **Access gate**: the app has no auth. Add a passcode/basic-auth at the proxy, e.g.
-  nginx `auth_basic` in front, or a platform access rule. (App-level passcode is a
-  future enhancement.)
+- **Auth**: the app HAS auth — email/password accounts (werkzeug-hashed), Google
+  Sign-In, and an optional global `APP_PASSCODE` gate, plus per-endpoint rate
+  limiting. You may still add a proxy-level gate (nginx `auth_basic`) for defence
+  in depth.
 - **Secrets**: keep real keys in the host's secret store / env, never committed.
+  **`SESSION_SECRET` is required** — the app refuses to boot with the insecure
+  default (it signs session cookies + password-reset tokens). Set `COOKIE_SECURE=1`
+  once served over HTTPS.
 - **DB**: change the default `ielts/ielts` credentials; back up the `ielts_pgdata`
   volume.
 
