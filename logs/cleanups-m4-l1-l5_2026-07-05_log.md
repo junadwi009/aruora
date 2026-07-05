@@ -39,4 +39,4 @@ coverage, dead-code removal, a tidy exception, and anti-takeover on Google sign-
 - L2 keeps endonyms untranslated by design (users find their own language).
 
 ## Commit
-- Pending (working tree).
+- `9a1ba2c` — fix: audit cleanups batch 3 (M4 + L1-L5). Not pushed.
