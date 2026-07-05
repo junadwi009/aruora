@@ -57,6 +57,7 @@ _RULES: tuple[tuple[str, int, int], ...] = (
     ("/api/writing/evaluate", 20, 60),
     ("/api/speaking/evaluate", 20, 60),
     ("/api/speaking/roleplay", 30, 60),
+    ("/api/speaking/transcribe", 12, 60),   # local Whisper is CPU-heavy — tighter
     ("/api/reading/generate", 20, 60),
     ("/api/listening/generate", 20, 60),
     ("/api/vocab", 30, 60),

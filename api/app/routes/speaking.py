@@ -14,6 +14,7 @@ bp = Blueprint("speaking", __name__)
 
 @bp.post("/api/speaking/evaluate")
 def speaking_evaluate():
+    uid = _require_uid()  # gate BEFORE any paid LLM work
     body = request.get_json(force=True) or {}
     gateway = _gateway()
     out = gateway.score(
@@ -26,7 +27,7 @@ def speaking_evaluate():
 
     # Persist the attempt for the Progress tab (history + trends).
     out["savedId"] = _repo().save_attempt(
-        _require_uid(),
+        uid,
         type="speaking",
         task=body.get("part", ""),
         prompt=body.get("question", ""),
@@ -47,6 +48,7 @@ def speaking_evaluate():
 @bp.post("/api/speaking/roleplay")
 def speaking_roleplay():
     """One AI partner turn in a conversation roleplay."""
+    _require_uid()  # authenticated only — this calls the paid LLM
     body = request.get_json(force=True) or {}
     history = "\n".join(f"{t.get('role')}: {t.get('text')}" for t in body.get("history", []))
     out = _gateway().score(
@@ -61,11 +63,17 @@ def speaking_roleplay():
 @bp.post("/api/speaking/transcribe")
 def speaking_transcribe():
     """Accept a multipart audio upload and return a transcript dict."""
+    _require_uid()  # authenticated only — ASR is CPU-heavy (cost/DoS guard)
+    cfg = _cfg()
     f = request.files.get("audio")
     if f is None:
         raise ApiError("VALIDATION", "An 'audio' file is required", 422)
     audio_bytes = f.read()
     if not audio_bytes:
         raise ApiError("VALIDATION", "The uploaded audio is empty", 422)
-    out = asr.transcribe(audio_bytes, _cfg())
+    # ASR-specific inner cap (tighter than the global MAX_CONTENT_LENGTH) so a
+    # single request can't tie up the CPU with a huge decode.
+    if len(audio_bytes) > cfg.ASR_MAX_UPLOAD_BYTES:
+        raise ApiError("PAYLOAD_TOO_LARGE", "The audio file is too large", 413)
+    out = asr.transcribe(audio_bytes, cfg)
     return jsonify(out), 200

@@ -69,6 +69,9 @@ class Config:
         self.ASR_MODEL = o.get("ASR_MODEL", os.getenv("ASR_MODEL", "base"))
         self.ASR_DEVICE = o.get("ASR_DEVICE", os.getenv("ASR_DEVICE", "cpu"))
         self.ASR_COMPUTE_TYPE = o.get("ASR_COMPUTE_TYPE", os.getenv("ASR_COMPUTE_TYPE", "int8"))
+        # ASR-specific upload cap (bytes). Tighter than MAX_CONTENT_BYTES so a huge
+        # audio decode can't tie up the CPU. Default 10 MB.
+        self.ASR_MAX_UPLOAD_BYTES = int(o.get("ASR_MAX_UPLOAD_BYTES", os.getenv("ASR_MAX_UPLOAD_BYTES", str(10 * 1024 * 1024))))
 
     @property
     def provider_configured(self):

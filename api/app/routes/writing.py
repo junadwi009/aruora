@@ -11,6 +11,7 @@ bp = Blueprint("writing", __name__)
 
 @bp.post("/api/writing/evaluate")
 def writing_evaluate():
+    uid = _require_uid()  # gate BEFORE any paid LLM / spaCy metric work
     body = request.get_json(force=True) or {}
     essay = body.get("essay", "")
 
@@ -48,7 +49,7 @@ def writing_evaluate():
 
     # Persist the attempt for the Progress tab (history + trends).
     out["savedId"] = _repo().save_attempt(
-        _require_uid(),
+        uid,
         type="writing",
         task=body.get("taskType", ""),
         prompt=body.get("prompt", ""),
