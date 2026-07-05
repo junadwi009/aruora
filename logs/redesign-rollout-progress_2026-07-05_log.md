@@ -28,4 +28,4 @@ the new identity so navigating from Home doesn't drop back to the previous look.
   still use their prior headers — next rollout steps.
 
 ## Commit
-- Pending (working tree).
+- `2accc7f` — Progress rollout. Not pushed.
