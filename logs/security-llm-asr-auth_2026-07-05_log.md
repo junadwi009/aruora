@@ -31,4 +31,4 @@ evaluate handlers that ran the paid/heavy work *before* the auth gate.
 - These endpoints are used only after onboarding/login establishes a session, so authenticated UX is unchanged (verified against the frontend flow).
 
 ## Commit
-- Pending (working tree).
+- `ba98aa2` — fix(security): require auth on roleplay/transcribe, auth-first evaluate. Not pushed.

@@ -45,4 +45,4 @@ node); radio groups lacked arrow-key navigation expected of the radio pattern.
   focus-visible rings. M4 (Card `interactive` div-button) deferred to a mini-batch.
 
 ## Commit
-- Pending (working tree).
+- `f5ed993` — fix(a11y): AA contrast, dialog focus trap, radio arrow-keys. Not pushed.

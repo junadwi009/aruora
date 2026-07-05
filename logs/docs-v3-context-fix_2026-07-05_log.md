@@ -32,4 +32,4 @@ FastAPI/uvicorn, wrong Python version, and "no auth" (all contradicted by the co
   version tracked, it must be explicitly un-ignored/force-added — not done here.
 
 ## Commit
-- Pending (working tree) — README.md + this log. `CLAUDE.md` is git-ignored.
+- `a1a396c` — README.md + this log. `CLAUDE.md` is git-ignored (refreshed locally only). Not pushed.
