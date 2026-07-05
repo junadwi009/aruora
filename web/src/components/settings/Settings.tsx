@@ -54,7 +54,7 @@ export const Settings: React.FC = () => {
           <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("settings.language")}</p>
           <div className="grid grid-cols-2 gap-2">
             <Button variant={lang === "en" ? "primary" : "secondary"} onClick={() => setLang("en")}>English</Button>
-            <Button variant={lang === "id" ? "primary" : "secondary"} onClick={() => setLang("id")}>Indonesia</Button>
+            <Button variant={lang === "id" ? "primary" : "secondary"} onClick={() => setLang("id")}>Bahasa Indonesia</Button>
           </div>
         </Card>
 

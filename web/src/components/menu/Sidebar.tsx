@@ -23,22 +23,22 @@ interface SidebarProps {
 
 interface NavEntry {
   view: View;
-  label: string;
   icon: React.ReactNode;
   skill?: string;
 }
 
+// Labels are rendered via t("nav." + view) below — no static label needed here.
 const NAV_ENTRIES: NavEntry[] = [
-  { view: "home", label: "Home", icon: <Home size={18} aria-hidden="true" /> },
-  { view: "reading", label: "Reading", icon: <BookOpen size={18} aria-hidden="true" />, skill: "reading" },
-  { view: "listening", label: "Listening", icon: <Headphones size={18} aria-hidden="true" />, skill: "listening" },
-  { view: "speaking", label: "Speaking", icon: <Mic size={18} aria-hidden="true" />, skill: "speaking" },
-  { view: "writing", label: "Writing", icon: <PenLine size={18} aria-hidden="true" />, skill: "writing" },
-  { view: "pronounce", label: "Pronounce", icon: <Volume2 size={18} aria-hidden="true" /> },
-  { view: "vocab", label: "Vocab", icon: <Layers size={18} aria-hidden="true" /> },
-  { view: "test", label: "Test", icon: <ClipboardCheck size={18} aria-hidden="true" /> },
-  { view: "tips", label: "Tips", icon: <Lightbulb size={18} aria-hidden="true" /> },
-  { view: "progress", label: "Progress", icon: <LineChart size={18} aria-hidden="true" /> },
+  { view: "home", icon: <Home size={18} aria-hidden="true" /> },
+  { view: "reading", icon: <BookOpen size={18} aria-hidden="true" />, skill: "reading" },
+  { view: "listening", icon: <Headphones size={18} aria-hidden="true" />, skill: "listening" },
+  { view: "speaking", icon: <Mic size={18} aria-hidden="true" />, skill: "speaking" },
+  { view: "writing", icon: <PenLine size={18} aria-hidden="true" />, skill: "writing" },
+  { view: "pronounce", icon: <Volume2 size={18} aria-hidden="true" /> },
+  { view: "vocab", icon: <Layers size={18} aria-hidden="true" /> },
+  { view: "test", icon: <ClipboardCheck size={18} aria-hidden="true" /> },
+  { view: "tips", icon: <Lightbulb size={18} aria-hidden="true" /> },
+  { view: "progress", icon: <LineChart size={18} aria-hidden="true" /> },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({ levels }) => {

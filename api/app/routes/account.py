@@ -116,9 +116,11 @@ def google_login():
     claims = verify_google_id_token(token, cfg.GOOGLE_CLIENT_ID)
     if not claims or not claims.get("sub"):
         raise ApiError("UNAUTHORIZED", "Invalid Google token", 401)
-    u = _repo().upsert_google_user(
-        claims["sub"], (claims.get("email") or "").strip().lower(), claims.get("name") or "",
-    )
+    # Only trust the email if Google says it's verified — otherwise an attacker
+    # could set an unverified address and get linked to that account. Sign-in by
+    # google_sub still works; the email is simply not adopted.
+    email = (claims.get("email") or "").strip().lower() if claims.get("email_verified") else ""
+    u = _repo().upsert_google_user(claims["sub"], email, claims.get("name") or "")
     login_session(u.id)
     return jsonify(_public(u)), 200
 

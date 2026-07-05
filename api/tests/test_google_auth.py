@@ -10,7 +10,7 @@ from app.data.repositories import Repository
 from app.data.seed import seed_all
 from app.services.llm import LlmGateway
 
-CLAIMS = {"sub": "google-123", "email": "g@user.com", "name": "Gina"}
+CLAIMS = {"sub": "google-123", "email": "g@user.com", "name": "Gina", "email_verified": True}
 
 
 def _client(client_id="test-client.apps.googleusercontent.com"):
@@ -57,6 +57,17 @@ def test_google_links_to_existing_email_account(monkeypatch):
     existing = repo.create_account("g@user.com", "secret123")  # password account, same email
     got = c.post("/api/account/google", json={"credential": "x"}).get_json()
     assert got["id"] == existing.id  # linked, not duplicated
+
+
+def test_google_unverified_email_not_adopted(monkeypatch):
+    """An unverified Google email must not be trusted/adopted (anti-takeover)."""
+    _stub_verify(monkeypatch, claims={
+        "sub": "google-999", "email": "unv@user.com", "name": "U", "email_verified": False,
+    })
+    c, _ = _client()
+    body = c.post("/api/account/google", json={"credential": "x"}).get_json()
+    # Signed in by sub, but the unverified email is NOT adopted.
+    assert body["email"] is None
 
 
 def test_invalid_google_token_401(monkeypatch):

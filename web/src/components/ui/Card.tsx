@@ -26,17 +26,37 @@ const variantClasses: Record<NonNullable<CardProps["variant"]>, string> = {
 
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ variant = "default", className = "", children, ...rest }, ref) => {
+    // A clickable interactive card is a button: make it keyboard-operable and
+    // focus-visible so it isn't a mouse-only <div>.
+    const asButton = variant === "interactive" && typeof rest.onClick === "function";
+    const buttonProps = asButton
+      ? {
+          role: "button" as const,
+          tabIndex: 0,
+          onKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              rest.onClick?.(e as unknown as React.MouseEvent<HTMLDivElement>);
+            }
+            rest.onKeyDown?.(e);
+          },
+        }
+      : {};
     return (
       <div
         ref={ref}
         className={[
           "rounded-[var(--radius-xl)] p-5",
           variantClasses[variant],
+          asButton
+            ? "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-600)]"
+            : "",
           className,
         ]
           .filter(Boolean)
           .join(" ")}
         {...rest}
+        {...buttonProps}
       >
         {children}
       </div>

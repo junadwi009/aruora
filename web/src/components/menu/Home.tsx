@@ -13,11 +13,12 @@ interface HomeProps {
   levels: Record<string, CefrBand>;
 }
 
-const SKILLS: { skill: Skill; label: string; icon: React.ReactNode }[] = [
-  { skill: "reading", label: "Reading", icon: <BookOpen size={18} aria-hidden="true" /> },
-  { skill: "listening", label: "Listening", icon: <Headphones size={18} aria-hidden="true" /> },
-  { skill: "speaking", label: "Speaking", icon: <Mic size={18} aria-hidden="true" /> },
-  { skill: "writing", label: "Writing", icon: <PenLine size={18} aria-hidden="true" /> },
+// Labels render via t("nav." + skill) below — no static label field needed.
+const SKILLS: { skill: Skill; icon: React.ReactNode }[] = [
+  { skill: "reading", icon: <BookOpen size={18} aria-hidden="true" /> },
+  { skill: "listening", icon: <Headphones size={18} aria-hidden="true" /> },
+  { skill: "speaking", icon: <Mic size={18} aria-hidden="true" /> },
+  { skill: "writing", icon: <PenLine size={18} aria-hidden="true" /> },
 ];
 
 const NEXT_BAND: Record<CefrBand, CefrBand> = {
@@ -174,7 +175,7 @@ export const Home: React.FC<HomeProps> = ({ levels }) => {
                     {m.idx + 1}
                   </span>
                   <span className="flex-1 text-[var(--color-text)]">{m.title}</span>
-                  <span className="text-xs text-[var(--color-muted)] tabular-nums">Day {m.dayTarget}</span>
+                  <span className="text-xs text-[var(--color-muted)] tabular-nums">{t("session.day")} {m.dayTarget}</span>
                 </li>
               ))}
             </ol>

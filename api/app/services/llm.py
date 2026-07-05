@@ -224,7 +224,7 @@ class LlmGateway:
                 try:
                     params = band_params(skill, band)
                     fmt_kw["params"] = params
-                except (KeyError, Exception):
+                except Exception:
                     fmt_kw["params"] = {}
 
         # Format the template; fall back gracefully on missing placeholders
