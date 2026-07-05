@@ -96,10 +96,15 @@ export const Progress: React.FC = () => {
   return (
     <main className="flex-1 overflow-y-auto">
       <div
-        className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 py-3 z-10"
+        className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 md:px-6 py-4 z-10"
         style={{ boxShadow: "var(--shadow-e1)" }}
       >
-        <h1 className="text-base font-semibold text-[var(--color-text)] tracking-tight">{t("nav.progress")}</h1>
+        <h1
+          className="text-xl font-bold text-[var(--color-text)] tracking-tight"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          {t("nav.progress")}
+        </h1>
       </div>
 
       <div className="p-4 md:p-6 max-w-2xl mx-auto flex flex-col gap-4">
@@ -128,7 +133,7 @@ export const Progress: React.FC = () => {
             {chartData.length > 0 && (
             <Card>
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">
+                <p className="text-sm font-semibold text-[var(--color-text)]">
                   {t("prog.bandTrend")}
                 </p>
                 <span className="text-[11px] text-[var(--color-muted)]">{t("prog.estimates")}</span>
@@ -172,7 +177,7 @@ export const Progress: React.FC = () => {
             {/* Mock tests */}
             {mocks.length > 0 && (
               <Card>
-                <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-2">
+                <p className="text-sm font-semibold text-[var(--color-text)] mb-2">
                   {t("prog.mockTests")}
                 </p>
                 <ul className="flex flex-col divide-y divide-[var(--color-border)]">
@@ -193,7 +198,7 @@ export const Progress: React.FC = () => {
             {/* History list */}
             {history.length > 0 && (
             <Card>
-              <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-2">
+              <p className="text-sm font-semibold text-[var(--color-text)] mb-2">
                 {t("prog.history")}
               </p>
               <ul className="flex flex-col divide-y divide-[var(--color-border)]">
