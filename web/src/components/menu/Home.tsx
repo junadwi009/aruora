@@ -37,95 +37,98 @@ function daysUntil(iso?: string | null): number | null {
   return diff;
 }
 
+// Display-font style, applied to headings + the greeting.
+const DISPLAY = { fontFamily: "var(--font-display)" } as const;
+// Shared surface-card inline style (warm border + soft elevation).
+const CARD = { border: "1px solid var(--color-border)", boxShadow: "var(--shadow-e1)" } as const;
+
 export const Home: React.FC<HomeProps> = ({ levels }) => {
   const { setView } = useView();
   const { t } = useT();
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [examDays, setExamDays] = useState<number | null>(null);
   const [streak, setStreak] = useState<{ current: number; today: number } | null>(null);
+  const [name, setName] = useState<string>("");
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    api.milestones().then((m) => setMilestones(Array.isArray(m) ? m : [])).catch(() => {});
-    api.accountMe().then((u) => setExamDays(daysUntil(u.examDate))).catch(() => {});
-    api.statsActivity().then((a) => setStreak({ current: a.current, today: a.today })).catch(() => {});
+    let active = true;
+    Promise.allSettled([
+      api.milestones().then((m) => { if (active) setMilestones(Array.isArray(m) ? m : []); }),
+      api.accountMe().then((u) => { if (active) { setExamDays(daysUntil(u.examDate)); setName(u.name || ""); } }),
+      api.statsActivity().then((a) => { if (active) setStreak({ current: a.current, today: a.today }); }),
+    ]).finally(() => { if (active) setLoaded(true); });
+    return () => { active = false; };
   }, []);
 
   const DAILY_GOAL = 1; // one practice/eval a day keeps the streak alive
+  const hour = new Date().getHours();
+  const greetKey = hour < 12 ? "home.greetMorning" : hour < 18 ? "home.greetAfternoon" : "home.greetEvening";
+  const hasStreak = !!streak && (streak.current > 0 || streak.today > 0);
 
   return (
-    <main className="flex-1 overflow-y-auto p-4 md:p-6 max-w-2xl">
-      <h1 className="text-2xl font-bold tracking-tight text-[var(--color-text)] mb-6">
-        {t("home.dashboard")}
-      </h1>
+    <main className="flex-1 overflow-y-auto p-4 md:p-8 max-w-2xl">
+      {/* Greeting — personal, time-aware, in the display face */}
+      <header className="mb-7 md:mb-8">
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-[var(--color-text)]" style={DISPLAY}>
+          {t(greetKey)}{name ? `, ${name}` : ""}
+        </h1>
+        <p className="text-sm text-[var(--color-muted)] mt-1.5">{t("home.greetSub")}</p>
+      </header>
 
-      {/* Today hero card — brand-tinted with accent left border */}
+      {/* Today hero — the day's single call to action */}
       <section aria-labelledby="today-heading" className="mb-6">
         <div
-          className="rounded-[var(--radius-xl)] p-5 flex items-center justify-between gap-4"
-          style={{
-            background: "color-mix(in srgb, var(--color-primary-50) 60%, var(--color-surface))",
-            border: "1px solid color-mix(in srgb, var(--color-primary-600) 20%, transparent)",
-            borderLeft: "4px solid var(--color-primary-600)",
-            boxShadow: "var(--shadow-e2)",
-          }}
+          className="rounded-[var(--radius-xl)] p-6 flex items-center justify-between gap-4 bg-[var(--color-surface)]"
+          style={{ border: "1px solid var(--color-border)", boxShadow: "var(--shadow-e2)" }}
         >
           <div>
-            <h2 id="today-heading" className="text-base font-semibold text-[var(--color-text)] mb-0.5">
+            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-primary-700)] mb-1.5">
               {t("home.today")}
+            </p>
+            <h2 id="today-heading" className="text-lg font-semibold text-[var(--color-text)]" style={DISPLAY}>
+              {t("home.todaySub")}
             </h2>
-            <p className="text-sm text-[var(--color-muted)]">{t("home.todaySub")}</p>
           </div>
-          <Button
-            onClick={() => setView("session")}
-            className="shrink-0"
-          >
+          <Button onClick={() => setView("session")} className="shrink-0">
             {t("home.start")}
           </Button>
         </div>
       </section>
 
-      {/* Streak + daily goal */}
-      {streak && (streak.current > 0 || streak.today > 0) && (
-        <section className="mb-6">
-          <div className="rounded-[var(--radius-xl)] px-5 py-4 flex items-center justify-between gap-4"
-            style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-e1)" }}>
-            <div>
-              <p className="text-sm font-semibold text-[var(--color-text)]">
-                🔥 {streak.current}-{t("home.streak")}
-              </p>
-              <p className="text-xs text-[var(--color-muted)] mt-0.5">
-                {streak.today >= DAILY_GOAL ? t("home.goalDone") : t("home.goalTodo")}
-              </p>
+      {/* Stat row — streak + exam countdown side by side */}
+      {(hasStreak || examDays !== null) && (
+        <section className="mb-6 flex flex-col sm:flex-row gap-3">
+          {hasStreak && (
+            <div className="flex-1 rounded-[var(--radius-xl)] px-5 py-4 flex items-center justify-between gap-4 bg-[var(--color-surface)]" style={CARD}>
+              <div>
+                <p className="text-sm font-semibold text-[var(--color-text)]">🔥 {streak!.current}-{t("home.streak")}</p>
+                <p className="text-xs text-[var(--color-muted)] mt-0.5">
+                  {streak!.today >= DAILY_GOAL ? t("home.goalDone") : t("home.goalTodo")}
+                </p>
+              </div>
+              <span className={`text-3xl font-bold tabular-nums ${streak!.today >= DAILY_GOAL ? "text-[var(--color-success)]" : "text-[var(--color-muted)]"}`}>
+                {streak!.today}/{DAILY_GOAL}
+              </span>
             </div>
-            <span className={`text-3xl font-bold tabular-nums ${streak.today >= DAILY_GOAL ? "text-[var(--color-success)]" : "text-[var(--color-muted)]"}`}>
-              {streak.today}/{DAILY_GOAL}
-            </span>
-          </div>
+          )}
+          {examDays !== null && (
+            <div className="flex-1 rounded-[var(--radius-xl)] px-5 py-4 flex items-center justify-between gap-4 bg-[var(--color-surface)]" style={CARD}>
+              <div>
+                <p className="text-xs text-[var(--color-muted)] uppercase tracking-wider">{t("home.examCountdown")}</p>
+                <p className="text-sm text-[var(--color-text)] mt-0.5">
+                  {examDays > 0 ? `${examDays} ${t("home.daysToGo")}` : examDays === 0 ? t("home.examToday") : "—"}
+                </p>
+              </div>
+              {examDays > 0 && <span className="text-3xl font-bold tabular-nums text-[var(--color-primary-600)]">{examDays}</span>}
+            </div>
+          )}
         </section>
       )}
 
-      {/* Exam countdown */}
-      {examDays !== null && (
-        <section className="mb-6">
-          <div className="rounded-[var(--radius-xl)] px-5 py-4 flex items-center justify-between gap-4"
-            style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", boxShadow: "var(--shadow-e1)" }}>
-            <div>
-              <p className="text-xs text-[var(--color-muted)] uppercase tracking-wide">{t("home.examCountdown")}</p>
-              <p className="text-sm text-[var(--color-text)] mt-0.5">
-                {examDays > 0 ? `${examDays} ${t("home.daysToGo")}` : examDays === 0 ? t("home.examToday") : "—"}
-              </p>
-            </div>
-            {examDays > 0 && <span className="text-3xl font-bold tabular-nums text-[var(--color-primary-600)]">{examDays}</span>}
-          </div>
-        </section>
-      )}
-
-      {/* Skill map — 2×2 elevated interactive cards */}
-      <section aria-labelledby="skills-heading" className="mb-6">
-        <h2
-          id="skills-heading"
-          className="text-sm font-semibold text-[var(--color-muted)] mb-3 tracking-tight uppercase"
-        >
+      {/* Skill map */}
+      <section aria-labelledby="skills-heading" className="mb-7">
+        <h2 id="skills-heading" className="text-base font-semibold text-[var(--color-text)] mb-3" style={DISPLAY}>
           {t("home.yourSkills")}
         </h2>
         <div className="grid grid-cols-2 gap-3">
@@ -133,12 +136,7 @@ export const Home: React.FC<HomeProps> = ({ levels }) => {
             const band = levels[skill];
             const nextBand = band ? NEXT_BAND[band] : "B1";
             return (
-              <Card
-                key={skill}
-                variant="interactive"
-                className="cursor-pointer"
-                onClick={() => setView(skill)}
-              >
+              <Card key={skill} variant="interactive" onClick={() => setView(skill)}>
                 <div className="flex items-start justify-between mb-3">
                   <span
                     className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-md)] text-[var(--color-primary-600)]"
@@ -158,15 +156,20 @@ export const Home: React.FC<HomeProps> = ({ levels }) => {
         </div>
       </section>
 
-      {/* Program milestones — real targets from the chosen plan */}
-      {milestones.length > 0 && (
-        <section aria-labelledby="milestones-heading" className="mb-6">
-          <h2
-            id="milestones-heading"
-            className="text-sm font-semibold text-[var(--color-muted)] mb-3 tracking-tight uppercase"
-          >
-            {t("home.milestones")}
-          </h2>
+      {/* Program milestones — skeleton while loading, empty-state nudge, or the list */}
+      <section aria-labelledby="milestones-heading" className="mb-7">
+        <h2 id="milestones-heading" className="text-base font-semibold text-[var(--color-text)] mb-3" style={DISPLAY}>
+          {t("home.milestones")}
+        </h2>
+        {!loaded ? (
+          <Card>
+            <div className="flex flex-col gap-3" aria-hidden="true">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="h-4 rounded bg-[var(--color-surface-2)] animate-pulse" style={{ width: `${80 - i * 14}%` }} />
+              ))}
+            </div>
+          </Card>
+        ) : milestones.length > 0 ? (
           <Card>
             <ol className="flex flex-col gap-2">
               {milestones.map((m) => (
@@ -180,15 +183,19 @@ export const Home: React.FC<HomeProps> = ({ levels }) => {
               ))}
             </ol>
           </Card>
-        </section>
-      )}
+        ) : (
+          <Card>
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-sm text-[var(--color-muted)]">{t("home.milestonesEmpty")}</p>
+              <Button size="sm" onClick={() => setView("session")} className="shrink-0">{t("home.start")}</Button>
+            </div>
+          </Card>
+        )}
+      </section>
 
       {/* Quick links */}
       <section aria-labelledby="quicklinks-heading">
-        <h2
-          id="quicklinks-heading"
-          className="text-sm font-semibold text-[var(--color-muted)] mb-3 tracking-tight uppercase"
-        >
+        <h2 id="quicklinks-heading" className="text-base font-semibold text-[var(--color-text)] mb-3" style={DISPLAY}>
           {t("home.quickAccess")}
         </h2>
         <div className="flex flex-wrap gap-2">

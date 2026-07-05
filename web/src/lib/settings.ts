@@ -9,6 +9,8 @@ const FONT_KEY = "ielts.font";
 
 // Each non-default font overrides BOTH the UI and reading stacks (all four
 // families are already bundled via fonts.css — nothing here is wasted).
+// Each non-default font overrides the UI, reading, AND display stacks so an
+// a11y font applies to headings too (accessibility wins over the brand face).
 const FONT_STACKS: Record<Exclude<Font, "default">, { ui: string; reading: string }> = {
   dyslexic: {
     ui: '"OpenDyslexic", "Atkinson Hyperlegible", system-ui, sans-serif',
@@ -38,11 +40,14 @@ export function applyFont(font: Font): void {
   if (font === "default") {
     root.removeProperty("--font-ui");
     root.removeProperty("--font-reading");
+    root.removeProperty("--font-display");
     return;
   }
   const stack = FONT_STACKS[font];
   root.setProperty("--font-ui", stack.ui);
   root.setProperty("--font-reading", stack.reading);
+  // Headings/brand follow the a11y font too (falls back to the brand face when default).
+  root.setProperty("--font-display", stack.ui);
 }
 
 export function setTheme(theme: Theme): void {

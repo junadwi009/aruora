@@ -51,19 +51,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ levels }) => {
       className="flex flex-col h-full w-64 bg-[var(--color-surface)] border-r border-[var(--color-border)] py-4"
       style={{ boxShadow: "var(--shadow-e1)" }}
     >
-      {/* Brand mark */}
-      <div className="px-4 mb-6 flex items-center gap-2.5">
+      {/* Brand mark — solid ink, display wordmark (no gradient fingerprint) */}
+      <div className="px-4 mb-7 flex items-center gap-2.5">
         <div
-          className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-md)] shrink-0"
-          style={{
-            background: "linear-gradient(135deg, var(--color-primary-600), var(--color-primary-800))",
-            boxShadow: "var(--shadow-e2)",
-          }}
+          className="flex items-center justify-center w-9 h-9 rounded-[var(--radius-md)] shrink-0 bg-[var(--color-text)]"
+          style={{ boxShadow: "var(--shadow-e1)" }}
           aria-hidden="true"
         >
-          <BookOpen size={14} className="text-white" />
+          <BookOpen size={16} className="text-[var(--color-surface)]" />
         </div>
-        <span className="text-sm font-bold text-[var(--color-text)] tracking-tight">IELTS Coach</span>
+        <span
+          className="text-lg font-bold text-[var(--color-text)] tracking-tight"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          IELTS Coach
+        </span>
       </div>
 
       <ul className="flex-1 flex flex-col gap-0.5 px-2" role="list">
@@ -76,16 +78,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ levels }) => {
                 onClick={() => setView(entry.view)}
                 aria-current={isActive ? "page" : undefined}
                 className={[
-                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-md)] text-sm font-medium",
+                  "relative w-full flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-md)] text-sm",
                   "transition-[background-color,color] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-600)]",
                   "min-h-[44px]",
                   isActive
-                    ? "bg-[var(--color-primary-50)] text-[var(--color-primary-700)]"
-                    : "text-[var(--color-text-2)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)]",
+                    ? "font-semibold text-[var(--color-text)] bg-[color-mix(in_srgb,var(--color-primary-600)_8%,transparent)]"
+                    : "font-medium text-[var(--color-text-2)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)]",
                 ]
                   .filter(Boolean)
                   .join(" ")}
               >
+                {isActive && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 rounded-full bg-[var(--color-primary-600)]"
+                  />
+                )}
                 {entry.icon}
                 <span className="flex-1 text-left">{t("nav." + entry.view)}</span>
                 {band && <LevelChip band={band} />}
@@ -100,16 +108,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ levels }) => {
           onClick={() => setView("settings")}
           aria-current={view === "settings" ? "page" : undefined}
           className={[
-            "w-full flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-md)] text-sm font-medium",
+            "relative w-full flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-md)] text-sm",
             "transition-[background-color,color] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-600)]",
             "min-h-[44px]",
             view === "settings"
-              ? "bg-[var(--color-primary-50)] text-[var(--color-primary-700)]"
-              : "text-[var(--color-text-2)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)]",
+              ? "font-semibold text-[var(--color-text)] bg-[color-mix(in_srgb,var(--color-primary-600)_8%,transparent)]"
+              : "font-medium text-[var(--color-text-2)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)]",
           ]
             .filter(Boolean)
             .join(" ")}
         >
+          {view === "settings" && (
+            <span
+              aria-hidden="true"
+              className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 rounded-full bg-[var(--color-primary-600)]"
+            />
+          )}
           <Settings size={18} aria-hidden="true" />
           <span className="flex-1 text-left">{t("nav.settings")}</span>
         </button>

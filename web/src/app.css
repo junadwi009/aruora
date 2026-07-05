@@ -16,15 +16,15 @@
   --color-danger: #DC2626;
   --color-info: #2563EB;
 
-  /* ── Neutrals (light) ── */
-  --color-bg: #F8FAFC;
-  --color-surface: #FFFFFF;
-  --color-surface-2: #F1F5F9;
-  --color-border: #E2E8F0;
-  --color-text: #0F172A;
-  --color-text-2: #334155;
-  /* Darkened from #64748B → WCAG AA for small text: ~5.3:1 on surface-2, ~5.8:1 on white. */
-  --color-muted: #5B6675;
+  /* ── Neutrals (light) — "warm paper" identity ── */
+  --color-bg: #FAF8F3;
+  --color-surface: #FFFDFA;
+  --color-surface-2: #F3F0E9;
+  --color-border: #E8E2D6;
+  --color-text: #17140F;
+  --color-text-2: #45403A;
+  /* Warm muted — WCAG AA for small text: ~5.2:1 on the warm surface-2. */
+  --color-muted: #6B6456;
 
   /* ── CEFR band colours ── */
   --color-cefr-a: #64748B;
@@ -36,6 +36,10 @@
   /* ── Typography ── */
   --font-ui: "Inter", system-ui, sans-serif;
   --font-reading: "Lexend", "Inter", system-ui, sans-serif;
+  /* Display face for the brand wordmark + page headings. The a11y-font setting
+     (settings.ts) overrides this too, so dyslexic/hyperlegible users get their
+     chosen face on headings as well. */
+  --font-display: "Lexend", "Inter", system-ui, sans-serif;
 
   /* ── Radius ── */
   --radius-sm:  8px;
@@ -55,15 +59,16 @@
   --duration-slow: 280ms;
 }
 
-/* ── Dark mode ── */
+/* ── Dark mode — warm charcoal to match the paper identity ── */
 .dark {
-  --color-bg: #0B1120;
-  --color-surface: #111827;
-  --color-surface-2: #1E293B;
-  --color-border: #334155;
-  --color-text: #F1F5F9;
-  --color-text-2: #CBD5E1;
-  --color-muted: #94A3B8;
+  --color-bg: #14110C;
+  --color-surface: #1C1813;
+  --color-surface-2: #27221A;
+  --color-border: #3A332A;
+  --color-text: #F4F0E8;
+  --color-text-2: #CFC7B8;
+  /* Warm muted — AA on the warm dark surface-2. */
+  --color-muted: #A69C8A;
 }
 
 /* ── Base ── */
