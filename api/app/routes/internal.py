@@ -6,6 +6,7 @@ emailed today. SMTP-optional (dev logs the message).
 
 Protect publicly: set REMINDER_TOKEN. Empty token = endpoint disabled (401).
 """
+import hmac
 from datetime import datetime, timezone
 
 from flask import Blueprint, jsonify, request
@@ -21,7 +22,8 @@ bp = Blueprint("internal", __name__)
 def run_reminders():
     cfg = _cfg()
     token = cfg.REMINDER_TOKEN
-    if not token or request.headers.get("X-Reminder-Token") != token:
+    given = request.headers.get("X-Reminder-Token") or ""
+    if not token or not hmac.compare_digest(str(given), str(token)):  # constant-time
         raise ApiError("UNAUTHORIZED", "Invalid reminder token", 401)
 
     # Current UTC instant; ?now=<iso> overrides it (for testing / replays).

@@ -5,6 +5,8 @@ When APP_PASSCODE is empty the app is open (offline-dev default). When set, all
 /api/* routes except health + these auth endpoints require a session established
 via POST /api/auth/login.
 """
+import hmac
+
 from flask import Blueprint, current_app, jsonify, request, session
 
 from app.errors import ApiError
@@ -31,7 +33,7 @@ def auth_login():
     if not code:
         return jsonify({"ok": True}), 200  # auth disabled
     given = (request.get_json(force=True) or {}).get("passcode", "")
-    if given != code:
+    if not hmac.compare_digest(str(given), str(code)):  # constant-time
         raise ApiError("UNAUTHORIZED", "Incorrect passcode", 401)
     session["auth"] = True
     return jsonify({"ok": True}), 200

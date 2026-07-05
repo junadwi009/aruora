@@ -3,13 +3,14 @@ POST /api/listening/generate — generate a listening transcript + questions via
 """
 from flask import Blueprint, jsonify, request
 
-from app.routes._deps import _gateway
+from app.routes._deps import _gateway, _require_uid
 
 bp = Blueprint("listening", __name__)
 
 
 @bp.post("/api/listening/generate")
 def listening_generate():
+    _require_uid()  # authenticated only — this calls the paid LLM
     body = request.get_json(force=True) or {}
     band = body.get("band", "B1")
     gateway = _gateway()

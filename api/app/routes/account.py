@@ -20,6 +20,13 @@ bp = Blueprint("account", __name__)
 
 _RESET_SALT = "ielts-password-reset"
 _RESET_MAX_AGE = 3600  # 1 hour
+_MIN_PASSWORD = 8      # minimum password length
+
+
+def _require_password(pw: str) -> str:
+    if len(pw or "") < _MIN_PASSWORD:
+        raise ApiError("VALIDATION", f"Password must be at least {_MIN_PASSWORD} characters", 422)
+    return pw
 
 
 def _reset_serializer():
@@ -51,8 +58,7 @@ def register():
     password = b.get("password") or ""
     if not _EMAIL_RE.match(email):
         raise ApiError("VALIDATION", "A valid email is required", 422)
-    if len(password) < 6:
-        raise ApiError("VALIDATION", "Password must be at least 6 characters", 422)
+    _require_password(password)
 
     repo = _repo()
     if repo.get_account_by_email(email) is not None:
@@ -137,9 +143,7 @@ def forgot():
 @bp.post("/api/account/reset")
 def reset():
     b = request.get_json(force=True) or {}
-    new = b.get("newPassword") or ""
-    if len(new) < 6:
-        raise ApiError("VALIDATION", "New password must be at least 6 characters", 422)
+    new = _require_password(b.get("newPassword") or "")
     try:
         uid = _reset_serializer().loads(b.get("token", ""), max_age=_RESET_MAX_AGE)
     except BadData:
@@ -182,6 +186,10 @@ def set_avatar():
     data_url = b.get("dataUrl", "")
     if not isinstance(data_url, str) or not data_url.startswith("data:image/"):
         raise ApiError("VALIDATION", "Avatar must be an image data URL", 422)
+    # Reject SVG: it can embed <script>/onload and would execute if the data URL
+    # is ever rendered outside an <img> (e.g. as a background or opened directly).
+    if data_url[:20].lower().startswith("data:image/svg"):
+        raise ApiError("VALIDATION", "SVG avatars are not allowed", 422)
     if len(data_url) > _MAX_AVATAR:
         raise ApiError("VALIDATION", "Image is too large (max ~2 MB)", 422)
     _repo().set_avatar(_uid_or_401(), data_url)
@@ -203,9 +211,7 @@ def delete_account():
 @bp.post("/api/account/password")
 def change_password():
     b = request.get_json(force=True) or {}
-    new = b.get("newPassword") or ""
-    if len(new) < 6:
-        raise ApiError("VALIDATION", "New password must be at least 6 characters", 422)
+    new = _require_password(b.get("newPassword") or "")
     if not _repo().change_password(_uid_or_401(), b.get("currentPassword") or "", new):
         raise ApiError("UNAUTHORIZED", "Current password is incorrect", 401)
     return jsonify({"ok": True}), 200

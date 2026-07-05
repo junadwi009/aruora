@@ -29,6 +29,18 @@ class Config:
         self.APP_PASSCODE = o.get("APP_PASSCODE", os.getenv("APP_PASSCODE", ""))
         self.SESSION_SECRET = o.get("SESSION_SECRET", os.getenv("SESSION_SECRET", "dev-secret-change-me"))
         self.SESSION_TIMEOUT_MIN = int(o.get("SESSION_TIMEOUT_MIN", os.getenv("SESSION_TIMEOUT_MIN", "30")))
+        # Session-cookie hardening. COOKIE_SECURE must be true in any HTTPS
+        # deployment (the cookie is then never sent over plain HTTP); leave false
+        # for local http dev. SameSite=Lax is our primary CSRF defence — browsers
+        # withhold the cookie on cross-site POST/DELETE/PATCH.
+        self.COOKIE_SECURE = _truthy(o.get("COOKIE_SECURE", os.getenv("COOKIE_SECURE", "0")))
+        self.COOKIE_SAMESITE = o.get("COOKIE_SAMESITE", os.getenv("COOKIE_SAMESITE", "Lax"))
+        # Max request body (bytes). Caps memory-exhaustion via huge JSON/uploads.
+        # 26 MB matches the nginx client_max_body_size (speech-audio uploads).
+        self.MAX_CONTENT_BYTES = int(o.get("MAX_CONTENT_BYTES", os.getenv("MAX_CONTENT_BYTES", str(26 * 1024 * 1024))))
+        # In-process rate limiting (brute-force + LLM cost-abuse defence).
+        # Always disabled under TESTING so the suite can hammer endpoints.
+        self.RATE_LIMIT_ENABLED = _truthy(o.get("RATE_LIMIT_ENABLED", os.getenv("RATE_LIMIT_ENABLED", "1")))
         # "Remember me": a remembered session survives browser restarts and is
         # forgotten only after this many days of inactivity (sliding).
         self.REMEMBER_DAYS = int(o.get("REMEMBER_DAYS", os.getenv("REMEMBER_DAYS", "7")))

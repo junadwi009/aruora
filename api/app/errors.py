@@ -20,6 +20,10 @@ def register_error_handlers(app):
     def _nf(_e):
         return error_response(ApiError("NOT_FOUND", "Resource not found", 404))
 
+    @app.errorhandler(413)
+    def _too_large(_e):
+        return error_response(ApiError("PAYLOAD_TOO_LARGE", "Request body is too large", 413))
+
     @app.errorhandler(500)
     def _ise(_e):
         return error_response(ApiError("INTERNAL", "Internal error", 500))

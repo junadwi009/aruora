@@ -9,8 +9,29 @@ def create_app(overrides=None):
     app = Flask(__name__)
     overrides = overrides or {}
     cfg = Config(overrides)
+
+    # ── Fail-closed: never boot a real deployment with the built-in dev secret ──
+    # The secret_key signs BOTH session cookies and password-reset tokens; a known
+    # value lets an attacker forge either (incl. an admin session). Tests pass
+    # TESTING=True and are exempt.
+    if not cfg.TESTING and cfg.SESSION_SECRET == "dev-secret-change-me":
+        raise RuntimeError(
+            "SESSION_SECRET is unset (using the insecure default). Set a strong, "
+            "random SESSION_SECRET (e.g. `python -c \"import secrets;print(secrets.token_urlsafe(48))\"`) "
+            "before starting the app."
+        )
+
     app.config["APP_CONFIG"] = cfg
     app.secret_key = cfg.SESSION_SECRET
+    # Session-cookie hardening: HttpOnly (no JS access), SameSite (CSRF defence),
+    # Secure (HTTPS-only) when configured for a TLS deployment.
+    app.config.update(
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE=cfg.COOKIE_SAMESITE,
+        SESSION_COOKIE_SECURE=cfg.COOKIE_SECURE,
+    )
+    # Cap request bodies to blunt memory-exhaustion DoS (returns 413).
+    app.config["MAX_CONTENT_LENGTH"] = cfg.MAX_CONTENT_BYTES
     # Upper bound for a "remembered" cookie's lifetime (sliding, refreshed each request).
     from datetime import timedelta as _timedelta
     app.permanent_session_lifetime = _timedelta(days=cfg.REMEMBER_DAYS)
@@ -18,6 +39,36 @@ def create_app(overrides=None):
     # supports_credentials so the passcode session cookie works cross-origin (dev).
     CORS(app, origins=[cfg.CORS_ORIGIN], supports_credentials=True)
     register_error_handlers(app)
+
+    # ── Rate limiting (Phase: security hardening) ──────────────────────────────
+    # In-process sliding-window limiter; disabled under TESTING so the suite can
+    # hammer endpoints. Guards credential brute-force and unauthenticated LLM
+    # cost-abuse. CORS preflights are never counted.
+    if cfg.RATE_LIMIT_ENABLED and not cfg.TESTING:
+        from .ratelimit import RateLimiter, rule_for, client_key
+        limiter = RateLimiter()
+
+        @app.before_request
+        def _rate_limit():
+            if request.method == "OPTIONS" or not request.path.startswith("/api/"):
+                return None
+            limit, window = rule_for(request.path)
+            key = f"{client_key(request.headers, request.remote_addr)}:{request.path}"
+            if not limiter.check(key, limit, window):
+                return error_response(
+                    ApiError("RATE_LIMITED", "Too many requests — please slow down and try again shortly", 429)
+                )
+            return None
+
+    # ── Security response headers ──────────────────────────────────────────────
+    @app.after_request
+    def _security_headers(resp):
+        resp.headers.setdefault("X-Content-Type-Options", "nosniff")
+        resp.headers.setdefault("X-Frame-Options", "DENY")
+        resp.headers.setdefault("Referrer-Policy", "no-referrer")
+        # API returns JSON only; deny all embedding/exec for this origin.
+        resp.headers.setdefault("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'")
+        return resp
 
     # ── Sliding session timeout (Phase 3a) ─────────────────────────────────────
     from datetime import datetime
