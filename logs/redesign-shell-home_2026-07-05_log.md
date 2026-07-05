@@ -48,4 +48,4 @@ heavy motion — and set the language for a later rollout to other screens.
   `prefers-reduced-motion` by the existing global rule.
 
 ## Commit
-- Pending (working tree).
+- `88ff204` — feat(ui): "Study Desk" redesign — warm identity for shell + Home. Not pushed.
