@@ -33,7 +33,7 @@ export const ProfileSection: React.FC = () => {
   if (anon) {
     return (
       <Card>
-        <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-2">{t("settings.profile")}</p>
+        <p className="text-sm font-semibold text-[var(--color-text)] mb-2">{t("settings.profile")}</p>
         <p className="text-sm text-[var(--color-muted)]">{t("set.profileAnon")}</p>
       </Card>
     );
@@ -67,7 +67,7 @@ export const ProfileSection: React.FC = () => {
 
   return (
     <Card className="flex flex-col gap-3">
-      <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("settings.profile")}</p>
+      <p className="text-sm font-semibold text-[var(--color-text)]">{t("settings.profile")}</p>
 
       <div className="flex items-center gap-4">
         <div className="w-16 h-16 rounded-full overflow-hidden bg-[var(--color-surface-2)] flex items-center justify-center shrink-0">

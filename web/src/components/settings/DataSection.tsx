@@ -38,7 +38,7 @@ export const DataSection: React.FC = () => {
 
   return (
     <Card className="flex flex-col gap-3">
-      <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("settings.data")}</p>
+      <p className="text-sm font-semibold text-[var(--color-text)]">{t("settings.data")}</p>
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-[var(--color-text)]">{t("set.dataDownload")}</p>
         <Button variant="secondary" size="sm" onClick={exportData} loading={busy}>

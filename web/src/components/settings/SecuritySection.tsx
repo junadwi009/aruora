@@ -30,7 +30,7 @@ export const SecuritySection: React.FC<{ hasAccount: boolean }> = ({ hasAccount 
 
   return (
     <Card className="flex flex-col gap-3">
-      <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("settings.security")}</p>
+      <p className="text-sm font-semibold text-[var(--color-text)]">{t("settings.security")}</p>
       {!hasAccount ? (
         <p className="text-sm text-[var(--color-muted)]">{t("set.securityAnon")}</p>
       ) : (

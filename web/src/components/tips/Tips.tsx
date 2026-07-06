@@ -69,10 +69,10 @@ export const Tips: React.FC = () => {
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 md:px-6 py-3 z-10"
+      <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 md:px-6 py-4 z-10"
         style={{ boxShadow: "var(--shadow-e1)" }}
       >
-        <h1 className="text-base font-semibold text-[var(--color-text)] tracking-tight">{t("nav.tips")}</h1>
+        <h1 style={{ fontFamily: "var(--font-display)" }} className="text-xl font-bold text-[var(--color-text)] tracking-tight">{t("nav.tips")}</h1>
       </div>
 
       <div className="p-4 md:p-6 flex flex-col gap-6 lg:grid lg:grid-cols-[1fr_389px] lg:items-start">

@@ -18,7 +18,7 @@ export const HelpSection: React.FC = () => {
     <Card className="flex flex-col gap-2">
       <div className="flex items-center gap-2 mb-1">
         <HelpCircle size={16} className="text-[var(--color-muted)]" aria-hidden="true" />
-        <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("settings.help")}</p>
+        <p className="text-sm font-semibold text-[var(--color-text)]">{t("settings.help")}</p>
       </div>
       {FAQ.map((item, i) => (
         <div key={i} className="border-b border-[var(--color-border)] last:border-0">

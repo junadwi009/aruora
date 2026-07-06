@@ -59,14 +59,14 @@ export const Writing: React.FC = () => {
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 py-3 z-10">
-        <h1 className="text-base font-semibold text-[var(--color-text)]">{t("nav.writing")}</h1>
+      <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 md:px-6 py-4 z-10">
+        <h1 style={{ fontFamily: "var(--font-display)" }} className="text-xl font-bold text-[var(--color-text)]">{t("nav.writing")}</h1>
       </div>
 
       <div className="p-4 md:p-6 max-w-2xl mx-auto flex flex-col gap-4">
         {/* Prompt */}
         <Card>
-          <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-1">
+          <p className="text-sm font-semibold text-[var(--color-text)] mb-1">
             {t("write.task2Prompt")}
           </p>
           <p className="text-sm text-[var(--color-text)] leading-relaxed">{STATIC_PROMPT}</p>
@@ -146,7 +146,7 @@ const MetricsPanel: React.FC<{ metrics: EssayMetrics }> = ({ metrics }) => {
   return (
     <Card variant="stat">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">
+        <p className="text-sm font-semibold text-[var(--color-text)]">
           {t("write.languageMetrics")}
         </p>
         <Badge tone="neutral" className="text-[10px]">
@@ -225,7 +225,7 @@ export const FeedbackView: React.FC<FeedbackViewProps> = ({ result, onRevise }) 
     {/* Corrections */}
     {Array.isArray(result.corrections) && result.corrections.length > 0 && (
       <Card>
-        <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-2">
+        <p className="text-sm font-semibold text-[var(--color-text)] mb-2">
           {t("write.corrections")}
         </p>
         <ul className="flex flex-col gap-1 text-sm text-[var(--color-text)]">
@@ -241,7 +241,7 @@ export const FeedbackView: React.FC<FeedbackViewProps> = ({ result, onRevise }) 
     {/* Model rewrite */}
     {result.rewrite && (
       <Card>
-        <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-2">
+        <p className="text-sm font-semibold text-[var(--color-text)] mb-2">
           {t("write.modelRewrite")}
         </p>
         <p className="text-sm text-[var(--color-text)] leading-relaxed whitespace-pre-wrap">

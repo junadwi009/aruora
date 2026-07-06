@@ -18,10 +18,10 @@ export const Vocab: React.FC = () => {
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 py-3 z-10 flex items-center justify-between">
+      <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 md:px-6 py-4 z-10 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Layers size={18} className="text-[var(--color-primary-600)]" aria-hidden="true" />
-          <h1 className="text-base font-semibold text-[var(--color-text)]">{t("vocab.title")}</h1>
+          <h1 style={{ fontFamily: "var(--font-display)" }} className="text-xl font-bold text-[var(--color-text)]">{t("vocab.title")}</h1>
         </div>
         <div className="flex gap-1.5">
           <Button variant={mode === "build" ? "primary" : "secondary"} size="sm" onClick={() => setMode("build")}>

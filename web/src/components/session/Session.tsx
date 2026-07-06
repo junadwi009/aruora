@@ -56,10 +56,10 @@ export const Session: React.FC = () => {
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 py-3 z-10 flex items-center justify-between">
+      <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 md:px-6 py-4 z-10 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <GraduationCap size={18} className="text-[var(--color-primary-600)]" aria-hidden="true" />
-          <h1 className="text-base font-semibold text-[var(--color-text)]">
+          <h1 style={{ fontFamily: "var(--font-display)" }} className="text-xl font-bold text-[var(--color-text)]">
             {t("session.guidedSession")}{meta ? ` · ${t("session.day")} ${meta.day}` : ""}
           </h1>
         </div>
@@ -91,7 +91,7 @@ export const Session: React.FC = () => {
           <>
             {/* Goal + stage stepper */}
             <Card variant="stat">
-              <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-1">{t("session.goal")}</p>
+              <p className="text-sm font-semibold text-[var(--color-text)] mb-1">{t("session.goal")}</p>
               <p className="text-sm text-[var(--color-text)]">{lesson.goal}</p>
               <div className="flex gap-1.5 mt-3" role="tablist" aria-label={t("session.stages")}>
                 {STAGES.map((s) => (
@@ -137,7 +137,7 @@ const Teach: React.FC<{ lesson: Lesson; onNext: () => void }> = ({ lesson, onNex
   const { t } = useT();
   return (
   <Card className="flex flex-col gap-3">
-    <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("session.stageLearn")}</p>
+    <p className="text-sm font-semibold text-[var(--color-text)]">{t("session.stageLearn")}</p>
     <p className="text-sm text-[var(--color-text)] leading-relaxed whitespace-pre-wrap">
       {lesson.teach.explanation}
     </p>
@@ -174,7 +174,7 @@ const Exercises: React.FC<{ lesson: Lesson; onNext: () => void }> = ({ lesson, o
 
 const ExerciseBlock: React.FC<{ exercise: LessonExercise }> = ({ exercise }) => (
   <Card className="flex flex-col gap-3">
-    <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{exercise.instruction}</p>
+    <p className="text-sm font-semibold text-[var(--color-text)]">{exercise.instruction}</p>
     {exercise.items.map((item, i) => (
       <ExerciseItem key={i} prompt={item.prompt} answer={item.answer} feedback={item.feedback} />
     ))}
@@ -233,7 +233,7 @@ const Produce: React.FC<{ lesson: Lesson; onOpenSkill: () => void; onNext: () =>
   const { t } = useT();
   return (
   <Card className="flex flex-col gap-3">
-    <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("session.stageProduce")}</p>
+    <p className="text-sm font-semibold text-[var(--color-text)]">{t("session.stageProduce")}</p>
     <p className="text-sm text-[var(--color-text)] leading-relaxed">{lesson.produce.instruction}</p>
     {lesson.produce.prefill && (
       <p className="text-sm text-[var(--color-muted)] italic pl-3 border-l-2 border-[var(--color-border)]">
@@ -257,7 +257,7 @@ const Review: React.FC<{ lesson: Lesson; onDone: () => void }> = ({ lesson, onDo
   const { t } = useT();
   return (
   <Card className="flex flex-col gap-3">
-    <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("session.reviewKeep")}</p>
+    <p className="text-sm font-semibold text-[var(--color-text)]">{t("session.reviewKeep")}</p>
     <ul className="flex flex-wrap gap-2">
       {lesson.review.collocations.map((c, i) => (
         <li

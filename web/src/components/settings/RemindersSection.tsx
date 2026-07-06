@@ -67,7 +67,7 @@ export const RemindersSection: React.FC = () => {
     <Card className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
         <Bell size={16} className="text-[var(--color-muted)]" aria-hidden="true" />
-        <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("set.reminder")}</p>
+        <p className="text-sm font-semibold text-[var(--color-text)]">{t("set.reminder")}</p>
       </div>
 
       <label className="flex items-center justify-between gap-3">

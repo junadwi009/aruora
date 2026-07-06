@@ -25,7 +25,7 @@ export const TargetsSection: React.FC = () => {
   if (anon) {
     return (
       <Card>
-        <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-2">{t("settings.targets")}</p>
+        <p className="text-sm font-semibold text-[var(--color-text)] mb-2">{t("settings.targets")}</p>
         <p className="text-sm text-[var(--color-muted)]">{t("set.targetsAnon")}</p>
       </Card>
     );
@@ -44,7 +44,7 @@ export const TargetsSection: React.FC = () => {
 
   return (
     <Card className="flex flex-col gap-3">
-      <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("settings.targets")}</p>
+      <p className="text-sm font-semibold text-[var(--color-text)]">{t("settings.targets")}</p>
 
       <label className="flex items-center justify-between gap-3">
         <span className="text-sm text-[var(--color-text)]">{t("set.targetsOverall")}</span>

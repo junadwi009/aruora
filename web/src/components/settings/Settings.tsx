@@ -44,14 +44,14 @@ export const Settings: React.FC = () => {
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 py-3 z-10">
-        <h1 className="text-base font-semibold text-[var(--color-text)]">{t("settings.title")}</h1>
+      <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 md:px-6 py-4 z-10">
+        <h1 style={{ fontFamily: "var(--font-display)" }} className="text-xl font-bold text-[var(--color-text)]">{t("settings.title")}</h1>
       </div>
 
       <div className="p-4 md:p-6 max-w-xl mx-auto flex flex-col gap-4">
         {/* Language */}
         <Card className="flex flex-col gap-3">
-          <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("settings.language")}</p>
+          <p className="text-sm font-semibold text-[var(--color-text)]">{t("settings.language")}</p>
           <div className="grid grid-cols-2 gap-2">
             <Button variant={lang === "en" ? "primary" : "secondary"} onClick={() => setLang("en")}>English</Button>
             <Button variant={lang === "id" ? "primary" : "secondary"} onClick={() => setLang("id")}>Bahasa Indonesia</Button>
@@ -60,7 +60,7 @@ export const Settings: React.FC = () => {
 
         {/* Theme */}
         <Card className="flex flex-col gap-3">
-          <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("settings.appearance")}</p>
+          <p className="text-sm font-semibold text-[var(--color-text)]">{t("settings.appearance")}</p>
           <div className="grid grid-cols-2 gap-2">
             <Button variant={theme === "light" ? "primary" : "secondary"} onClick={() => pickTheme("light")}>
               <Sun size={16} className="mr-1.5" /> {t("common.light")}
@@ -73,7 +73,7 @@ export const Settings: React.FC = () => {
 
         {/* Font */}
         <Card className="flex flex-col gap-3">
-          <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("settings.font")}</p>
+          <p className="text-sm font-semibold text-[var(--color-text)]">{t("settings.font")}</p>
           <div className="flex flex-col gap-2">
             {FONTS.map((f) => (
               <button

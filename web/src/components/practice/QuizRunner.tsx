@@ -152,7 +152,7 @@ export const QuizRunner: React.FC<QuizRunnerProps> = ({ skill, band, mode }) => 
         className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 py-3 flex items-center gap-3 z-10"
         style={{ boxShadow: "var(--shadow-e1)" }}
       >
-        <h1 className="text-base font-semibold text-[var(--color-text)] capitalize flex-1 tracking-tight">
+        <h1 style={{ fontFamily: "var(--font-display)" }} className="text-xl font-bold text-[var(--color-text)] capitalize flex-1 tracking-tight">
           {skill}
         </h1>
         {band && <LevelChip band={band} />}

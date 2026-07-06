@@ -41,7 +41,7 @@ export const AdminSection: React.FC<{ selfId: number }> = ({ selfId }) => {
     <Card className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
         <ShieldCheck size={16} className="text-[var(--color-primary-600)]" />
-        <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("admin.title")}</p>
+        <p className="text-sm font-semibold text-[var(--color-text)]">{t("admin.title")}</p>
       </div>
       <p className="text-sm text-[var(--color-muted)]">{t("admin.sub")}</p>
 

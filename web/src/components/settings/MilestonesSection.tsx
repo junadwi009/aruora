@@ -21,7 +21,7 @@ export const MilestonesSection: React.FC = () => {
   if (items.length === 0) {
     return (
       <Card>
-        <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-2">{t("settings.milestones")}</p>
+        <p className="text-sm font-semibold text-[var(--color-text)] mb-2">{t("settings.milestones")}</p>
         <p className="text-sm text-[var(--color-muted)]">{t("set.milestonesEmpty")}</p>
       </Card>
     );
@@ -35,7 +35,7 @@ export const MilestonesSection: React.FC = () => {
   return (
     <Card className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide">{t("settings.milestones")}</p>
+        <p className="text-sm font-semibold text-[var(--color-text)]">{t("settings.milestones")}</p>
         <Button variant="secondary" size="sm" onClick={addMilestone}><Plus size={14} className="mr-1" /> {t("set.add")}</Button>
       </div>
       <ul className="flex flex-col gap-3">

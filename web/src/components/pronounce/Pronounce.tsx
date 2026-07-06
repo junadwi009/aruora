@@ -61,8 +61,8 @@ export const Pronounce: React.FC = () => {
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 py-3 z-10 flex items-center justify-between">
-        <h1 className="text-base font-semibold text-[var(--color-text)]">{t("pron.title")}</h1>
+      <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 md:px-6 py-4 z-10 flex items-center justify-between">
+        <h1 style={{ fontFamily: "var(--font-display)" }} className="text-xl font-bold text-[var(--color-text)]">{t("pron.title")}</h1>
         <Button variant="ghost" size="sm" onClick={newSentence} loading={loadingTarget}>
           <RefreshCw size={14} className="mr-1" /> {t("pron.newSentence")}
         </Button>
@@ -108,7 +108,7 @@ export const Pronounce: React.FC = () => {
 
         {transcript !== null && (
           <Card>
-            <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-2">
+            <p className="text-sm font-semibold text-[var(--color-text)] mb-2">
               {t("pron.recogniserHeard")}
             </p>
             <p className="text-sm text-[var(--color-text)]">{transcript || t("pron.nothingDetected")}</p>
@@ -128,7 +128,7 @@ export const Pronounce: React.FC = () => {
             <p className="text-sm text-[var(--color-text)] leading-relaxed">{feedback.summary}</p>
             {feedback.wordTips?.length > 0 && (
               <div>
-                <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-1">{t("pron.wordTips")}</p>
+                <p className="text-sm font-semibold text-[var(--color-text)] mb-1">{t("pron.wordTips")}</p>
                 <ul className="flex flex-col gap-1">
                   {feedback.wordTips.map((t, i) => (
                     <li key={i} className="text-sm text-[var(--color-text)]">
@@ -140,7 +140,7 @@ export const Pronounce: React.FC = () => {
             )}
             {feedback.prosody?.length > 0 && (
               <div>
-                <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide mb-1">{t("pron.stressIntonation")}</p>
+                <p className="text-sm font-semibold text-[var(--color-text)] mb-1">{t("pron.stressIntonation")}</p>
                 <ul className="list-disc pl-5 flex flex-col gap-1">
                   {feedback.prosody.map((p, i) => (
                     <li key={i} className="text-sm text-[var(--color-text)]">{p}</li>
