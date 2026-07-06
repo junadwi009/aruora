@@ -32,7 +32,7 @@ export const Milestones: React.FC = () => {
   return (
     <div className="journey-bg flex min-h-full flex-col gap-7 p-6 max-w-lg mx-auto">
       <div className="animate-fade-slide-in flex flex-col gap-2">
-        <h1 className="text-2xl font-bold text-[var(--color-text)] tracking-tight">
+        <h1 style={{ fontFamily: "var(--font-display)" }} className="text-2xl font-bold text-[var(--color-text)] tracking-tight">
           {t("mile.title")}
         </h1>
         <p className="text-sm text-[var(--color-muted)] leading-relaxed">

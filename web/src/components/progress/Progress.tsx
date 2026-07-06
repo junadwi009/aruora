@@ -146,10 +146,10 @@ export const Progress: React.FC = () => {
                     <YAxis domain={[0, 9]} ticks={[0, 3, 5, 6, 7, 9]} tick={{ fontSize: 11 }} stroke="var(--color-muted)" />
                     <Tooltip />
                     <Legend />
-                    <Line type="monotone" dataKey="writing" name={t("nav.writing")} stroke="var(--color-primary-600)" connectNulls dot />
-                    <Line type="monotone" dataKey="speaking" name={t("nav.speaking")} stroke="#0d9488" connectNulls dot />
-                    <Line type="monotone" dataKey="reading" name={t("nav.reading")} stroke="#d97706" connectNulls dot />
-                    <Line type="monotone" dataKey="listening" name={t("nav.listening")} stroke="#7c3aed" connectNulls dot />
+                    <Line type="monotone" dataKey="writing" name={t("nav.writing")} stroke="var(--color-skill-writing)" connectNulls dot />
+                    <Line type="monotone" dataKey="speaking" name={t("nav.speaking")} stroke="var(--color-skill-speaking)" connectNulls dot />
+                    <Line type="monotone" dataKey="reading" name={t("nav.reading")} stroke="var(--color-skill-reading)" connectNulls dot />
+                    <Line type="monotone" dataKey="listening" name={t("nav.listening")} stroke="var(--color-skill-listening)" connectNulls dot />
                   </LineChart>
                 </ResponsiveContainer>
               </div>

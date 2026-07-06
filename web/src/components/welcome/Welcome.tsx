@@ -15,14 +15,11 @@ export const Welcome: React.FC = () => {
         {/* Brand mark */}
         <div className="flex flex-col items-center gap-3">
           <div
-            className="flex items-center justify-center w-14 h-14 rounded-[var(--radius-xl)]"
-            style={{
-              background: "linear-gradient(135deg, var(--color-primary-600), var(--color-primary-800))",
-              boxShadow: "var(--shadow-e3)",
-            }}
+            className="flex items-center justify-center w-14 h-14 rounded-[var(--radius-xl)] bg-[var(--color-text)]"
+            style={{ boxShadow: "var(--shadow-e2)" }}
             aria-hidden="true"
           >
-            <BookOpen size={26} className="text-white" />
+            <BookOpen size={26} className="text-[var(--color-surface)]" />
           </div>
           <span className="text-xs font-semibold tracking-widest text-[var(--color-muted)] uppercase">
             IELTS Coach
@@ -33,7 +30,7 @@ export const Welcome: React.FC = () => {
         <div className="flex flex-col gap-3">
           <h1
             className="text-4xl font-bold text-[var(--color-text)] tracking-tight leading-tight"
-            style={{ textWrap: "balance" } as React.CSSProperties}
+            style={{ textWrap: "balance", fontFamily: "var(--font-display)" } as React.CSSProperties}
           >
             {t("welcome.title")}
           </h1>

@@ -70,7 +70,7 @@ export const Generating: React.FC = () => {
       <div className="animate-fade-slide-in w-full max-w-md flex flex-col gap-6">
         {/* Heading */}
         <div className="text-center flex flex-col gap-2">
-          <h1 className="text-2xl font-bold text-[var(--color-text)] tracking-tight">
+          <h1 style={{ fontFamily: "var(--font-display)" }} className="text-2xl font-bold text-[var(--color-text)] tracking-tight">
             {t("place.genTitle")}
           </h1>
           <p className="text-sm text-[var(--color-muted)]">

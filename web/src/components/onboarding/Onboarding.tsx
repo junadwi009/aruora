@@ -84,7 +84,7 @@ export const Onboarding: React.FC = () => {
 
         {current === 0 && (
           <div className="flex flex-col gap-2">
-            <h2 className="text-lg font-semibold text-[var(--color-text)] tracking-tight">
+            <h2 style={{ fontFamily: "var(--font-display)" }} className="text-lg font-semibold text-[var(--color-text)] tracking-tight">
               {t("onb.nameHeading")}
             </h2>
             <Field
@@ -99,7 +99,7 @@ export const Onboarding: React.FC = () => {
 
         {current === 1 && (
           <div className="flex flex-col gap-2">
-            <h2 className="text-lg font-semibold text-[var(--color-text)] tracking-tight">
+            <h2 style={{ fontFamily: "var(--font-display)" }} className="text-lg font-semibold text-[var(--color-text)] tracking-tight">
               {t("onb.goalHeading")}
             </h2>
             <div role="radiogroup" aria-label={t("onb.goal")} className="flex flex-col gap-3">
@@ -119,7 +119,7 @@ export const Onboarding: React.FC = () => {
 
         {current === 2 && (
           <div className="flex flex-col gap-2">
-            <h2 className="text-lg font-semibold text-[var(--color-text)] tracking-tight">
+            <h2 style={{ fontFamily: "var(--font-display)" }} className="text-lg font-semibold text-[var(--color-text)] tracking-tight">
               {t("onb.targetHeading")}
             </h2>
             <Slider

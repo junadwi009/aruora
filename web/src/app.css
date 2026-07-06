@@ -33,6 +33,12 @@
   --color-cefr-c1: #6366F1;
   --color-cefr-c2: #8B5CF6;
 
+  /* ── Skill line colours (Progress trend chart) ── */
+  --color-skill-writing: var(--color-primary-600);
+  --color-skill-speaking: #0D9488;
+  --color-skill-reading: #D97706;
+  --color-skill-listening: #6D5AE6;
+
   /* ── Typography ── */
   --font-ui: "Inter", system-ui, sans-serif;
   --font-reading: "Lexend", "Inter", system-ui, sans-serif;

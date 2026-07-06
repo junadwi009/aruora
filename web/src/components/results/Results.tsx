@@ -63,7 +63,7 @@ export const Results: React.FC = () => {
         <div className="flex items-center gap-3 flex-wrap">
           <h1
             className="text-4xl font-bold text-[var(--color-text)] tracking-tight tabular-nums"
-            style={{ textWrap: "balance" } as React.CSSProperties}
+            style={{ textWrap: "balance", fontFamily: "var(--font-display)" } as React.CSSProperties}
           >
             {t("results.overallBand")} {overallBand.toFixed(1)}
           </h1>
