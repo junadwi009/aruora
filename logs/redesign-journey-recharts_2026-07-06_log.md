@@ -35,4 +35,4 @@ colours were hardcoded hexes. This closes both.
   small follow-up if wanted).
 
 ## Commit
-- (recorded on commit)
+- `29f63f3` — feat(ui): extend "Study Desk" identity to the journey + tokenize chart colours.
