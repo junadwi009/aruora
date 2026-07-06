@@ -44,4 +44,4 @@ screen now shares the display-face header + editorial section hierarchy.
   scope — they have their own layout language; a future batch if wanted.
 
 ## Commit
-- (recorded on commit)
+- `60fc8b0` — feat(ui): complete "Study Desk" identity rollout across all screens.
