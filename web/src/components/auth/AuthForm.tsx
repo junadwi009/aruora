@@ -54,11 +54,11 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode, onSuccess, onSwitch, o
       <form onSubmit={submit} className="flex w-full max-w-sm flex-col gap-5">
         <div className="flex flex-col items-center gap-2 text-center">
           <div
-            className="flex items-center justify-center w-12 h-12 rounded-[var(--radius-xl)]"
-            style={{ background: "linear-gradient(135deg, var(--color-primary-600), var(--color-primary-800))" }}
+            className="flex items-center justify-center w-12 h-12 rounded-[var(--radius-xl)] bg-[var(--color-text)]"
+            style={{ boxShadow: "var(--shadow-e2)" }}
             aria-hidden="true"
           >
-            {isLogin ? <LogIn size={22} className="text-white" /> : <UserPlus size={22} className="text-white" />}
+            {isLogin ? <LogIn size={22} className="text-[var(--color-surface)]" /> : <UserPlus size={22} className="text-[var(--color-surface)]" />}
           </div>
           <h1 className="text-xl font-bold text-[var(--color-text)]">
             {isLogin ? t("auth.welcomeBack") : t("auth.createAccount")}

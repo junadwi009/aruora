@@ -32,11 +32,11 @@ export const ResetPassword: React.FC<{ token: string; onDone: () => void }> = ({
     <div className="journey-bg flex min-h-full items-center justify-center p-6">
       <form onSubmit={submit} className="flex w-full max-w-sm flex-col gap-5 text-center">
         <div
-          className="self-center flex items-center justify-center w-12 h-12 rounded-[var(--radius-xl)]"
-          style={{ background: "linear-gradient(135deg, var(--color-primary-600), var(--color-primary-800))" }}
+          className="self-center flex items-center justify-center w-12 h-12 rounded-[var(--radius-xl)] bg-[var(--color-text)]"
+          style={{ boxShadow: "var(--shadow-e2)" }}
           aria-hidden="true"
         >
-          <KeyRound size={22} className="text-white" />
+          <KeyRound size={22} className="text-[var(--color-surface)]" />
         </div>
         <h1 className="text-xl font-bold text-[var(--color-text)]">{t("auth.newPassword")}</h1>
         {done ? (
