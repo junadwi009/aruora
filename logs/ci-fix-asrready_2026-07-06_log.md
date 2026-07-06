@@ -39,4 +39,4 @@ running pytest: `1 failed (test_health_ok), 175 passed` — matching CI.
   model fine on Linux.
 
 ## Commit
-- (recorded on commit)
+- `2bf8bd5` — fix(ci): make health asrReady assertion environment-independent. Pushed with the Progress rollout.
