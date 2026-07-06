@@ -1,7 +1,10 @@
 from app import create_app
 
 def test_health_ok():
-    app = create_app({"TESTING": True})
+    # Deterministic overrides: asrReady depends on whether faster-whisper is
+    # importable (it IS in any full `pip install -r requirements.txt`, e.g. CI),
+    # so disable ASR explicitly instead of assuming the package is absent.
+    app = create_app({"TESTING": True, "LLM_MODE": "stub", "ASR_ENABLED": False})
     client = app.test_client()
     r = client.get("/api/health")
     assert r.status_code == 200
