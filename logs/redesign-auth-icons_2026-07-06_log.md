@@ -23,4 +23,4 @@ Consistency — after Batch 6 these were the only screens left with the gradient
 - Presentation-only; no logic/i18n/route change.
 
 ## Commit
-- (recorded on commit)
+- `0313d90` — feat(ui): unify auth screen brand marks to the ink mark.
