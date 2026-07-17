@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, Button } from "../ui";
+import { Button } from "../ui";
 import { ClipboardList, Clock, Mic } from "lucide-react";
 import { useT } from "../../lib/i18n";
 
@@ -11,13 +11,26 @@ export const PlacementIntro: React.FC<PlacementIntroProps> = ({ onBegin }) => {
   const { t } = useT();
   return (
     <div className="journey-bg flex min-h-full items-center justify-center p-6">
-      <Card className="animate-fade-slide-in w-full max-w-lg flex flex-col gap-7">
+      <div
+        className="animate-fade-slide-in flex w-full max-w-lg flex-col gap-7 rounded-[var(--radius-3xl)] border border-[color-mix(in_srgb,var(--color-border)_70%,transparent)] bg-[var(--color-surface)] p-8"
+        style={{ boxShadow: "var(--shadow-premium-card)" }}
+      >
         {/* Heading */}
-        <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-bold text-[var(--color-text)] tracking-tight leading-tight">
+        <div className="flex flex-col gap-3">
+          <div
+            className="flex h-12 w-12 items-center justify-center rounded-[var(--radius-xl)] bg-[var(--color-primary-600)] text-white"
+            style={{ boxShadow: "var(--shadow-premium)" }}
+            aria-hidden="true"
+          >
+            <ClipboardList size={24} />
+          </div>
+          <h1
+            className="text-2xl font-bold leading-tight tracking-tight text-[var(--color-text)]"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
             {t("place.introTitle")}
           </h1>
-          <p className="text-[var(--color-muted)] text-base leading-relaxed">
+          <p className="text-base leading-relaxed text-[var(--color-muted)]">
             {t("place.introSubtitle")}
           </p>
         </div>
@@ -26,7 +39,7 @@ export const PlacementIntro: React.FC<PlacementIntroProps> = ({ onBegin }) => {
         <ul className="flex flex-col gap-4 text-sm text-[var(--color-text)]">
           <li className="flex items-start gap-3">
             <span
-              className="mt-0.5 shrink-0 flex items-center justify-center w-8 h-8 rounded-[var(--radius-md)]"
+              className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-md)]"
               style={{ background: "color-mix(in srgb, var(--color-primary-600) 12%, transparent)" }}
               aria-hidden="true"
             >
@@ -38,7 +51,7 @@ export const PlacementIntro: React.FC<PlacementIntroProps> = ({ onBegin }) => {
           </li>
           <li className="flex items-start gap-3">
             <span
-              className="mt-0.5 shrink-0 flex items-center justify-center w-8 h-8 rounded-[var(--radius-md)]"
+              className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-md)]"
               style={{ background: "color-mix(in srgb, var(--color-primary-600) 12%, transparent)" }}
               aria-hidden="true"
             >
@@ -50,7 +63,7 @@ export const PlacementIntro: React.FC<PlacementIntroProps> = ({ onBegin }) => {
           </li>
           <li className="flex items-start gap-3">
             <span
-              className="mt-0.5 shrink-0 flex items-center justify-center w-8 h-8 rounded-[var(--radius-md)]"
+              className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-md)]"
               style={{ background: "color-mix(in srgb, var(--color-primary-600) 12%, transparent)" }}
               aria-hidden="true"
             >
@@ -63,18 +76,18 @@ export const PlacementIntro: React.FC<PlacementIntroProps> = ({ onBegin }) => {
         </ul>
 
         {/* Footer note */}
-        <p className="text-xs text-[var(--color-muted)] border-t border-[var(--color-border)] pt-5">
+        <p className="border-t border-[color-mix(in_srgb,var(--color-border)_70%,transparent)] pt-5 text-xs text-[var(--color-muted)]">
           {t("place.accommodationsPre")}{" "}
           <strong>{t("place.accommodationsStrong")}</strong> {t("place.accommodationsRest")}
         </p>
 
         {/* CTA */}
         <div className="flex justify-end">
-          <Button size="lg" onClick={onBegin}>
+          <Button size="lg" pill onClick={onBegin}>
             {t("place.begin")}
           </Button>
         </div>
-      </Card>
+      </div>
     </div>
   );
 };

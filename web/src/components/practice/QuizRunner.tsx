@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { BookOpen, Headphones } from "lucide-react";
 import { api } from "../../lib/api/client";
 import { bandFromPct } from "../../lib/band";
 import type { QuizQuestion, QuizSet } from "../../lib/types";
@@ -149,9 +150,15 @@ export const QuizRunner: React.FC<QuizRunnerProps> = ({ skill, band, mode }) => 
     <main className="flex-1 overflow-y-auto">
       {/* Header */}
       <div
-        className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 py-3 flex items-center gap-3 z-10"
-        style={{ boxShadow: "var(--shadow-e1)" }}
+        className="sticky top-0 bg-[var(--color-surface)] border-b border-[color-mix(in_srgb,var(--color-border)_70%,transparent)] px-4 md:px-6 py-4 flex items-center gap-3 z-10"
+        style={{ boxShadow: "var(--shadow-premium)" }}
       >
+        <div
+          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[var(--radius-lg)] bg-[color-mix(in_srgb,var(--color-primary-600)_10%,transparent)] text-[var(--color-primary-600)]"
+          aria-hidden="true"
+        >
+          {mode === "reading" ? <BookOpen size={20} /> : <Headphones size={20} />}
+        </div>
         <h1 style={{ fontFamily: "var(--font-display)" }} className="text-xl font-bold text-[var(--color-text)] capitalize flex-1 tracking-tight">
           {skill}
         </h1>
@@ -225,8 +232,9 @@ export const QuizRunner: React.FC<QuizRunnerProps> = ({ skill, band, mode }) => 
               <Card>
                 <div className="flex items-center gap-3 mb-2">
                   <Button
-                    variant="secondary"
+                    variant="primary"
                     size="sm"
+                    pill
                     onClick={handlePlay}
                     disabled={speaking}
                     aria-label={speaking ? t("quiz.playing") : t("quiz.playAudio")}
@@ -240,8 +248,8 @@ export const QuizRunner: React.FC<QuizRunnerProps> = ({ skill, band, mode }) => 
                   )}
                 </div>
                 {showTranscript && set.transcript && (
-                  <div className="mt-3 border-t border-[var(--color-border)] pt-3">
-                    <p className="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest mb-2">{t("quiz.transcript")}</p>
+                  <div className="mt-3 border-t border-[color-mix(in_srgb,var(--color-border)_70%,transparent)] pt-3">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)] mb-2">{t("quiz.transcript")}</p>
                     <p
                       className="text-sm text-[var(--color-text)] leading-relaxed"
                       style={{ fontFamily: "var(--font-reading)" }}
@@ -280,6 +288,7 @@ export const QuizRunner: React.FC<QuizRunnerProps> = ({ skill, band, mode }) => 
             {!submitted && (
               <Button
                 className="mt-2 self-start"
+                pill
                 onClick={handleSubmit}
                 disabled={Object.keys(answers).length === 0}
               >
@@ -343,7 +352,7 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
               return (
                 <label
                   key={opt}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-[var(--radius-md)] border cursor-pointer text-sm transition-colors ${optColor}`}
+                  className={`flex min-h-11 items-center gap-2 px-4 py-3 rounded-[var(--radius-lg)] border cursor-pointer text-sm font-medium transition-colors ${optColor}`}
                 >
                   <input
                     type="radio"
@@ -368,12 +377,12 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
           onChange={(e) => onChange(e.target.value)}
           placeholder={t("quiz.typeAnswer")}
           aria-label={`${t("quiz.answerForQuestion")} ${index + 1}`}
-          className="min-h-11 w-full px-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-600)]"
+          className="min-h-11 w-full px-4 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text)] text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-600)]"
         />
       )}
 
       {submitted && question.explanation && (
-        <p className="mt-2 text-xs text-[var(--color-muted)] border-t border-[var(--color-border)] pt-2">
+        <p className="mt-3 text-xs text-[var(--color-muted)] leading-relaxed border-t border-[color-mix(in_srgb,var(--color-border)_70%,transparent)] pt-3">
           {question.explanation}
         </p>
       )}

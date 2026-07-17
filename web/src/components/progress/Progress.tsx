@@ -96,9 +96,15 @@ export const Progress: React.FC = () => {
   return (
     <main className="flex-1 overflow-y-auto">
       <div
-        className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 md:px-6 py-4 z-10"
+        className="sticky top-0 bg-[var(--color-surface)] border-b border-[color-mix(in_srgb,var(--color-border)_70%,transparent)] px-4 md:px-6 py-4 z-10 flex items-center gap-3"
         style={{ boxShadow: "var(--shadow-e1)" }}
       >
+        <div
+          className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-lg)] bg-[color-mix(in_srgb,var(--color-primary-600)_10%,transparent)] text-[var(--color-primary-600)]"
+          aria-hidden="true"
+        >
+          <TrendingUp size={20} />
+        </div>
         <h1
           className="text-xl font-bold text-[var(--color-text)] tracking-tight"
           style={{ fontFamily: "var(--font-display)" }}
@@ -109,15 +115,18 @@ export const Progress: React.FC = () => {
 
       <div className="p-4 md:p-6 max-w-2xl mx-auto flex flex-col gap-4">
         {loading ? (
-          <Card className="py-12 text-center text-sm text-[var(--color-muted)]">{t("prog.loadingHistory")}</Card>
+          <Card className="py-12 text-center text-sm text-[var(--color-muted)] rounded-[var(--radius-3xl)]" style={{ boxShadow: "var(--shadow-premium)" }}>{t("prog.loadingHistory")}</Card>
         ) : !hasData ? (
-          <Card className="flex flex-col items-center gap-5 py-12 text-center">
+          <Card
+            className="flex flex-col items-center gap-5 py-12 text-center rounded-[var(--radius-3xl)]"
+            style={{ boxShadow: "var(--shadow-premium)" }}
+          >
             <div
-              className="flex items-center justify-center w-14 h-14 rounded-[var(--radius-xl)]"
-              style={{ background: "color-mix(in srgb, var(--color-primary-600) 12%, transparent)" }}
+              className="flex items-center justify-center w-16 h-16 rounded-[var(--radius-2xl)]"
+              style={{ background: "color-mix(in srgb, var(--color-primary-600) 10%, transparent)" }}
               aria-hidden="true"
             >
-              <TrendingUp size={26} className="text-[var(--color-primary-600)]" />
+              <TrendingUp size={30} className="text-[var(--color-primary-600)]" />
             </div>
             <div className="flex flex-col gap-2">
               <p className="text-base font-semibold text-[var(--color-text)]">{t("prog.noAttempts")}</p>
@@ -125,18 +134,18 @@ export const Progress: React.FC = () => {
                 {t("prog.noAttemptsBody")}
               </p>
             </div>
-            <Button onClick={() => setView("writing")}>{t("prog.startPractising")}</Button>
+            <Button pill onClick={() => setView("writing")}>{t("prog.startPractising")}</Button>
           </Card>
         ) : (
           <>
             {/* Trend chart */}
             {chartData.length > 0 && (
-            <Card>
+            <Card className="rounded-[var(--radius-3xl)]" style={{ boxShadow: "var(--shadow-premium)" }}>
               <div className="flex items-center justify-between mb-3">
                 <p className="text-sm font-semibold text-[var(--color-text)]">
                   {t("prog.bandTrend")}
                 </p>
-                <span className="text-[11px] text-[var(--color-muted)]">{t("prog.estimates")}</span>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">{t("prog.estimates")}</span>
               </div>
               <div className="h-64" aria-hidden="true">
                 <ResponsiveContainer width="100%" height="100%">
@@ -176,7 +185,7 @@ export const Progress: React.FC = () => {
 
             {/* Mock tests */}
             {mocks.length > 0 && (
-              <Card>
+              <Card className="rounded-[var(--radius-3xl)]" style={{ boxShadow: "var(--shadow-premium)" }}>
                 <p className="text-sm font-semibold text-[var(--color-text)] mb-2">
                   {t("prog.mockTests")}
                 </p>
@@ -197,7 +206,7 @@ export const Progress: React.FC = () => {
 
             {/* History list */}
             {history.length > 0 && (
-            <Card>
+            <Card className="rounded-[var(--radius-3xl)]" style={{ boxShadow: "var(--shadow-premium)" }}>
               <p className="text-sm font-semibold text-[var(--color-text)] mb-2">
                 {t("prog.history")}
               </p>

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { api } from "../../lib/api/client";
 import { useJourney } from "../../lib/journey";
 import { ProgressBar } from "../ui/ProgressBar";
@@ -66,8 +67,46 @@ export const Generating: React.FC = () => {
   }, []);
 
   return (
-    <div className="journey-bg flex min-h-full flex-col items-center justify-center gap-8 p-6">
-      <div className="animate-fade-slide-in w-full max-w-md flex flex-col gap-6">
+    <div className="journey-bg relative flex min-h-full flex-col items-center justify-center gap-8 overflow-hidden p-6">
+      {/* Ambient gradient blobs — decorative */}
+      <span
+        aria-hidden="true"
+        className="premium-blob"
+        style={{
+          top: 0,
+          left: 0,
+          width: "20rem",
+          height: "20rem",
+          background:
+            "linear-gradient(135deg, color-mix(in srgb, var(--color-primary-600) 28%, transparent), transparent)",
+        }}
+      />
+      <span
+        aria-hidden="true"
+        className="premium-blob"
+        style={{
+          bottom: 0,
+          right: 0,
+          width: "20rem",
+          height: "20rem",
+          background:
+            "linear-gradient(135deg, color-mix(in srgb, var(--color-primary-600) 16%, transparent), transparent)",
+        }}
+      />
+
+      <div
+        className="animate-fade-slide-in relative z-10 w-full max-w-md flex flex-col gap-6 rounded-[var(--radius-3xl)] border border-[color-mix(in_srgb,var(--color-border)_70%,transparent)] bg-[var(--color-surface)] p-8"
+        style={{ boxShadow: "var(--shadow-premium-card)" }}
+      >
+        {/* Animated icon tile */}
+        <div
+          className="mx-auto flex h-14 w-14 items-center justify-center rounded-[var(--radius-xl)] bg-[var(--color-primary-600)] text-white"
+          style={{ boxShadow: "var(--shadow-premium)" }}
+          aria-hidden="true"
+        >
+          <Loader2 size={28} className="animate-spin" />
+        </div>
+
         {/* Heading */}
         <div className="text-center flex flex-col gap-2">
           <h1 style={{ fontFamily: "var(--font-display)" }} className="text-2xl font-bold text-[var(--color-text)] tracking-tight">
@@ -79,7 +118,7 @@ export const Generating: React.FC = () => {
         </div>
 
         {/* Stepped checklist — elevated rows */}
-        <ul className="flex flex-col gap-2" role="list">
+        <ul className="flex flex-col gap-2 text-left" role="list">
           {STEPS.map((label, i) => {
             const isDone = i < stepIdx;
             const isActive = i === stepIdx;

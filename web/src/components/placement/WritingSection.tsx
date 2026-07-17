@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, Textarea } from "../ui";
+import { Textarea } from "../ui";
 import { useT } from "../../lib/i18n";
 
 interface WritingSectionData {
@@ -32,9 +32,12 @@ export const WritingSection: React.FC<WritingSectionProps> = ({
   return (
     <div className="flex flex-col gap-5 max-w-2xl">
       {/* Prompt card */}
-      <Card className="flex flex-col gap-3">
+      <div
+        className="flex flex-col gap-3 rounded-[var(--radius-3xl)] border border-[color-mix(in_srgb,var(--color-border)_70%,transparent)] bg-[var(--color-surface)] p-6 md:p-8"
+        style={{ boxShadow: "var(--shadow-premium)" }}
+      >
         <div className="flex items-center justify-between gap-2">
-          <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]">
+          <span className="rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--color-primary-700)]" style={{ background: "color-mix(in srgb, var(--color-primary-600) 10%, transparent)" }}>
             {section.taskType === "task1" ? t("place.task1") : t("place.task2")}
           </span>
           {/* Word count chip */}
@@ -52,7 +55,7 @@ export const WritingSection: React.FC<WritingSectionProps> = ({
         <p className="text-sm text-[var(--color-text)] leading-relaxed">
           {section.prompt}
         </p>
-      </Card>
+      </div>
 
       <Textarea
         label={t("place.yourResponse")}

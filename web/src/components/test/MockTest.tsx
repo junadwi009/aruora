@@ -68,10 +68,18 @@ export const MockTest: React.FC = () => {
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 md:px-6 py-4 z-10 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <ClipboardCheck size={18} className="text-[var(--color-primary-600)]" aria-hidden="true" />
-          <h1 style={{ fontFamily: "var(--font-display)" }} className="text-xl font-bold text-[var(--color-text)]">{t("test.title")}</h1>
+      <div
+        className="sticky top-0 bg-[var(--color-surface)] border-b border-[color-mix(in_srgb,var(--color-border)_70%,transparent)] px-4 md:px-6 py-4 z-10 flex items-center justify-between gap-3"
+        style={{ boxShadow: "var(--shadow-e1)" }}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-lg)] bg-[color-mix(in_srgb,var(--color-primary-600)_10%,transparent)] text-[var(--color-primary-600)]"
+            aria-hidden="true"
+          >
+            <ClipboardCheck size={20} />
+          </div>
+          <h1 style={{ fontFamily: "var(--font-display)" }} className="text-xl font-bold text-[var(--color-text)] tracking-tight">{t("test.title")}</h1>
         </div>
         {(stage === "listening" || stage === "reading") && (
           <Timer seconds={MOCK_SECONDS} onExpire={finish} />
@@ -82,12 +90,23 @@ export const MockTest: React.FC = () => {
         {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
 
         {stage === "intro" && (
-          <Card className="flex flex-col items-center gap-4 py-10 text-center">
-            <p className="text-base font-semibold text-[var(--color-text)]">{t("test.introTitle")}</p>
-            <p className="text-sm text-[var(--color-muted)] max-w-sm">
-              {t("test.introBody")}
-            </p>
-            <Button onClick={start} loading={loading}>
+          <Card
+            className="flex flex-col items-center gap-5 py-12 text-center rounded-[var(--radius-3xl)]"
+            style={{ boxShadow: "var(--shadow-premium)" }}
+          >
+            <div
+              className="flex h-16 w-16 items-center justify-center rounded-[var(--radius-2xl)] bg-[color-mix(in_srgb,var(--color-primary-600)_10%,transparent)] text-[var(--color-primary-600)]"
+              aria-hidden="true"
+            >
+              <ClipboardCheck size={30} />
+            </div>
+            <div className="flex flex-col gap-2">
+              <p className="text-base font-semibold text-[var(--color-text)]">{t("test.introTitle")}</p>
+              <p className="text-sm text-[var(--color-muted)] max-w-sm">
+                {t("test.introBody")}
+              </p>
+            </div>
+            <Button onClick={start} loading={loading} pill>
               {loading ? t("common.loading") : t("test.startMock")}
             </Button>
           </Card>
@@ -117,8 +136,11 @@ export const MockTest: React.FC = () => {
         )}
 
         {stage === "result" && result && (
-          <Card className="flex flex-col gap-4 py-8">
-            <p className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wide text-center">
+          <Card
+            className="flex flex-col gap-4 py-8 rounded-[var(--radius-3xl)]"
+            style={{ boxShadow: "var(--shadow-premium)" }}
+          >
+            <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)] text-center">
               {t("test.estimatedResult")}
             </p>
             <div className="flex items-center justify-center gap-8">
@@ -130,10 +152,10 @@ export const MockTest: React.FC = () => {
               {t("test.estimateNote")}
             </p>
             <div className="flex justify-center gap-2">
-              <Button variant="secondary" onClick={() => { setStage("intro"); setResult(null); setLAnswers({}); setRAnswers({}); }}>
+              <Button variant="secondary" pill onClick={() => { setStage("intro"); setResult(null); setLAnswers({}); setRAnswers({}); }}>
                 {t("test.newMock")}
               </Button>
-              <Button onClick={() => setView("progress")}>
+              <Button pill onClick={() => setView("progress")}>
                 {t("test.viewProgress")} <ArrowRight size={14} className="ml-1" />
               </Button>
             </div>
@@ -220,7 +242,7 @@ const Section: React.FC<SectionProps> = ({ title, set, answers, onAnswer, onNext
         ))}
       </div>
 
-      <Button className="self-end" onClick={onNext}>
+      <Button className="self-end" pill onClick={onNext}>
         {nextLabel} <ArrowRight size={14} className="ml-1" />
       </Button>
     </>

@@ -63,8 +63,13 @@ export const Roleplay: React.FC = () => {
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 md:px-6 py-4 z-10 flex items-center gap-2">
-        <MessagesSquare size={18} className="text-[var(--color-primary-600)]" aria-hidden="true" />
+      <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[color-mix(in_srgb,var(--color-border)_70%,transparent)] px-4 md:px-6 py-4 z-10 flex items-center gap-3" style={{ boxShadow: "var(--shadow-premium)" }}>
+        <div
+          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[var(--radius-lg)] bg-[color-mix(in_srgb,var(--color-primary-600)_10%,transparent)] text-[var(--color-primary-600)]"
+          aria-hidden="true"
+        >
+          <MessagesSquare size={20} />
+        </div>
         <h1 style={{ fontFamily: "var(--font-display)" }} className="text-xl font-bold text-[var(--color-text)]">{t("roleplay.title")}</h1>
       </div>
 
@@ -89,7 +94,7 @@ export const Roleplay: React.FC = () => {
           <>
             <div className="flex flex-col gap-2">
               {messages.map((m, i) => (
-                <div key={i} className={`max-w-[85%] rounded-[var(--radius-lg)] px-3 py-2 text-sm ${
+                <div key={i} className={`max-w-[85%] rounded-[var(--radius-2xl)] px-4 py-2.5 text-sm leading-relaxed ${
                   m.role === "assistant"
                     ? "self-start bg-[var(--color-surface-2)] text-[var(--color-text)]"
                     : "self-end bg-[var(--color-primary-600)] text-white"
@@ -109,9 +114,9 @@ export const Roleplay: React.FC = () => {
                 onKeyDown={(e) => e.key === "Enter" && send()}
                 placeholder={t("roleplay.replyPlaceholder")}
                 aria-label={t("roleplay.yourReply")}
-                className="flex-1 min-h-11 px-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] text-sm text-[var(--color-text)]"
+                className="flex-1 min-h-11 px-4 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface-2)] text-sm text-[var(--color-text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-600)]"
               />
-              <Button onClick={send} disabled={!input.trim() || busy} aria-label={t("roleplay.send")}><Send size={16} /></Button>
+              <Button onClick={send} disabled={!input.trim() || busy} pill aria-label={t("roleplay.send")}><Send size={16} /></Button>
             </div>
 
             <Button variant="ghost" size="sm" onClick={endConversation} loading={scoring} className="self-end">

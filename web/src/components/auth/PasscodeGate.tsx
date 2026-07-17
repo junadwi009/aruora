@@ -27,18 +27,48 @@ export const PasscodeGate: React.FC<{ onUnlock: () => void }> = ({ onUnlock }) =
   };
 
   return (
-    <div className="journey-bg flex min-h-full items-center justify-center p-6">
-      <form onSubmit={submit} className="flex w-full max-w-xs flex-col items-center gap-5 text-center">
-        <div
-          className="flex items-center justify-center w-14 h-14 rounded-[var(--radius-xl)] bg-[var(--color-text)]"
-          style={{ boxShadow: "var(--shadow-e2)" }}
-          aria-hidden="true"
-        >
-          <Lock size={24} className="text-[var(--color-surface)]" />
-        </div>
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-bold text-[var(--color-text)]">{t("auth.passcodeTitle")}</h1>
-          <p className="text-sm text-[var(--color-muted)]">{t("auth.passcodeSub")}</p>
+    <div className="relative flex min-h-full items-center justify-center overflow-hidden bg-[var(--color-bg)] p-6">
+      {/* Ambient gradient blobs — decorative */}
+      <span
+        aria-hidden="true"
+        className="premium-blob"
+        style={{
+          top: 0,
+          left: 0,
+          width: "20rem",
+          height: "20rem",
+          background: "linear-gradient(135deg, color-mix(in srgb, var(--color-primary-600) 28%, transparent), transparent)",
+        }}
+      />
+      <span
+        aria-hidden="true"
+        className="premium-blob"
+        style={{
+          bottom: 0,
+          right: 0,
+          width: "20rem",
+          height: "20rem",
+          background: "linear-gradient(135deg, color-mix(in srgb, var(--color-danger) 20%, transparent), transparent)",
+        }}
+      />
+
+      <form
+        onSubmit={submit}
+        className="relative z-10 flex w-full max-w-md flex-col items-center gap-5 rounded-[var(--radius-3xl)] border border-[color-mix(in_srgb,var(--color-border)_70%,transparent)] bg-[var(--color-surface)] p-8 text-center"
+        style={{ boxShadow: "var(--shadow-premium-card)" }}
+      >
+        <div className="mb-2 flex flex-col items-center gap-3 text-center">
+          <div
+            className="flex h-14 w-14 items-center justify-center rounded-[var(--radius-xl)] bg-[var(--color-primary-600)] text-white"
+            style={{ boxShadow: "var(--shadow-premium)" }}
+            aria-hidden="true"
+          >
+            <Lock size={26} />
+          </div>
+          <h1 className="text-2xl font-bold text-[var(--color-text)]" style={{ fontFamily: "var(--font-display)" }}>
+            {t("auth.passcodeTitle")}
+          </h1>
+          <p className="max-w-xs text-sm text-[var(--color-muted)]">{t("auth.passcodeSub")}</p>
         </div>
         <input
           type="password"
@@ -48,10 +78,10 @@ export const PasscodeGate: React.FC<{ onUnlock: () => void }> = ({ onUnlock }) =
           onChange={(e) => setPasscode(e.target.value)}
           aria-label={t("auth.passcodeAria")}
           placeholder="••••"
-          className="w-full min-h-11 px-3 text-center tracking-widest rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-600)]"
+          className="w-full min-h-11 px-4 text-center tracking-[0.5em] rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-600)]"
         />
         {error && <p className="text-xs text-[var(--color-danger)]" role="alert">{error}</p>}
-        <Button type="submit" loading={busy} disabled={!passcode.trim()} className="w-full">
+        <Button type="submit" pill loading={busy} disabled={!passcode.trim()} className="w-full">
           {t("auth.unlock")}
         </Button>
       </form>

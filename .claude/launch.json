@@ -6,6 +6,13 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["start"],
       "port": 5050
+    },
+    {
+      "name": "ielts-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "web",
+      "port": 5173
     }
   ]
 }

@@ -52,7 +52,7 @@ export const ListeningSection: React.FC<ListeningSectionProps> = ({
     <div className="flex flex-col gap-6 max-w-2xl">
       {/* Audio clips */}
       <div className="flex flex-col gap-3">
-        <h2 className="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest">
+        <h2 className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
           {t("place.audioClips")}
         </h2>
         {!hasSpeechSynthesis && (
@@ -63,8 +63,8 @@ export const ListeningSection: React.FC<ListeningSectionProps> = ({
         {section.clips.map((clip, i) => (
           <div
             key={i}
-            className="flex items-center gap-4 p-4 rounded-[var(--radius-lg)] bg-[var(--color-surface)] border border-[var(--color-border)]"
-            style={{ boxShadow: "var(--shadow-e1)" }}
+            className="flex items-center gap-4 rounded-[var(--radius-2xl)] border border-[color-mix(in_srgb,var(--color-border)_70%,transparent)] bg-[var(--color-surface)] p-4"
+            style={{ boxShadow: "var(--shadow-premium)" }}
           >
             {/* Styled play button */}
             <button
@@ -113,11 +113,13 @@ export const ListeningSection: React.FC<ListeningSectionProps> = ({
               key={item.id}
               id={`q-${qi}`}
               data-qi={qi}
-              className="flex flex-col gap-3 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4"
-              style={{ boxShadow: "var(--shadow-e1)" }}
+              className="flex flex-col gap-3 rounded-[var(--radius-2xl)] border border-[color-mix(in_srgb,var(--color-border)_70%,transparent)] bg-[var(--color-surface)] p-5"
+              style={{ boxShadow: "var(--shadow-premium)" }}
             >
-              <p className="text-sm font-medium text-[var(--color-text)] leading-relaxed">
-                <span className="text-[var(--color-muted)] mr-2 tabular-nums">{qi + 1}.</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider tabular-nums text-[var(--color-muted)]">
+                {t("place.question")} {qi + 1}
+              </span>
+              <p className="text-sm font-semibold text-[var(--color-text)] leading-relaxed">
                 {payload.stem}
               </p>
 
@@ -129,10 +131,10 @@ export const ListeningSection: React.FC<ListeningSectionProps> = ({
                       <label
                         key={opt}
                         className={[
-                          "flex items-center gap-2.5 cursor-pointer text-sm rounded-[var(--radius-md)] px-3 py-2 border transition-colors",
+                          "flex min-h-11 items-center gap-2.5 cursor-pointer text-sm font-semibold rounded-[var(--radius-lg)] px-3 py-2 border transition-colors",
                           answers[item.id] === opt
                             ? "border-[var(--color-primary-600)] bg-[color-mix(in_srgb,var(--color-primary-600)_8%,transparent)] text-[var(--color-primary-700)]"
-                            : "border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-surface-2)]",
+                            : "border-[var(--color-border)] text-[var(--color-text)] hover:border-[var(--color-primary-600)] hover:bg-[var(--color-surface-2)]",
                         ].join(" ")}
                       >
                         <input
@@ -160,7 +162,7 @@ export const ListeningSection: React.FC<ListeningSectionProps> = ({
                     setAnswer(item.id, e.target.value);
                     setCurrentQ(qi);
                   }}
-                  className="min-h-11 px-3 py-2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] text-sm text-[var(--color-text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-600)]"
+                  className="min-h-11 px-3 py-2 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface-2)] text-sm text-[var(--color-text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-600)]"
                   placeholder={t("place.yourAnswer")}
                 />
               )}

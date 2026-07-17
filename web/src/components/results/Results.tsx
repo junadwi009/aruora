@@ -59,22 +59,27 @@ export const Results: React.FC = () => {
   return (
     <div className="animate-fade-slide-in flex min-h-full flex-col gap-6 p-6 max-w-2xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-3 flex-wrap">
-          <h1
-            className="text-4xl font-bold text-[var(--color-text)] tracking-tight tabular-nums"
-            style={{ textWrap: "balance", fontFamily: "var(--font-display)" } as React.CSSProperties}
-          >
-            {t("results.overallBand")} {overallBand.toFixed(1)}
-          </h1>
-          <LevelChip band={cefr as CefrBand} />
+      <div className="flex flex-col gap-4 border-b border-[color-mix(in_srgb,var(--color-border)_70%,transparent)] pb-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1
+              className="text-4xl font-bold text-[var(--color-text)] tracking-tight tabular-nums"
+              style={{ textWrap: "balance", fontFamily: "var(--font-display)" } as React.CSSProperties}
+            >
+              {t("results.overallBand")} {overallBand.toFixed(1)}
+            </h1>
+            <LevelChip band={cefr as CefrBand} />
+          </div>
+          <p className="text-sm text-[var(--color-muted)]">{headline}</p>
         </div>
-        <p className="text-sm text-[var(--color-muted)]">{headline}</p>
+        <Button pill size="lg" onClick={() => go("register")} className="shrink-0">
+          {t("results.saveCta")}
+        </Button>
       </div>
 
       {/* Radar chart */}
-      <Card>
-        <h2 className="text-xs font-semibold text-[var(--color-muted)] mb-4 uppercase tracking-widest">
+      <Card style={{ boxShadow: "var(--shadow-premium-card)" }}>
+        <h2 className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)] mb-4">
           {t("results.skillRadar")}
         </h2>
         {/* Chart — may render at 0×0 in jsdom, that's fine */}
@@ -131,7 +136,10 @@ export const Results: React.FC = () => {
           return (
             <Card key={skill}>
               <div className="flex items-center justify-between mb-3">
-                <span className="font-semibold text-[var(--color-text)]">
+                <span
+                  className="font-semibold text-[var(--color-text)]"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
                   {skillLabel(skill)}
                 </span>
                 <LevelChip band={s.cefr as CefrBand} />
@@ -161,13 +169,6 @@ export const Results: React.FC = () => {
             </Card>
           );
         })}
-      </div>
-
-      {/* CTA */}
-      <div className="flex justify-center pt-2">
-        <Button size="lg" onClick={() => go("register")} className="min-w-[14rem]">
-          {t("results.saveCta")}
-        </Button>
       </div>
     </div>
   );

@@ -18,16 +18,24 @@ export const Vocab: React.FC = () => {
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 md:px-6 py-4 z-10 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Layers size={18} className="text-[var(--color-primary-600)]" aria-hidden="true" />
-          <h1 style={{ fontFamily: "var(--font-display)" }} className="text-xl font-bold text-[var(--color-text)]">{t("vocab.title")}</h1>
+      <div
+        className="sticky top-0 bg-[var(--color-surface)] border-b border-[color-mix(in_srgb,var(--color-border)_70%,transparent)] px-4 md:px-6 py-4 z-10 flex items-center justify-between gap-3"
+        style={{ boxShadow: "var(--shadow-e1)" }}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-lg)] bg-[color-mix(in_srgb,var(--color-primary-600)_10%,transparent)] text-[var(--color-primary-600)]"
+            aria-hidden="true"
+          >
+            <Layers size={20} />
+          </div>
+          <h1 style={{ fontFamily: "var(--font-display)" }} className="text-xl font-bold text-[var(--color-text)] tracking-tight">{t("vocab.title")}</h1>
         </div>
         <div className="flex gap-1.5">
-          <Button variant={mode === "build" ? "primary" : "secondary"} size="sm" onClick={() => setMode("build")}>
+          <Button variant={mode === "build" ? "primary" : "secondary"} size="sm" pill onClick={() => setMode("build")}>
             {t("vocab.build")}
           </Button>
-          <Button variant={mode === "review" ? "primary" : "secondary"} size="sm" onClick={() => { setMode("review"); }}>
+          <Button variant={mode === "review" ? "primary" : "secondary"} size="sm" pill onClick={() => { setMode("review"); }}>
             {t("vocab.review")}{stats.due > 0 ? ` (${stats.due})` : ""}
           </Button>
         </div>
@@ -151,10 +159,21 @@ const Review: React.FC<{ onChange: () => void }> = ({ onChange }) => {
 
   if (queue.length === 0 || idx >= queue.length) {
     return (
-      <Card className="flex flex-col items-center gap-3 py-10 text-center">
-        <p className="text-base font-semibold text-[var(--color-text)]">{t("vocab.allCaughtUp")} 🎉</p>
-        <p className="text-sm text-[var(--color-muted)]">{t("vocab.noCardsDue")}</p>
-        <Button variant="secondary" size="sm" onClick={load}>
+      <Card
+        className="flex flex-col items-center gap-4 py-12 text-center rounded-[var(--radius-3xl)]"
+        style={{ boxShadow: "var(--shadow-premium)" }}
+      >
+        <div
+          className="flex h-16 w-16 items-center justify-center rounded-[var(--radius-2xl)] bg-[color-mix(in_srgb,var(--color-primary-600)_10%,transparent)] text-[var(--color-primary-600)]"
+          aria-hidden="true"
+        >
+          <Layers size={30} />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <p className="text-base font-semibold text-[var(--color-text)]">{t("vocab.allCaughtUp")} 🎉</p>
+          <p className="text-sm text-[var(--color-muted)]">{t("vocab.noCardsDue")}</p>
+        </div>
+        <Button variant="secondary" size="sm" pill onClick={load}>
           <RotateCcw size={14} className="mr-1" /> {t("vocab.refresh")}
         </Button>
       </Card>
@@ -173,12 +192,15 @@ const Review: React.FC<{ onChange: () => void }> = ({ onChange }) => {
   return (
     <>
       <p className="text-xs text-[var(--color-muted)] text-center">{idx + 1} {t("vocab.of")} {queue.length}</p>
-      <Card className="min-h-40 flex flex-col items-center justify-center text-center gap-3 py-8">
+      <Card
+        className="min-h-44 flex flex-col items-center justify-center text-center gap-3 py-10 rounded-[var(--radius-3xl)]"
+        style={{ boxShadow: "var(--shadow-premium)" }}
+      >
         <p className="text-lg font-semibold text-[var(--color-text)]">{card.front}</p>
         {flipped ? (
           <p className="text-sm text-[var(--color-text)] whitespace-pre-wrap">{card.back}</p>
         ) : (
-          <Button variant="secondary" size="sm" onClick={() => setFlipped(true)}>{t("vocab.showAnswer")}</Button>
+          <Button variant="secondary" size="sm" pill onClick={() => setFlipped(true)}>{t("vocab.showAnswer")}</Button>
         )}
       </Card>
       {flipped && (
