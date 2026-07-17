@@ -1,7 +1,7 @@
 # Update log — Google sign-in routing + set-password + dashboard layout fix
 
 **Date:** 2026-07-17
-**Commit:** _(fill after commit)_
+**Commit:** `cc40383`
 
 ## What changed & why
 
