@@ -113,8 +113,8 @@ export const Settings: React.FC = () => {
         {/* Band targets */}
         <TargetsSection />
 
-        {/* Security — change password */}
-        <SecuritySection hasAccount={hasAccount} />
+        {/* Security — change password (or set one for Google-only accounts) */}
+        <SecuritySection hasAccount={hasAccount} hasPassword={account?.hasPassword ?? true} />
 
         {/* Study reminder */}
         <RemindersSection />

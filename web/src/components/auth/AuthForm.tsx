@@ -13,9 +13,12 @@ interface AuthFormProps {
   onSwitch?: () => void;
   onSkip?: () => void;
   onForgot?: () => void;
+  /** Route a Google sign-in by whether the account is brand new (→ placement)
+   *  or returning (→ dashboard). Falls back to onSuccess when omitted. */
+  onGoogleAuthed?: (user: AccountUser, isNew: boolean) => void;
 }
 
-export const AuthForm: React.FC<AuthFormProps> = ({ mode, onSuccess, onSwitch, onSkip, onForgot }) => {
+export const AuthForm: React.FC<AuthFormProps> = ({ mode, onSuccess, onSwitch, onSkip, onForgot, onGoogleAuthed }) => {
   const { t } = useT();
   const isLogin = mode === "login";
   const [email, setEmail] = useState("");
@@ -150,7 +153,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode, onSuccess, onSwitch, o
               {t("auth.or")}
               <span className="h-px flex-1 bg-[var(--color-border)]" />
             </div>
-            <GoogleButton clientId={googleClientId} onSuccess={onSuccess} onError={setError} />
+            <GoogleButton clientId={googleClientId} onSuccess={onSuccess} onGoogleAuthed={onGoogleAuthed} onError={setError} />
           </>
         )}
 

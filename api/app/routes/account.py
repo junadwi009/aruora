@@ -48,6 +48,8 @@ def _public(u) -> dict:
             "country": u.country, "examDate": u.exam_date, "bio": u.bio,
             "avatar": u.avatar, "reminderTime": u.reminder_time,
             "reminderTz": u.reminder_tz,
+            # Whether a local password is set — lets Google-only users add one.
+            "hasPassword": bool(u.password_hash),
             "isAdmin": _is_admin(u.email)}
 
 
@@ -120,9 +122,11 @@ def google_login():
     # could set an unverified address and get linked to that account. Sign-in by
     # google_sub still works; the email is simply not adopted.
     email = (claims.get("email") or "").strip().lower() if claims.get("email_verified") else ""
-    u = _repo().upsert_google_user(claims["sub"], email, claims.get("name") or "")
+    u, is_new = _repo().upsert_google_user(claims["sub"], email, claims.get("name") or "")
     login_session(u.id)
-    return jsonify(_public(u)), 200
+    # isNew tells the client to route a first-time Google user into the placement
+    # flow; returning users go straight to the dashboard.
+    return jsonify({**_public(u), "isNew": is_new}), 200
 
 
 @bp.post("/api/account/forgot")
@@ -214,6 +218,12 @@ def delete_account():
 def change_password():
     b = request.get_json(force=True) or {}
     new = _require_password(b.get("newPassword") or "")
-    if not _repo().change_password(_uid_or_401(), b.get("currentPassword") or "", new):
+    uid = _uid_or_401()
+    # Google-only accounts have no local password yet: let the signed-in user set
+    # one without proving a current password (there is none to prove).
+    if not _repo().has_password(uid):
+        _repo().set_password(uid, new)
+        return jsonify({"ok": True}), 200
+    if not _repo().change_password(uid, b.get("currentPassword") or "", new):
         raise ApiError("UNAUTHORIZED", "Current password is incorrect", 401)
     return jsonify({"ok": True}), 200

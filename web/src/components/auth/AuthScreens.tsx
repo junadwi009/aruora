@@ -3,13 +3,16 @@ import { useJourney } from "../../lib/journey";
 import { AuthForm } from "./AuthForm";
 import { ForgotPassword } from "./ForgotPassword";
 
-/** Returning-user sign-in (from Welcome). On success jump straight into the app. */
+/** Returning-user sign-in (from Welcome). Email/password users jump into the app.
+ *  Google users are routed by whether the account is brand new: first-time Google
+ *  sign-ins go through onboarding + placement; returning ones go to the dashboard. */
 export const LoginScreen: React.FC = () => {
   const { go } = useJourney();
   return (
     <AuthForm
       mode="login"
       onSuccess={() => go("app")}
+      onGoogleAuthed={(_u, isNew) => go(isNew ? "onboarding" : "app")}
       onSwitch={() => go("welcome")}
       onForgot={() => go("forgot")}
     />

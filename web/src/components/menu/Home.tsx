@@ -65,6 +65,8 @@ export const Home: React.FC<HomeProps> = ({ levels }) => {
   const hour = new Date().getHours();
   const greetKey = hour < 12 ? "home.greetMorning" : hour < 18 ? "home.greetAfternoon" : "home.greetEvening";
   const hasStreak = !!streak && (streak.current > 0 || streak.today > 0);
+  // Right rail only exists once there's real streak / exam data to show.
+  const showRail = hasStreak || examDays !== null;
 
   return (
     <main className="flex-1 overflow-y-auto p-4 md:p-8">
@@ -103,8 +105,9 @@ export const Home: React.FC<HomeProps> = ({ levels }) => {
         </section>
 
         <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
-          {/* Main column */}
-          <div className="flex flex-col gap-7 lg:col-span-8">
+          {/* Main column — spans full width when there's no right-rail data yet,
+              so a fresh account doesn't leave the right third empty. */}
+          <div className={`flex flex-col gap-7 ${showRail ? "lg:col-span-8" : "lg:col-span-12"}`}>
             {/* Skill map */}
             <section aria-labelledby="skills-heading">
               <h2 id="skills-heading" className="mb-3 text-lg font-bold text-[var(--color-text)]" style={DISPLAY}>
@@ -189,7 +192,7 @@ export const Home: React.FC<HomeProps> = ({ levels }) => {
           </div>
 
           {/* Right rail — real streak + exam-countdown widgets */}
-          {(hasStreak || examDays !== null) && (
+          {showRail && (
             <aside className="flex flex-col gap-4 lg:col-span-4">
               {hasStreak && (
                 <div className="rounded-[var(--radius-2xl)] bg-[var(--color-surface)] p-5" style={CARD}>

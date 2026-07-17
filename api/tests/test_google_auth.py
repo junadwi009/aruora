@@ -42,6 +42,51 @@ def test_google_login_creates_account_and_session(monkeypatch):
     assert c.get("/api/account/me").status_code == 200
 
 
+def test_google_login_reports_new_then_returning(monkeypatch):
+    """First-ever Google sign-in is flagged isNew; a later sign-in is not."""
+    _stub_verify(monkeypatch)
+    c, _ = _client()
+    first = c.post("/api/account/google", json={"credential": "x"}).get_json()
+    assert first["isNew"] is True
+    assert first["hasPassword"] is False  # Google-only account has no local password
+    c.post("/api/account/logout")
+    again = c.post("/api/account/google", json={"credential": "x"}).get_json()
+    assert again["isNew"] is False
+
+
+def test_google_link_existing_email_not_new(monkeypatch):
+    """Linking to an existing email account is not a new sign-up."""
+    _stub_verify(monkeypatch)
+    c, repo = _client()
+    repo.create_account("g@user.com", "secret123")  # pre-existing password account
+    got = c.post("/api/account/google", json={"credential": "x"}).get_json()
+    assert got["isNew"] is False
+    assert got["hasPassword"] is True  # inherited the email account's password
+
+
+def test_google_user_can_set_first_password(monkeypatch):
+    """A Google-only user sets a password (no current one) and can then sign in with it."""
+    _stub_verify(monkeypatch)
+    c, _ = _client()
+    c.post("/api/account/google", json={"credential": "x"})  # signs in, no password
+    r = c.post("/api/account/password", json={"newPassword": "brandnew123"})
+    assert r.status_code == 200
+    # Can now sign in with email + the new password.
+    c.post("/api/account/logout")
+    login = c.post("/api/account/login", json={"email": "g@user.com", "password": "brandnew123"})
+    assert login.status_code == 200
+
+
+def test_password_account_still_needs_current(monkeypatch):
+    """An account that already has a password must prove the current one to change it."""
+    _stub_verify(monkeypatch)
+    c, repo = _client()
+    repo.create_account("g@user.com", "secret123")
+    c.post("/api/account/google", json={"credential": "x"})  # signs into that account
+    bad = c.post("/api/account/password", json={"currentPassword": "wrong", "newPassword": "another123"})
+    assert bad.status_code == 401
+
+
 def test_google_login_is_idempotent_by_sub(monkeypatch):
     _stub_verify(monkeypatch)
     c, repo = _client()

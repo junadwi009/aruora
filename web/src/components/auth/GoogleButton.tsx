@@ -40,7 +40,11 @@ export const GoogleButton: React.FC<{
   clientId: string;
   onSuccess: (u: AccountUser) => void;
   onError?: (msg: string) => void;
-}> = ({ clientId, onSuccess, onError }) => {
+  /** When set, receives the signed-in user plus whether this was a first-ever
+   *  Google sign-in — used to route new users into placement. Falls back to
+   *  onSuccess when omitted. */
+  onGoogleAuthed?: (u: AccountUser, isNew: boolean) => void;
+}> = ({ clientId, onSuccess, onError, onGoogleAuthed }) => {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -53,7 +57,10 @@ export const GoogleButton: React.FC<{
           client_id: clientId,
           callback: (resp) => {
             api.accountGoogle(resp.credential)
-              .then(onSuccess)
+              .then((u) => {
+                if (onGoogleAuthed) onGoogleAuthed(u, !!u.isNew);
+                else onSuccess(u);
+              })
               .catch((e) => onError?.(e instanceof Error ? e.message : "Google sign-in failed"));
           },
         });
@@ -64,7 +71,7 @@ export const GoogleButton: React.FC<{
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [clientId, onSuccess, onError]);
+  }, [clientId, onSuccess, onError, onGoogleAuthed]);
 
   return <div ref={ref} className="flex justify-center min-h-11" />;
 };

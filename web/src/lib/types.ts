@@ -257,6 +257,10 @@ export interface AccountUser {
   reminderTime?: string | null;
   reminderTz?: string | null;
   isAdmin?: boolean;
+  /** Whether a local password is set (false for Google-only accounts). */
+  hasPassword?: boolean;
+  /** Only present on the Google sign-in response: true on first-ever sign-in. */
+  isNew?: boolean;
 }
 
 export interface AdminUser {
