@@ -3,7 +3,7 @@
 **Date:** 2026-07-17
 **Spec/plan:** `docs/superpowers/specs/2026-07-17-approachable-redesign-quicksand.md` ·
 `docs/superpowers/plans/2026-07-17-approachable-redesign-quicksand.md`
-**Commit:** _(fill after commit)_
+**Commit:** `48dc7b6`
 
 ## What changed & why
 Applied the `ielts_coach_approachable_redesign_with_idr_pricing.html` prototype's visual
