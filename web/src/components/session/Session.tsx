@@ -56,32 +56,51 @@ export const Session: React.FC = () => {
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 md:px-6 py-4 z-10 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <GraduationCap size={18} className="text-[var(--color-primary-600)]" aria-hidden="true" />
-          <h1 style={{ fontFamily: "var(--font-display)" }} className="text-xl font-bold text-[var(--color-text)]">
+      <div
+        className="sticky top-0 bg-[var(--color-surface)] border-b border-[color-mix(in_srgb,var(--color-border)_70%,transparent)] px-4 md:px-6 py-4 z-10 flex items-center justify-between gap-3"
+        style={{ boxShadow: "var(--shadow-e1)" }}
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-lg)] bg-[color-mix(in_srgb,var(--color-primary-600)_10%,transparent)] text-[var(--color-primary-600)]"
+            aria-hidden="true"
+          >
+            <GraduationCap size={20} />
+          </div>
+          <h1 style={{ fontFamily: "var(--font-display)" }} className="text-xl font-bold text-[var(--color-text)] tracking-tight truncate">
             {t("session.guidedSession")}{meta ? ` · ${t("session.day")} ${meta.day}` : ""}
           </h1>
         </div>
         {lesson && (
-          <Button variant="ghost" size="sm" onClick={() => generate(true)} loading={generating} aria-label={t("session.regenerateLesson")}>
+          <Button variant="ghost" size="sm" pill onClick={() => generate(true)} loading={generating} aria-label={t("session.regenerateLesson")}>
             <RefreshCw size={14} className="mr-1" /> {t("session.regenerate")}
           </Button>
         )}
       </div>
 
       <div className="p-4 md:p-6 max-w-2xl mx-auto flex flex-col gap-4">
-        {loading && <Card className="py-12 text-center text-sm text-[var(--color-muted)]">{t("common.loading")}</Card>}
+        {loading && <Card className="py-12 text-center text-sm text-[var(--color-muted)] rounded-[var(--radius-3xl)]" style={{ boxShadow: "var(--shadow-premium)" }}>{t("common.loading")}</Card>}
 
         {!loading && error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
 
         {!loading && !lesson && (
-          <Card className="flex flex-col items-center gap-4 py-10 text-center">
-            <p className="text-base font-semibold text-[var(--color-text)]">{t("session.todaysFocus")}: {meta?.focus}</p>
-            <p className="text-sm text-[var(--color-muted)] max-w-xs">
-              {t("session.introBody")}
-            </p>
-            <Button onClick={() => generate(false)} loading={generating}>
+          <Card
+            className="flex flex-col items-center gap-5 py-12 text-center rounded-[var(--radius-3xl)]"
+            style={{ boxShadow: "var(--shadow-premium)" }}
+          >
+            <div
+              className="flex h-16 w-16 items-center justify-center rounded-[var(--radius-2xl)] bg-[color-mix(in_srgb,var(--color-primary-600)_10%,transparent)] text-[var(--color-primary-600)]"
+              aria-hidden="true"
+            >
+              <GraduationCap size={30} />
+            </div>
+            <div className="flex flex-col gap-2">
+              <p className="text-base font-semibold text-[var(--color-text)]">{t("session.todaysFocus")}: {meta?.focus}</p>
+              <p className="text-sm text-[var(--color-muted)] max-w-xs">
+                {t("session.introBody")}
+              </p>
+            </div>
+            <Button onClick={() => generate(false)} loading={generating} pill>
               {generating ? t("session.generating") : t("session.generateLesson")}
             </Button>
           </Card>
@@ -150,7 +169,7 @@ const Teach: React.FC<{ lesson: Lesson; onNext: () => void }> = ({ lesson, onNex
         ))}
       </ul>
     )}
-    <Button className="self-end mt-2" onClick={onNext}>
+    <Button className="self-end mt-2" pill onClick={onNext}>
       {t("session.stagePractice")} <ArrowRight size={14} className="ml-1" />
     </Button>
   </Card>
@@ -165,7 +184,7 @@ const Exercises: React.FC<{ lesson: Lesson; onNext: () => void }> = ({ lesson, o
     {lesson.exercises.map((ex, i) => (
       <ExerciseBlock key={i} exercise={ex} />
     ))}
-    <Button className="self-end" onClick={onNext}>
+    <Button className="self-end" pill onClick={onNext}>
       {t("session.stageProduce")} <ArrowRight size={14} className="ml-1" />
     </Button>
   </div>
@@ -241,10 +260,10 @@ const Produce: React.FC<{ lesson: Lesson; onOpenSkill: () => void; onNext: () =>
       </p>
     )}
     <div className="flex gap-2 justify-end">
-      <Button variant="ghost" size="sm" onClick={onNext}>
+      <Button variant="ghost" size="sm" pill onClick={onNext}>
         {t("session.skipToReview")}
       </Button>
-      <Button onClick={onOpenSkill} className="capitalize">
+      <Button onClick={onOpenSkill} pill className="capitalize">
         {t("session.open")} {lesson.skill} <ArrowRight size={14} className="ml-1" />
       </Button>
     </div>
@@ -271,7 +290,7 @@ const Review: React.FC<{ lesson: Lesson; onDone: () => void }> = ({ lesson, onDo
     {lesson.review.tip && (
       <p className="text-sm text-[var(--color-text)] mt-1">💡 {lesson.review.tip}</p>
     )}
-    <Button className="self-end mt-2" onClick={onDone}>
+    <Button className="self-end mt-2" pill onClick={onDone}>
       {t("session.finish")}
     </Button>
   </Card>

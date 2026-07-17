@@ -16,12 +16,12 @@
   --color-danger: #DC2626;
   --color-info: #2563EB;
 
-  /* ── Neutrals (light) — "warm paper" identity ── */
-  --color-bg: #FAF8F3;
-  --color-surface: #FFFDFA;
-  --color-surface-2: #F3F0E9;
-  --color-border: #E8E2D6;
-  --color-text: #17140F;
+  /* ── Neutrals (light) — "warm paper" identity (approachable-premium) ── */
+  --color-bg: #FCFAF6;
+  --color-surface: #FFFFFF;
+  --color-surface-2: #F5F3EE;
+  --color-border: #EAE6DF;
+  --color-text: #231F1C;
   --color-text-2: #45403A;
   /* Warm muted — WCAG AA for small text: ~5.2:1 on the warm surface-2. */
   --color-muted: #6B6456;
@@ -42,21 +42,27 @@
   /* ── Typography ── */
   --font-ui: "Inter", system-ui, sans-serif;
   --font-reading: "Lexend", "Inter", system-ui, sans-serif;
-  /* Display face for the brand wordmark + page headings. The a11y-font setting
-     (settings.ts) overrides this too, so dyslexic/hyperlegible users get their
-     chosen face on headings as well. */
-  --font-display: "Lexend", "Inter", system-ui, sans-serif;
+  /* Display face for the brand wordmark + page headings — warm rounded Quicksand.
+     The a11y-font setting (settings.ts) overrides this too, so dyslexic/
+     hyperlegible users get their chosen face on headings as well. */
+  --font-display: "Quicksand", "Lexend", "Inter", system-ui, sans-serif;
 
-  /* ── Radius ── */
+  /* ── Radius — larger, softer "approachable" shapes ── */
   --radius-sm:  8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 22px;
+  --radius-2xl: 24px;   /* cards / surfaces */
+  --radius-3xl: 32px;   /* large hero surfaces */
 
-  /* ── Elevation (slate/indigo-tinted shadows) ── */
+  /* ── Elevation (indigo-tinted shadows) ── */
   --shadow-e1: 0 1px 2px rgba(15,23,42,.06);
   --shadow-e2: 0 6px 20px -6px rgba(30,41,59,.18), 0 2px 6px -2px rgba(30,41,59,.10);
   --shadow-e3: 0 18px 48px -12px rgba(49,46,129,.28), 0 6px 16px -8px rgba(30,41,59,.16);
+  /* Soft "premium" shadows — subtle indigo lift used across cards. */
+  --shadow-premium: 0 4px 24px -2px rgba(99,102,241,.06), 0 2px 8px -1px rgba(0,0,0,.02);
+  --shadow-premium-card: 0 20px 40px -15px rgba(99,102,241,.10), 0 1px 8px rgba(0,0,0,.02);
+  --shadow-premium-hover: 0 24px 48px -12px rgba(99,102,241,.16), 0 4px 12px -2px rgba(0,0,0,.03);
 
   /* ── Motion ── */
   --ease-default: cubic-bezier(.2,0,.2,1);
@@ -67,14 +73,18 @@
 
 /* ── Dark mode — warm charcoal to match the paper identity ── */
 .dark {
-  --color-bg: #14110C;
-  --color-surface: #1C1813;
-  --color-surface-2: #27221A;
-  --color-border: #3A332A;
-  --color-text: #F4F0E8;
+  --color-bg: #12100E;
+  --color-surface: #1E1B18;
+  --color-surface-2: #2A2622;
+  --color-border: #3E3732;
+  --color-text: #FDFCFB;
   --color-text-2: #CFC7B8;
   /* Warm muted — AA on the warm dark surface-2. */
   --color-muted: #A69C8A;
+  /* Premium shadows read as near-black lifts on the dark paper. */
+  --shadow-premium: 0 4px 24px -2px rgba(0,0,0,.40), 0 2px 8px -1px rgba(0,0,0,.30);
+  --shadow-premium-card: 0 20px 40px -15px rgba(0,0,0,.55), 0 1px 8px rgba(0,0,0,.30);
+  --shadow-premium-hover: 0 24px 48px -12px rgba(0,0,0,.60), 0 4px 12px -2px rgba(0,0,0,.35);
 }
 
 /* ── Base ── */
@@ -109,6 +119,27 @@ p {
 .tabular-nums,
 [data-tabular] {
   font-variant-numeric: tabular-nums;
+}
+
+/* ── Approachable-premium helpers ── */
+/* Soft lift on hover for interactive cards. */
+.premium-hover {
+  transition: transform var(--duration-slow) var(--ease-default),
+              box-shadow var(--duration-slow) var(--ease-default);
+}
+.premium-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-premium-hover);
+}
+
+/* Decorative blurred gradient blob for auth / onboarding / hero backdrops.
+   Purely ornamental — always pair with aria-hidden + pointer-events-none. */
+.premium-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(48px);
+  pointer-events: none;
+  opacity: .5;
 }
 
 /* ── Ambient journey background ── */

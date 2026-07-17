@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, HelpCircle } from "lucide-react";
 import { api } from "../../lib/api/client";
 import type { Tips as TipsData } from "../../lib/types";
 import { useT } from "../../lib/i18n";
@@ -69,9 +69,15 @@ export const Tips: React.FC = () => {
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 md:px-6 py-4 z-10"
+      <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[color-mix(in_srgb,var(--color-border)_70%,transparent)] px-4 md:px-6 py-4 z-10 flex items-center gap-3"
         style={{ boxShadow: "var(--shadow-e1)" }}
       >
+        <div
+          className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-lg)] bg-[color-mix(in_srgb,var(--color-primary-600)_10%,transparent)] text-[var(--color-primary-600)]"
+          aria-hidden="true"
+        >
+          <HelpCircle size={20} />
+        </div>
         <h1 style={{ fontFamily: "var(--font-display)" }} className="text-xl font-bold text-[var(--color-text)] tracking-tight">{t("nav.tips")}</h1>
       </div>
 
@@ -83,7 +89,11 @@ export const Tips: React.FC = () => {
           const panelId = `tips-panel-${skill}`;
 
           return (
-            <Card key={skill} className="p-0 overflow-hidden">
+            <Card
+              key={skill}
+              className="p-0 overflow-hidden rounded-[var(--radius-3xl)]"
+              style={{ boxShadow: "var(--shadow-premium)" }}
+            >
               {/* Accordion trigger — rounded header, chevron rotate */}
               <button
                 type="button"

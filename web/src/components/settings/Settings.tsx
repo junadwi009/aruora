@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Sun, Moon, LogOut } from "lucide-react";
+import { Sun, Moon, LogOut, Settings2 } from "lucide-react";
 import { api } from "../../lib/api/client";
 import {
   getTheme, setTheme, getFont, setFont,
@@ -44,8 +44,17 @@ export const Settings: React.FC = () => {
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 md:px-6 py-4 z-10">
-        <h1 style={{ fontFamily: "var(--font-display)" }} className="text-xl font-bold text-[var(--color-text)]">{t("settings.title")}</h1>
+      <div
+        className="sticky top-0 bg-[var(--color-surface)] border-b border-[color-mix(in_srgb,var(--color-border)_70%,transparent)] px-4 md:px-6 py-4 z-10 flex items-center gap-3"
+        style={{ boxShadow: "var(--shadow-e1)" }}
+      >
+        <div
+          className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-lg)] bg-[color-mix(in_srgb,var(--color-primary-600)_10%,transparent)] text-[var(--color-primary-600)]"
+          aria-hidden="true"
+        >
+          <Settings2 size={20} />
+        </div>
+        <h1 style={{ fontFamily: "var(--font-display)" }} className="text-xl font-bold text-[var(--color-text)] tracking-tight">{t("settings.title")}</h1>
       </div>
 
       <div className="p-4 md:p-6 max-w-xl mx-auto flex flex-col gap-4">

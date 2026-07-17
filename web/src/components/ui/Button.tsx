@@ -7,12 +7,14 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   loading?: boolean;
   /** Stretch to full container width */
   fullWidth?: boolean;
+  /** Fully-rounded pill shape — the approachable-premium CTA look. */
+  pill?: boolean;
 }
 
 const variantClasses: Record<NonNullable<ButtonProps["variant"]>, string> = {
   primary:
     "bg-[var(--color-primary-600)] text-white border-transparent " +
-    "hover:bg-[var(--color-primary-700)] hover:shadow-[var(--shadow-e2)] " +
+    "hover:bg-[var(--color-primary-700)] hover:shadow-[var(--shadow-premium-card)] " +
     "active:scale-[.98]",
   secondary:
     "bg-[var(--color-surface)] text-[var(--color-text)] border border-[var(--color-border)] " +
@@ -40,6 +42,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       size = "md",
       loading = false,
       fullWidth = false,
+      pill = false,
       disabled,
       children,
       className = "",
@@ -52,7 +55,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={loading || disabled}
         className={[
-          "inline-flex items-center justify-center font-medium rounded-[var(--radius-md)]",
+          "inline-flex items-center justify-center font-medium",
+          pill ? "rounded-full" : "rounded-[var(--radius-md)]",
           "transition-[background-color,box-shadow,transform,border-color,color]",
           "transition-duration-[var(--duration-base)] ease-[var(--ease-default)]",
           "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-600)]",

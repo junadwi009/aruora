@@ -8,7 +8,13 @@
 @import "@fontsource/lexend/400.css";
 @import "@fontsource/lexend/500.css";
 @import "@fontsource/lexend/600.css";
-@import "@fontsource/lexend/700.css"; /* display / headings weight */
+@import "@fontsource/lexend/700.css"; /* reading passages weight */
+
+/* Quicksand — warm rounded display face for headings + brand wordmark. */
+@import "@fontsource/quicksand/400.css";
+@import "@fontsource/quicksand/500.css";
+@import "@fontsource/quicksand/600.css";
+@import "@fontsource/quicksand/700.css";
 
 @import "@fontsource/atkinson-hyperlegible/400.css";
 @import "@fontsource/atkinson-hyperlegible/700.css";

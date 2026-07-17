@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>IELTS Coach — UI/UX + Motion Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Lexend:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --color-primary-50:#EEF2FF; --color-primary-100:#E0E7FF;
+  --color-primary-600:#4F46E5; --color-primary-700:#4338CA; --color-primary-800:#3730A3;
+  --color-accent-500:#14B8A6; --color-accent-600:#0D9488;
+  --color-success:#16A34A; --color-warning:#D97706; --color-danger:#DC2626; --color-info:#2563EB;
+  --color-bg:#FAF8F3; --color-surface:#FFFDFA; --color-surface-2:#F3F0E9;
+  --color-border:#E8E2D6; --color-text:#17140F; --color-text-2:#45403A; --color-muted:#6B6456;
+  --color-cefr-a:#64748B; --color-cefr-b1:#0EA5E9; --color-cefr-b2:#14B8A6; --color-cefr-c1:#6366F1; --color-cefr-c2:#8B5CF6;
+  --font-ui:"Inter",system-ui,sans-serif; --font-display:"Lexend","Inter",system-ui,sans-serif; --font-reading:"Lexend","Inter",system-ui,sans-serif;
+  --radius-sm:8px; --radius-md:12px; --radius-lg:16px; --radius-xl:22px;
+  --shadow-e1:0 1px 2px rgba(15,23,42,.06);
+  --shadow-e2:0 6px 20px -6px rgba(30,41,59,.18),0 2px 6px -2px rgba(30,41,59,.10);
+  --shadow-e3:0 18px 48px -12px rgba(49,46,129,.28),0 6px 16px -8px rgba(30,41,59,.16);
+  --ease:cubic-bezier(.2,0,.2,1); --dur-fast:120ms; --dur-base:180ms; --dur-slow:280ms;
+}
+.dark{
+  --color-bg:#14110C; --color-surface:#1C1813; --color-surface-2:#27221A;
+  --color-border:#3A332A; --color-text:#F4F0E8; --color-text-2:#CFC7B8; --color-muted:#A69C8A;
+  --color-primary-50:#20203a;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--color-bg);color:var(--color-text);font-family:var(--font-ui);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-feature-settings:"kern" 1,"liga" 1;transition:background var(--dur-slow) var(--ease),color var(--dur-slow) var(--ease)}
+h1,h2,h3{text-wrap:balance;margin:0}
+p{text-wrap:pretty;margin:0}
+button{font-family:inherit}
+.tabular{font-variant-numeric:tabular-nums}
+.display{font-family:var(--font-display)}
+.muted{color:var(--color-muted)}
+
+#stage{position:fixed;inset:0;overflow:hidden}
+.screen{position:absolute;inset:0;overflow-y:auto;display:none}
+.screen.active{display:block}
+.journey-bg{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(1200px 600px at 50% -10%,color-mix(in srgb,var(--color-primary-50) 70%,transparent),transparent)}
+@keyframes fadeSlideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.anim{animation:fadeSlideIn var(--dur-slow) var(--ease) both}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;border:none;border-radius:var(--radius-md);font-weight:600;font-size:14px;min-height:44px;padding:0 18px;background:var(--color-primary-600);color:#fff;box-shadow:var(--shadow-e1);transition:transform var(--dur-fast) var(--ease),box-shadow var(--dur-base) var(--ease),background var(--dur-base) var(--ease),filter var(--dur-base) var(--ease)}
+.btn:hover{filter:brightness(1.05);box-shadow:var(--shadow-e2);transform:translateY(-1px)}
+.btn:active{transform:translateY(0) scale(.985)}
+.btn.lg{min-height:50px;padding:0 24px;font-size:15px}
+.btn.sm{min-height:36px;padding:0 14px;font-size:13px}
+.btn.secondary{background:var(--color-surface);color:var(--color-text);border:1px solid var(--color-border);box-shadow:none}
+.btn.secondary:hover{background:var(--color-surface-2);filter:none}
+.btn.ghost{background:transparent;color:var(--color-muted);box-shadow:none;font-weight:500}
+.btn.ghost:hover{color:var(--color-text);transform:none;box-shadow:none}
+.linkbtn{background:none;border:none;color:var(--color-muted);cursor:pointer;font-size:14px;min-height:44px;padding:0 8px;text-underline-offset:2px}
+.linkbtn:hover{color:var(--color-text);text-decoration:underline}
+.linkbtn.xs{font-size:12px}
+
+.card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-e1);padding:20px}
+.card.interactive{cursor:pointer;transition:transform var(--dur-base) var(--ease),box-shadow var(--dur-base) var(--ease),border-color var(--dur-base) var(--ease)}
+.card.interactive:hover{transform:translateY(-2px);box-shadow:var(--shadow-e2);border-color:color-mix(in srgb,var(--color-primary-600) 40%,var(--color-border))}
+
+.chip{display:inline-flex;align-items:center;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.02em;background:color-mix(in srgb,var(--band,#64748B) 15%,transparent);color:var(--band,#64748B)}
+.chip[data-band="A1A2"]{--band:var(--color-cefr-a)}
+.chip[data-band="B1"]{--band:var(--color-cefr-b1)}
+.chip[data-band="B2"]{--band:var(--color-cefr-b2)}
+.chip[data-band="C1"]{--band:var(--color-cefr-c1)}
+.chip[data-band="C2"]{--band:var(--color-cefr-c2)}
+.badge{display:inline-flex;align-items:center;padding:1px 7px;border-radius:6px;font-size:10px;font-weight:700;background:var(--color-surface-2);color:var(--color-muted)}
+.badge.success{background:color-mix(in srgb,var(--color-success) 15%,transparent);color:var(--color-success)}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--color-muted)}
+.brandmark{display:flex;align-items:center;justify-content:center;border-radius:var(--radius-md);background:var(--color-text);color:var(--color-surface)}
+
+.field{display:flex;flex-direction:column;gap:6px}
+.flabel{font-size:12px;font-weight:500;color:var(--color-muted)}
+.input,.select,textarea.ta{width:100%;min-height:44px;padding:10px 12px;border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface);color:var(--color-text);font-family:inherit;font-size:14px;transition:border-color var(--dur-base) var(--ease),box-shadow var(--dur-base) var(--ease)}
+.input:focus,.select:focus,textarea.ta:focus{outline:none;border-color:var(--color-primary-600);box-shadow:0 0 0 3px color-mix(in srgb,var(--color-primary-600) 18%,transparent)}
+textarea.ta{resize:vertical;line-height:1.55}
+
+.radiocard{display:flex;align-items:flex-start;gap:12px;padding:16px;border:1px solid var(--color-border);border-radius:var(--radius-lg);background:var(--color-surface);cursor:pointer;transition:border-color var(--dur-base) var(--ease),background var(--dur-base) var(--ease),box-shadow var(--dur-base) var(--ease)}
+.radiocard:hover{border-color:color-mix(in srgb,var(--color-primary-600) 35%,var(--color-border))}
+.radiocard[aria-checked="true"]{border-color:var(--color-primary-600);background:color-mix(in srgb,var(--color-primary-600) 6%,var(--color-surface));box-shadow:0 0 0 1px var(--color-primary-600) inset}
+.radiocard .dot{width:20px;height:20px;border-radius:999px;border:2px solid var(--color-border);flex:0 0 auto;margin-top:1px;transition:border-color var(--dur-base) var(--ease)}
+.radiocard[aria-checked="true"] .dot{border-color:var(--color-primary-600);background:radial-gradient(circle at 50% 50%,var(--color-primary-600) 0 5px,transparent 6px)}
+.iconbox{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:var(--radius-md);flex:0 0 auto;background:color-mix(in srgb,var(--color-primary-600) 12%,transparent);color:var(--color-primary-600)}
+
+.pbar{height:6px;border-radius:999px;background:var(--color-surface-2);overflow:hidden}
+.pbar>i{display:block;height:100%;background:var(--color-primary-600);border-radius:999px;transition:width var(--dur-slow) var(--ease)}
+.stepind{display:flex;align-items:center;gap:8px}
+.stepind .s{display:flex;align-items:center;gap:8px;color:var(--color-muted);font-size:12px;font-weight:600}
+.stepind .n{width:22px;height:22px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:11px;background:var(--color-surface-2);color:var(--color-muted);transition:background var(--dur-base),color var(--dur-base)}
+.stepind .s.done .n,.stepind .s.cur .n{background:var(--color-primary-600);color:#fff}
+.stepind .s.cur{color:var(--color-text)}
+.stepind .bar{flex:1;height:2px;background:var(--color-border);min-width:14px}
+
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:999px;background:var(--color-surface-2);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:999px;background:var(--color-primary-600);cursor:pointer;box-shadow:var(--shadow-e1);border:3px solid var(--color-surface);transition:transform var(--dur-fast)}
+input[type=range]::-webkit-slider-thumb:active{transform:scale(1.12)}
+
+#s-app{display:none}
+#s-app.active{display:flex}
+.shell{display:flex;height:100%;width:100%;background:var(--color-bg)}
+.sidebar{display:flex;flex-direction:column;width:256px;flex:0 0 256px;background:var(--color-surface);border-right:1px solid var(--color-border);padding:16px 0;box-shadow:var(--shadow-e1)}
+.sb-brand{display:flex;align-items:center;gap:10px;padding:0 16px;margin-bottom:26px}
+.sb-brand .brandmark{width:36px;height:36px}
+.sb-brand span{font-family:var(--font-display);font-weight:700;font-size:18px;letter-spacing:-.01em}
+.navlist{list-style:none;margin:0;padding:0 8px;display:flex;flex-direction:column;gap:2px;flex:1}
+.navitem{position:relative;width:100%;display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:var(--radius-md);font-size:14px;font-weight:500;color:var(--color-text-2);background:none;border:none;cursor:pointer;min-height:44px;text-align:left;transition:background var(--dur-base) var(--ease),color var(--dur-base) var(--ease)}
+.navitem:hover{background:var(--color-surface-2);color:var(--color-text)}
+.navitem.active{font-weight:600;color:var(--color-text);background:color-mix(in srgb,var(--color-primary-600) 8%,transparent)}
+.navitem .lbar{position:absolute;left:0;top:50%;transform:translateY(-50%) scaleY(0);height:20px;width:4px;border-radius:999px;background:var(--color-primary-600);transition:transform var(--dur-base) var(--ease)}
+.navitem.active .lbar{transform:translateY(-50%) scaleY(1)}
+.navitem .lbl{flex:1}
+.sb-foot{padding:8px 8px 0;margin-top:auto;border-top:1px solid var(--color-border)}
+.content{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.view{flex:1;overflow-y:auto;display:none}
+.view.active{display:block}
+.vhead{position:sticky;top:0;z-index:5;background:var(--color-surface);border-bottom:1px solid var(--color-border);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.vhead h1{font-family:var(--font-display);font-size:20px;font-weight:700;display:flex;align-items:center;gap:10px}
+.vbody{padding:24px;max-width:820px}
+.vbody.wide{max-width:none}
+
+.tf{display:flex;flex-direction:column;min-height:100%}
+.tf header{position:sticky;top:0;z-index:5;background:var(--color-surface);border-bottom:1px solid var(--color-border);padding:12px 16px 0;box-shadow:var(--shadow-e1);display:flex;flex-direction:column;gap:8px}
+.tf .row{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.tf .sec{font-size:16px;font-weight:600}
+.tf .of{font-size:14px;font-weight:500;color:var(--color-muted)}
+.tf .timer{font-variant-numeric:tabular-nums;font-weight:600;font-size:14px;padding:5px 12px;border-radius:999px;background:var(--color-surface-2);display:inline-flex;gap:6px;align-items:center}
+.tf .hbar{height:4px;margin:0 -16px;background:var(--color-surface-2)}
+.tf .hbar>i{display:block;height:100%;background:var(--color-primary-600);transition:width var(--dur-slow) var(--ease)}
+.tf main{flex:1;padding:24px 16px}
+.tf footer{position:sticky;bottom:0;background:var(--color-surface);border-top:1px solid var(--color-border);padding:12px 16px;display:flex;justify-content:flex-end;box-shadow:0 -2px 8px -4px rgba(15,23,42,.08)}
+
+.numtabs{display:flex;gap:8px;margin-bottom:20px}
+.numtab{width:44px;height:44px;border-radius:var(--radius-md);border:1px solid var(--color-border);background:var(--color-surface);display:flex;align-items:center;justify-content:center;font-weight:600;cursor:pointer;transition:all var(--dur-base)}
+.numtab.on{border-color:var(--color-primary-600);box-shadow:0 0 0 2px color-mix(in srgb,var(--color-primary-600) 30%,transparent)}
+.numtab.off{color:var(--color-muted);background:var(--color-surface-2)}
+.qcard{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-e1);padding:18px;margin-bottom:14px}
+.qcard .q{font-size:15px;margin-bottom:10px}
+.opt{width:100%;text-align:left;padding:12px 14px;border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface);margin-top:8px;cursor:pointer;font-size:14px;transition:all var(--dur-base)}
+.opt:hover{border-color:var(--color-primary-600);background:color-mix(in srgb,var(--color-primary-600) 5%,var(--color-surface))}
+.opt.sel{border-color:var(--color-primary-600);background:color-mix(in srgb,var(--color-primary-600) 8%,var(--color-surface));font-weight:600}
+
+.acc{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-e1);margin-bottom:14px;overflow:hidden}
+.acc>button{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px;background:none;border:none;cursor:pointer;font-size:16px;font-weight:700;color:var(--color-text);text-align:left}
+.acc .chev{transition:transform var(--dur-base) var(--ease);color:var(--color-muted)}
+.acc.open .chev{transform:rotate(180deg)}
+.acc .panel{max-height:0;overflow:hidden;transition:max-height var(--dur-slow) var(--ease)}
+.acc.open .panel{max-height:400px}
+.acc .panel .inner{padding:0 20px 20px;color:var(--color-text-2);font-size:14px;line-height:1.6}
+
+#protobar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:100;display:flex;align-items:center;gap:6px;background:color-mix(in srgb,var(--color-text) 92%,transparent);color:var(--color-surface);border-radius:999px;padding:6px 8px;box-shadow:var(--shadow-e3);backdrop-filter:blur(6px);font-size:13px}
+#protobar button{background:transparent;border:none;color:inherit;cursor:pointer;border-radius:999px;padding:8px;display:flex;align-items:center;justify-content:center;transition:background var(--dur-fast);font-size:16px;line-height:1}
+#protobar button:hover{background:rgba(255,255,255,.16)}
+#pblabel{min-width:190px;text-align:center;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+#pblabel small{opacity:.6;font-weight:500}
+.pbdivider{width:1px;height:20px;background:rgba(255,255,255,.2);margin:0 2px}
+#jumpwrap{position:fixed;inset:0;z-index:110;display:none;align-items:center;justify-content:center;background:rgba(10,8,4,.5);padding:24px}
+#jumpwrap.open{display:flex}
+#jumpcard{background:var(--color-surface);color:var(--color-text);border-radius:var(--radius-xl);box-shadow:var(--shadow-e3);padding:22px;max-width:640px;width:100%;max-height:80vh;overflow:auto}
+#jumpcard h3{font-family:var(--font-display);font-size:18px;margin-bottom:14px}
+.jgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.jitem{text-align:left;padding:10px 12px;border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface);cursor:pointer;font-size:13px;transition:all var(--dur-base)}
+.jitem:hover{border-color:var(--color-primary-600);background:var(--color-surface-2)}
+.jitem b{display:block;font-size:11px;color:var(--color-muted);font-weight:600;margin-bottom:2px}
+.jgroup{grid-column:1/-1;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-muted);font-weight:700;margin:10px 0 2px}
+
+svg{display:block}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+@media (max-width:720px){.sidebar{display:none}.vbody{padding:16px}#pblabel{min-width:120px}}
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div id="protobar">
+  <button id="pbPrev" title="Previous (left arrow)">&lsaquo;</button>
+  <span id="pblabel"></span>
+  <button id="pbNext" title="Next (right arrow)">&rsaquo;</button>
+  <span class="pbdivider"></span>
+  <button id="pbJump" title="Jump to screen">&#9638;</button>
+  <button id="pbTheme" title="Toggle light / dark">&#9790;</button>
+</div>
+<div id="jumpwrap"><div id="jumpcard"><h3>Jump to any screen</h3><div class="jgrid" id="jgrid"></div></div></div>
+
+<script>
+const I = {
+  book:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
+  home:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>',
+  head:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M18 14h3v5a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2z"/><path d="M3 14a9 9 0 0 1 18 0"/></svg>',
+  mic:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10a7 7 0 0 1-14 0M12 19v3"/></svg>',
+  pen:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+  vol:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a9 9 0 0 1 0 14"/></svg>',
+  layers:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 10 5-10 5L2 7z"/><path d="m2 12 10 5 10-5M2 17l10 5 10-5"/></svg>',
+  clip:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/><path d="m9 14 2 2 4-4"/></svg>',
+  bulb:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2"/></svg>',
+  line:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>',
+  cog:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1"/></svg>',
+  clock:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  list:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>',
+  play:'<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l14 8-14 8z"/></svg>',
+  refresh:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>',
+  chev:'<svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>',
+  target:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>',
+  cap:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10 12 5 2 10l10 5z"/><path d="M6 12v5c0 1 2.7 2 6 2s6-1 6-2v-5"/></svg>',
+  login:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5M15 12H3"/></svg>',
+  userplus:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>',
+  user:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+  brief:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>',
+  grad:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10 12 5 2 10l10 5z"/><path d="M6 12v5c0 1 2.7 2 6 2s6-1 6-2v-5"/></svg>',
+  circle:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>',
+  check:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="padding:4px"><path d="M20 6 9 17l-5-5"/></svg>',
+};
+
+const setHTML=(elm,html)=>{elm.textContent='';elm.insertAdjacentHTML('beforeend',html);};
+const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.insertAdjacentHTML('beforeend',html);return e;};
+const chip=b=>`<span class="chip" data-band="${b}">${b==='A1A2'?'A1/A2':b}</span>`;
+function replay(node){node.querySelectorAll('.anim').forEach(n=>{n.style.animation='none';void n.offsetWidth;n.style.animation='';});}
+
+const stage=document.getElementById('stage');
+function scr(id){const s=el('div','screen');s.id=id;stage.appendChild(s);return s;}
+
+/* 01 Welcome */
+setHTML(scr('s-welcome'),`
+<div class="journey-bg"><div class="anim" style="max-width:360px;display:flex;flex-direction:column;align-items:center;gap:32px;text-align:center">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:12px">
+    <div class="brandmark" style="width:56px;height:56px;border-radius:var(--radius-xl);box-shadow:var(--shadow-e2)">${I.book}</div>
+    <span class="eyebrow">IELTS Coach</span></div>
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <h1 class="display" style="font-size:38px;font-weight:800;letter-spacing:-.02em;line-height:1.1">Find your level,<br>then rise.</h1>
+    <p class="muted" style="font-size:16px;line-height:1.6">Expert feedback for Writing &amp; Speaking you cannot grade yourself — plus Reading, Listening, and a personal study plan.</p></div>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%">
+    <button class="btn lg" style="min-width:192px" onclick="go(3)">Get started</button>
+    <button class="linkbtn" onclick="go(1)">I already have an account</button></div>
+</div></div>`);
+
+function authForm(o){return `<div class="journey-bg"><form class="anim" onsubmit="return false" style="width:100%;max-width:360px;display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center">
+    <div class="brandmark" style="width:48px;height:48px;border-radius:var(--radius-xl);box-shadow:var(--shadow-e2)">${o.icon}</div>
+    <h1 class="display" style="font-size:22px;font-weight:800">${o.title}</h1>
+    <p class="muted" style="font-size:14px">${o.sub}</p></div>
+  <div class="field"><span class="flabel">Email</span><input class="input" type="email" placeholder="you@example.com"></div>
+  <div class="field"><span class="flabel">Password</span><input class="input" type="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"></div>
+  ${o.extra||''}<button class="btn" style="width:100%">${o.cta}</button></form></div>`;}
+
+/* 02 Login */
+setHTML(scr('s-login'), authForm({icon:I.login,title:'Welcome back',sub:'Sign in to pick up where you left off.',cta:'Sign in',
+  extra:`<label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer"><input type="checkbox" checked style="width:16px;height:16px;accent-color:var(--color-primary-600)"> Keep me signed in <span class="muted" style="font-size:12px">on this device</span></label>`})
+  +`<div style="position:absolute;left:0;right:0;bottom:96px;display:flex;flex-direction:column;align-items:center;gap:2px">
+     <button class="linkbtn xs" onclick="go(2)">Forgot password?</button>
+     <button class="linkbtn" onclick="go(0)">New here? Create an account</button></div>`);
+
+/* 03 Forgot */
+setHTML(scr('s-forgot'),`
+<div class="journey-bg"><form class="anim" onsubmit="return false" style="width:100%;max-width:360px;display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center">
+    <div class="brandmark" style="width:48px;height:48px;border-radius:var(--radius-xl);box-shadow:var(--shadow-e2)">${I.login}</div>
+    <h1 class="display" style="font-size:22px;font-weight:800">Reset your password</h1>
+    <p class="muted" style="font-size:14px">Enter your email and we will send a reset link.</p></div>
+  <div class="field"><span class="flabel">Email</span><input class="input" type="email" placeholder="you@example.com"></div>
+  <button class="btn" style="width:100%">Send reset link</button>
+  <button class="linkbtn" onclick="go(1)" style="align-self:center">&larr; Back to sign in</button></form></div>`);
+
+/* 04-06 Onboarding */
+const ob=scr('s-onboarding');
+setHTML(ob,`<div class="journey-bg"><div class="card anim" style="width:100%;max-width:448px;display:flex;flex-direction:column;gap:24px;padding:24px">
+  <div class="stepind" id="obSteps"></div><div id="obBody"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+    <button class="btn secondary" id="obBack">Back</button><button class="btn" id="obNext">Next</button></div></div></div>`);
+let obStep=0, obGoal=0, obTarget=6.0;
+function renderOb(){
+  const steps=['Your name','Your goal','Target band'];
+  setHTML(document.getElementById('obSteps'), steps.map((s,i)=>`${i>0?'<span class="bar"></span>':''}<span class="s ${i<obStep?'done':i===obStep?'cur':''}"><span class="n">${i+1}</span>${s}</span>`).join(''));
+  const body=document.getElementById('obBody');
+  if(obStep===0)setHTML(body,`<div style="display:flex;flex-direction:column;gap:8px"><h2 class="display" style="font-size:18px;font-weight:600">What should we call you?</h2><div class="field"><span class="flabel">Name</span><input class="input" value="Arjuna" placeholder="Your name"></div></div>`);
+  else if(obStep===1){const goals=[[I.brief,'Work','For my job or career'],[I.grad,'Study abroad','University admission'],[I.circle,'Something else','Personal goals']];
+    setHTML(body,`<div style="display:flex;flex-direction:column;gap:8px"><h2 class="display" style="font-size:18px;font-weight:600">Why are you taking IELTS?</h2><div style="display:flex;flex-direction:column;gap:12px">${goals.map((g,i)=>`<div class="radiocard" aria-checked="${obGoal===i}" onclick="obGoal=${i};renderOb()"><span class="iconbox">${g[0]}</span><div><div style="font-weight:600;font-size:14px">${g[1]}</div><div class="muted" style="font-size:13px">${g[2]}</div></div></div>`).join('')}</div></div>`);}
+  else setHTML(body,`<div style="display:flex;flex-direction:column;gap:16px"><h2 class="display" style="font-size:18px;font-weight:600">What band are you aiming for?</h2><div class="field"><div style="display:flex;justify-content:space-between"><span class="flabel">Target band</span><span class="tabular" style="font-weight:700;color:var(--color-primary-600)" id="obTv">${obTarget.toFixed(1)}</span></div><input type="range" min="4" max="9" step="0.5" value="${obTarget}" oninput="obTarget=+this.value;document.getElementById('obTv').textContent=obTarget.toFixed(1)"></div></div>`);
+  const back=document.getElementById('obBack');back.disabled=obStep===0;back.style.opacity=obStep===0?.5:1;
+  document.getElementById('obNext').textContent=obStep===2?'Start placement':'Next';
+}
+document.getElementById('obBack').onclick=()=>{if(obStep>0){obStep--;go(3+obStep);}};
+document.getElementById('obNext').onclick=()=>{obStep<2?(obStep++,go(3+obStep)):go(6);};
+
+/* 07 Placement intro */
+setHTML(scr('s-intro'),`<div class="journey-bg"><div class="card anim" style="width:100%;max-width:512px;display:flex;flex-direction:column;gap:28px">
+  <div style="display:flex;flex-direction:column;gap:8px"><h1 class="display" style="font-size:24px;font-weight:800">Let us find your level</h1>
+    <p class="muted" style="font-size:16px;line-height:1.6">A short adaptive check across all four skills. Answer honestly — there is no pass or fail.</p></div>
+  <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:16px;font-size:14px">
+    ${[[I.clock,'<b>About 15 minutes.</b> You can pause between sections.'],[I.list,'Covers <b>Listening, Reading, Writing &amp; Speaking.</b>'],[I.mic,'Speaking uses your <b>microphone</b> — transcribed on-device.']].map(f=>`<li style="display:flex;gap:12px;align-items:flex-start"><span class="iconbox" style="width:32px;height:32px">${f[0]}</span><span style="padding-top:4px">${f[1]}</span></li>`).join('')}</ul>
+  <p class="muted" style="font-size:12px;border-top:1px solid var(--color-border);padding-top:20px">Need accommodations? <b>Extra time and dyslexia-friendly fonts</b> are in Settings.</p>
+  <div style="display:flex;justify-content:flex-end"><button class="btn lg" onclick="go(7)">Begin</button></div></div></div>`);
+
+/* 08-11 Placement */
+const pl=scr('s-placement');
+function readingBody(){return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start">
+  <div class="card" style="font-family:var(--font-reading);line-height:1.7;font-size:15px">
+    <p style="margin-bottom:14px">Rewilding is an approach to conservation that goes beyond simply protecting what remains of natural habitats. It aims to restore ecosystems to a more self-sustaining state, often by reintroducing large predators or herbivores.</p>
+    <p style="margin-bottom:14px">The most famous rewilding experiment is the reintroduction of grey wolves to Yellowstone National Park in 1995. Before the reintroduction, elk populations had grown unchecked and grazed riverbanks heavily, preventing tree regeneration.</p>
+    <p>In Europe, organisations such as Rewilding Europe are working to restore large tracts of rural land abandoned after the decline of traditional farming.</p></div>
+  <div>${['Rewilding aims to manage every detail of natural habitats to protect biodiversity.','Grey wolves were reintroduced to Yellowstone National Park in 1995.','The elk in Yellowstone increased in number after wolves were reintroduced.'].map((q,i)=>`<div class="qcard"><div class="q">${i+1}. ${q}</div>${['True','False','Not Given'].map(o=>`<button class="opt${i===1&&o==='True'?' sel':''}">${o}</button>`).join('')}</div>`).join('')}<button class="btn secondary" style="margin-top:4px">Submit</button></div></div>`;}
+const plSections=[
+ {name:'Listening',step:1,body:()=>`<div class="numtabs">${[1,2,3,4].map((n,i)=>`<div class="numtab ${i===0?'on':'off'}">${n}</div>`).join('')}</div>
+   <div class="card" style="margin-bottom:14px;display:flex"><button class="btn secondary">${I.play} Play</button></div>
+   ${['What material is the funerary stele made from?','What did the Egyptians call the soul that required food after death?','How many canopic jars were typically used in a single burial?'].map((q,i)=>`<div class="qcard"><div class="q">${i+1}. ${q}</div><input class="input" placeholder="Type your answer..."></div>`).join('')}`},
+ {name:'Reading',step:2,body:()=>readingBody()},
+ {name:'Writing',step:3,body:()=>`<div style="max-width:640px;display:flex;flex-direction:column;gap:20px">
+   <div class="card" style="display:flex;flex-direction:column;gap:12px"><div style="display:flex;justify-content:space-between;align-items:center"><span class="eyebrow">Task 2</span><span class="badge">0 / 250 words</span></div>
+   <p style="font-size:14px;line-height:1.6">Some people believe technology has made our lives simpler. Others argue it has made life more complicated. Discuss both views and give your opinion.</p></div>
+   <div class="field"><span class="flabel">Your response</span><textarea class="ta" rows="10" placeholder="Write your response here..."></textarea></div></div>`},
+ {name:'Speaking',step:4,body:()=>`<div style="max-width:640px;display:flex;flex-direction:column;gap:20px">
+   <div class="card"><p style="font-size:14px;font-weight:600;margin-bottom:4px">Part 2 &middot; Cue card</p><p style="font-size:14px;line-height:1.6">Describe a place you have visited that made a strong impression on you. Say where it is, when you went, what you did, and why it impressed you.</p></div>
+   <div class="card" style="background:var(--color-surface-2);display:flex;align-items:center;gap:16px"><button class="btn secondary">${I.mic} Record answer</button><span class="muted" style="font-size:14px">Record your answer; the transcript appears below and stays editable.</span></div>
+   <div class="field"><span class="flabel">Transcript</span><textarea class="ta" rows="6" placeholder="Your transcript will appear here..."></textarea></div></div>`},
+];
+function renderPlacement(idx){const s=plSections[idx];
+  setHTML(pl,`<div class="tf"><header><div class="row"><div style="display:flex;align-items:center;gap:12px"><span class="sec">${s.name}</span><span class="of tabular">${s.step} of 4</span></div><span class="timer">${I.clock} <span id="plTimer">10:00</span></span></div><div class="hbar"><i style="width:${s.step/4*100}%"></i></div></header><main class="anim">${s.body()}</main><footer><button class="btn lg" onclick="${idx<3?`go(${8+idx})`:'go(11)'}">${idx<3?'Next':'Submit'}</button></footer></div>`);
+  startTimer();}
+let timerH=null;
+function startTimer(){clearInterval(timerH);let t=600;const n=document.getElementById('plTimer');timerH=setInterval(()=>{t--;if(t<0||!document.body.contains(n)){clearInterval(timerH);return;}n.textContent=`${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`;},1000);}
+
+/* 12 Generating */
+const gen=scr('s-generating');
+function renderGenerating(){const steps=['Building your Reading set...','Preparing Listening clips...','Drafting Speaking prompts...','Assembling Writing tasks...'];
+  setHTML(gen,`<div class="journey-bg"><div class="anim" style="width:100%;max-width:448px;display:flex;flex-direction:column;gap:24px">
+    <div style="text-align:center;display:flex;flex-direction:column;gap:8px"><h1 class="display" style="font-size:24px;font-weight:800">Building your plan...</h1><p class="muted" style="font-size:14px">Usually a few seconds. Hang tight!</p></div>
+    <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px">${steps.map((s,i)=>`<li class="genrow" data-i="${i}" style="display:flex;align-items:center;gap:12px;border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:12px 16px;background:var(--color-surface);box-shadow:var(--shadow-e1);opacity:.3;transition:opacity var(--dur-slow),box-shadow var(--dur-slow),border-color var(--dur-slow)"><span class="gdot" style="width:20px;height:20px;border-radius:999px;flex:0 0 auto;background:var(--color-border)"></span><span style="font-size:14px;font-weight:500">${s}</span></li>`).join('')}</ul>
+    <div><div style="font-size:13px" class="muted">Generating practice content</div><div class="pbar" style="margin-top:6px"><i id="genBar" style="width:0%"></i></div></div></div></div>`);}
+let genH=null;
+function animateGenerating(){renderGenerating();clearInterval(genH);let p=0;const rows=[].slice.call(gen.querySelectorAll('.genrow')),bar=gen.querySelector('#genBar');
+  genH=setInterval(()=>{p+=4;if(p>100){clearInterval(genH);return;}bar.style.width=p+'%';const cur=Math.min(3,Math.floor(p/25));
+    rows.forEach((r,i)=>{r.style.opacity=i<cur?.6:i===cur?1:.3;r.style.borderColor=i===cur?'var(--color-primary-600)':'var(--color-border)';const d=r.querySelector('.gdot');
+      if(i<cur){d.style.background='color-mix(in srgb,var(--color-success) 15%,transparent)';setHTML(d,I.check);}
+      else if(i===cur){d.style.background='color-mix(in srgb,var(--color-primary-600) 20%,transparent)';d.style.border='2px solid var(--color-primary-600)';}});},90);}
+
+/* 13 Results */
+function radar(){const c=150,vals=[2.8/9,2.8/9,5/9,0],ang=[-90,0,90,180];
+  const pts=vals.map((v,i)=>{const a=ang[i]*Math.PI/180,r=v*110;return [c+Math.cos(a)*r,c+Math.sin(a)*r];});
+  const rings=[1,.75,.5,.25].map(f=>{const p=ang.map(d=>{const a=d*Math.PI/180,r=f*110;return `${c+Math.cos(a)*r},${c+Math.sin(a)*r}`;}).join(' ');return `<polygon points="${p}" fill="none" stroke="var(--color-border)" stroke-width="1"/>`;}).join('');
+  return `<svg viewBox="0 0 300 300" width="100%" height="280">${rings}<polygon points="${pts.map(p=>p.join(',')).join(' ')}" fill="color-mix(in srgb,var(--color-primary-600) 25%,transparent)" stroke="var(--color-primary-600)" stroke-width="2"/><text x="150" y="24" text-anchor="middle" fill="var(--color-muted)" font-size="14">Listening</text><text x="286" y="154" text-anchor="end" fill="var(--color-muted)" font-size="14">Reading</text><text x="150" y="292" text-anchor="middle" fill="var(--color-muted)" font-size="14">Writing</text><text x="14" y="154" fill="var(--color-muted)" font-size="14">Speaking</text></svg>`;}
+setHTML(scr('s-results'),`<div style="min-height:100%;overflow-y:auto"><div class="anim" style="max-width:672px;margin:0 auto;padding:24px;display:flex;flex-direction:column;gap:24px">
+  <div style="display:flex;flex-direction:column;gap:8px"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><h1 class="display tabular" style="font-size:38px;font-weight:800">Overall Band 3.5</h1>${chip('A1A2')}</div><p class="muted" style="font-size:14px">Your Writing is your strongest skill — let us build from here.</p></div>
+  <div class="card"><h2 class="eyebrow" style="margin-bottom:16px">Skill Radar</h2>${radar()}
+    <table style="width:100%;font-size:14px;border-collapse:collapse;margin-top:16px"><thead><tr><th style="text-align:left;padding:4px 0;color:var(--color-muted);font-weight:500">Skill</th><th style="text-align:left;color:var(--color-muted);font-weight:500">Approx. Band</th></tr></thead><tbody>${[['Listening','2.8'],['Reading','2.8'],['Writing','5.0'],['Speaking','—']].map(r=>`<tr style="border-top:1px solid var(--color-border)"><td style="padding:6px 0">${r[0]}</td><td class="tabular" style="font-weight:600">${r[1]}</td></tr>`).join('')}</tbody></table></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">${[['Listening','A1A2','2.8',33],['Reading','A1A2','2.8',33],['Writing','B1','5.0',66],['Speaking','A1A2','—',20]].map(s=>`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><span style="font-weight:600">${s[0]}</span>${chip(s[1])}</div><p class="muted" style="font-size:14px;margin-bottom:12px">${s[2]==='—'?'Band not yet estimated':`Approx. IELTS band: <b style="color:var(--color-text)">${s[2]}</b>`}</p><div class="pbar"><i style="width:${s[3]}%"></i></div></div>`).join('')}</div>
+  <div style="display:flex;justify-content:center;padding-top:4px"><button class="btn lg" style="min-width:224px" onclick="go(13)">Save your results</button></div></div></div>`);
+
+/* 14 Register */
+setHTML(scr('s-register'), authForm({icon:I.userplus,title:'Create your account',sub:'Save your results and sync across devices.',cta:'Create account'})
+  +`<div style="position:absolute;left:0;right:0;bottom:88px;display:flex;flex-direction:column;align-items:center;gap:2px"><button class="linkbtn" onclick="go(1)">Already have an account? Sign in</button><button class="linkbtn xs" onclick="go(14)">Maybe later</button></div>`);
+
+/* 15 Program */
+const pr=scr('s-program');
+let prSel=90;
+function renderProgram(){const plans=[[30,'Intensive','~2 hrs/day'],[90,'Steady','~45 min/day'],[180,'Relaxed','~20 min/day']];
+  setHTML(pr,`<div class="journey-bg" style="align-items:flex-start"><div style="width:100%;max-width:512px;margin:0 auto;display:flex;flex-direction:column;gap:28px;padding:24px 0">
+    <div class="anim" style="display:flex;flex-direction:column;gap:8px"><h1 class="display" style="font-size:24px;font-weight:800">Choose your program</h1><p class="muted" style="font-size:14px;line-height:1.6">Based on your gap to target, we recommend a <b style="color:var(--color-text)">90-day plan</b> — but you can change this anytime.</p></div>
+    <div style="display:flex;flex-direction:column;gap:12px">${plans.map(p=>`<div style="position:relative">${p[0]===90?'<div style="position:absolute;top:-10px;right:16px;z-index:2"><span class="badge success">Recommended</span></div>':''}<div class="radiocard" aria-checked="${prSel===p[0]}" onclick="prSel=${p[0]};renderProgram()"><span class="dot"></span><div><div style="font-weight:600">${p[0]}-day plan</div><div class="muted" style="font-size:13px">${p[1]} &middot; ${p[2]}</div></div></div></div>`).join('')}</div>
+    <button class="btn lg" style="width:100%" onclick="go(15)">Start ${prSel}-day plan</button></div></div>`);}
+
+/* 16 Milestones */
+setHTML(scr('s-milestones'),`<div class="journey-bg" style="align-items:flex-start"><div style="width:100%;max-width:512px;margin:0 auto;padding:24px 0;display:flex;flex-direction:column;gap:28px">
+  <div class="anim" style="display:flex;flex-direction:column;gap:8px"><h1 class="display" style="font-size:24px;font-weight:800">Your milestones</h1><p class="muted" style="font-size:14px;line-height:1.6">Checkpoints that keep your 90 days on track. Each one lifts a skill toward your target.</p></div>
+  <ol style="list-style:none;margin:0;padding:0">${[[30,'Listening A1A2, Reading A1A2, Writing B1'],[60,'Listening B1, Reading B1, Writing B1'],[90,'Listening B1, Reading B1, Speaking B1']].map((m,i,a)=>`<li style="display:flex;gap:16px"><div style="display:flex;flex-direction:column;align-items:center"><div class="tabular" style="width:36px;height:36px;border-radius:999px;border:2px solid var(--color-primary-600);background:var(--color-surface);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:var(--color-primary-700);box-shadow:var(--shadow-e2)">${m[0]}</div>${i<a.length-1?'<div style="width:2px;flex:1;margin:4px 0;background:var(--color-border)"></div>':''}</div><div style="padding-bottom:24px;flex:1"><p style="font-size:14px;font-weight:600;line-height:1.4">Day ${m[0]}: ${m[1]}</p></div></li>`).join('')}</ol>
+  <button class="btn lg" style="width:100%" onclick="go(16)">Go to dashboard</button></div></div>`);
+
+/* APP SHELL */
+const NAV=[['home','Home',I.home],['reading','Reading',I.book,'A1A2'],['listening','Listening',I.head,'A1A2'],['speaking','Speaking',I.mic,'A1A2'],['writing','Writing',I.pen,'B1'],['pronounce','Pronounce',I.vol],['vocab','Vocab',I.layers],['test','Test',I.clip],['tips','Tips',I.bulb],['progress','Progress',I.line]];
+const appScreen=scr('s-app');
+setHTML(appScreen,`<div class="shell"><nav class="sidebar"><div class="sb-brand"><div class="brandmark">${I.book}</div><span>IELTS Coach</span></div><ul class="navlist" id="navlist">${NAV.map(n=>`<li><button class="navitem" data-v="${n[0]}" onclick="setView('${n[0]}')"><span class="lbar"></span>${n[2]}<span class="lbl">${n[1]}</span>${n[3]?chip(n[3]):''}</button></li>`).join('')}</ul><div class="sb-foot"><button class="navitem" data-v="settings" onclick="setView('settings')"><span class="lbar"></span>${I.cog}<span class="lbl">Settings</span></button></div></nav><div class="content" id="content"></div></div>`);
+
+const vhead=(title,icon,right)=>`<div class="vhead"><h1>${icon||''}${title}</h1>${right?`<div style="display:flex;align-items:center;gap:12px">${right}</div>`:''}</div>`;
+const skillLevel=b=>`${chip(b)} <span class="muted" style="font-size:13px">Level: ${b==='A1A2'?'A1A2':b} &middot; targeting B1</span>`;
+function sect(title,inner){return `<div class="card"><p style="font-weight:600;margin-bottom:14px">${title}</p>${inner}</div>`;}
+const VIEWS={
+  home:()=>`<main class="view" data-v="home"><div class="vbody anim">
+    <header style="margin-bottom:28px"><h1 class="display" style="font-size:34px;font-weight:800;letter-spacing:-.01em">Good evening, Arjuna</h1><p class="muted" style="margin-top:6px">Ready for today's practice?</p></header>
+    <div style="border:1px solid var(--color-border);border-radius:var(--radius-xl);padding:24px;background:var(--color-surface);box-shadow:var(--shadow-e2);display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px"><div><p style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--color-primary-700);margin-bottom:6px">Today</p><h2 class="display" style="font-size:18px;font-weight:600">Start today's guided session</h2></div><button class="btn">Start</button></div>
+    <h2 class="display" style="font-size:16px;font-weight:600;margin-bottom:12px">Your Skills</h2><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px">${[['reading','Reading',I.book,'A1A2','B1'],['listening','Listening',I.head,'A1A2','B1'],['speaking','Speaking',I.mic,'A1A2','B1'],['writing','Writing',I.pen,'B1','B2']].map(s=>`<div class="card interactive" onclick="setView('${s[0]}')"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px"><span class="iconbox" style="width:32px;height:32px">${s[2]}</span>${chip(s[3])}</div><p style="font-weight:600;font-size:14px">${s[1]}</p><p class="muted" style="font-size:12px;margin-top:2px">Targeting ${s[4]}</p></div>`).join('')}</div>
+    <h2 class="display" style="font-size:16px;font-weight:600;margin-bottom:12px">Program Milestones</h2><div class="card" style="margin-bottom:28px"><ol style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px">${[[1,'Day 30: Listening A1A2, Reading A1A2, Writing B1, Speaking A1A2',30],[2,'Day 60: Listening B1, Reading B1, Writing B1, Speaking B1',60],[3,'Day 90: Listening B1, Reading B1, Writing B1, Speaking B1',90],[4,'Day 120: Listening B1, Reading B1, Writing B2, Speaking B1',120]].map(m=>`<li style="display:flex;align-items:center;gap:12px;font-size:14px"><span class="tabular" style="width:24px;height:24px;border-radius:999px;background:var(--color-surface-2);color:var(--color-muted);display:flex;align-items:center;justify-content:center;font-size:12px;flex:0 0 auto">${m[0]}</span><span style="flex:1">${m[1]}</span><span class="muted tabular" style="font-size:12px">Day ${m[2]}</span></li>`).join('')}</ol></div>
+    <h2 class="display" style="font-size:16px;font-weight:600;margin-bottom:12px">Quick Access</h2><div style="display:flex;flex-wrap:wrap;gap:8px">${['Practice','Test','Pronounce','Roleplay','Vocab','Tips'].map(q=>`<button class="btn secondary sm">${q}</button>`).join('')}</div></div></main>`,
+  reading:()=>`<main class="view" data-v="reading">${vhead('Reading',I.book,skillLevel('A1A2'))}<div class="vbody wide anim" style="padding:24px 40px"><div class="numtabs">${[1,2,3,4,5].map((n,i)=>`<div class="numtab ${i===0?'on':'off'}">${n}</div>`).join('')}</div>${readingBody()}</div></main>`,
+  listening:()=>`<main class="view" data-v="listening">${vhead('Listening',I.head,skillLevel('A1A2'))}<div class="vbody wide anim" style="max-width:900px;margin:0 auto"><div class="numtabs">${[1,2,3,4].map((n,i)=>`<div class="numtab ${i===0?'on':'off'}">${n}</div>`).join('')}</div><div class="card" style="margin-bottom:14px;display:flex"><button class="btn secondary">${I.play} Play</button></div>${['What material is the funerary stele made from?','What did the Egyptians call the soul that required food after death?','How many canopic jars were typically used in a single burial?','Why was the heart left inside the mummy body?'].map((q,i)=>`<div class="qcard"><div class="q">${i+1}. ${q}</div><input class="input" placeholder="Type your answer..."></div>`).join('')}<button class="btn secondary" style="margin-top:4px">Submit</button></div></main>`,
+  speaking:()=>`<main class="view" data-v="speaking">${vhead('Speaking',I.mic)}<div class="vbody anim" style="max-width:672px;margin:0 auto;display:flex;flex-direction:column;gap:16px"><div class="card"><p style="font-size:14px;font-weight:600;margin-bottom:4px">Part 2 &middot; Cue card</p><p style="font-size:14px;line-height:1.6">Describe a place you have visited that made a strong impression on you. Say where it is, when you went, what you did, and explain why it made such a strong impression.</p></div><div class="card" style="background:var(--color-surface-2);display:flex;align-items:center;gap:16px"><button class="btn secondary">${I.mic} Record answer</button><span class="muted" style="font-size:14px">Record your answer; the transcript appears below and stays editable.</span></div><div class="field"><span class="flabel">Transcript</span><textarea class="ta" rows="8" placeholder="Your transcript will appear here..."></textarea></div><button class="btn">Evaluate my answer</button></div></main>`,
+  writing:()=>`<main class="view" data-v="writing">${vhead('Writing',I.pen)}<div class="vbody anim" style="max-width:672px;margin:0 auto;display:flex;flex-direction:column;gap:16px"><div class="card"><p style="font-size:14px;font-weight:600;margin-bottom:4px">Task 2 prompt</p><p style="font-size:14px;line-height:1.6">Some people think that the best way to increase road safety is to increase the minimum legal age for driving cars or riding motorbikes. To what extent do you agree or disagree?</p></div><div class="field"><div style="display:flex;justify-content:space-between"><span class="flabel">Your essay</span><span class="badge">0 / 250 words</span></div><textarea class="ta" rows="12" placeholder="Write your essay here..."></textarea></div><button class="btn">Evaluate my essay</button></div></main>`,
+  pronounce:()=>`<main class="view" data-v="pronounce">${vhead('Pronunciation drill',I.vol,`<button class="btn ghost sm">${I.refresh} New sentence</button>`)}<div class="vbody anim" style="max-width:900px;margin:0 auto"><div class="card" style="display:flex;justify-content:space-between;gap:16px;margin-bottom:14px"><div><p style="font-size:19px;font-weight:600;line-height:1.4">The early train to the city usually arrives before eight in the morning.</p><p class="muted" style="font-size:13px;margin-top:8px">Focus: sentence stress on content words</p></div><button class="btn secondary" style="width:44px;padding:0;flex:0 0 auto">${I.vol}</button></div><div class="card" style="background:var(--color-surface-2);display:flex;align-items:center;gap:16px"><button class="btn secondary">${I.mic} Record answer</button><span class="muted" style="font-size:14px">Record your answer; the transcript appears below and stays editable.</span></div></div></main>`,
+  vocab:()=>`<main class="view" data-v="vocab">${vhead('Vocabulary',I.layers,`<button class="btn sm">Build</button><button class="btn secondary sm">Review</button>`)}<div class="vbody anim" style="max-width:900px;margin:0 auto;text-align:center"><p class="muted" style="font-size:14px;margin-bottom:16px">Deck: 0 cards &middot; 0 due</p><div style="display:flex;gap:16px;max-width:640px;margin:0 auto"><input class="input" value="environment" style="text-align:left"><button class="btn" style="flex:0 0 auto">Generate</button></div></div></main>`,
+  test:()=>`<main class="view" data-v="test">${vhead('Mock Test',I.clip)}<div class="vbody anim" style="display:flex;justify-content:center;padding-top:56px"><div class="card" style="max-width:520px;text-align:center;padding:36px"><h2 class="display" style="font-size:18px;font-weight:700;margin-bottom:12px">Listening + Reading mock</h2><p class="muted" style="font-size:14px;line-height:1.6;margin-bottom:24px">One Listening section then one Reading section, 30 minutes total. You will get an estimated band for each and an overall score, saved to your Progress.</p><button class="btn">Start mock</button></div></div></main>`,
+  tips:()=>`<main class="view" data-v="tips">${vhead('Tips',I.bulb)}<div class="vbody wide anim" style="padding:24px;display:grid;grid-template-columns:2fr 1fr;gap:24px;max-width:none"><div>${['Reading','Listening','Writing','Speaking'].map(s=>`<div class="acc"><button onclick="this.parentElement.classList.toggle('open')">${s}${I.chev}</button><div class="panel"><div class="inner">Skim for structure first, then read questions before details. Manage your time — do not over-invest in a single hard question.</div></div></div>`).join('')}</div><div style="display:flex;flex-direction:column;gap:16px"><div class="card"><p class="eyebrow" style="display:flex;align-items:center;gap:6px;color:var(--color-primary-700);margin-bottom:12px">${I.target} Your Level &amp; Target</p><p style="font-size:14px;margin-bottom:8px">Target band: <b>6.0</b></p>${[['Reading','A1A2'],['Listening','A1A2'],['Writing','B1'],['Speaking','A1A2']].map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0"><span style="font-size:14px">${r[0]}</span>${chip(r[1])}</div>`).join('')}</div><div class="acc"><button onclick="this.parentElement.classList.toggle('open')"><span style="display:flex;align-items:center;gap:8px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-muted)">${I.cap} Self-assessment criteria</span>${I.chev}</button><div class="panel"><div class="inner">How to judge your own band across the four official criteria.</div></div></div></div></div></main>`,
+  progress:()=>`<main class="view" data-v="progress">${vhead('Progress',I.line)}<div class="vbody anim" style="display:flex;justify-content:center;padding-top:56px"><div class="card" style="max-width:520px;text-align:center;padding:40px"><div class="iconbox" style="width:56px;height:56px;margin:0 auto 20px;border-radius:var(--radius-lg)">${I.line}</div><h2 class="display" style="font-size:18px;font-weight:700;margin-bottom:12px">No attempts yet</h2><p class="muted" style="font-size:14px;line-height:1.6;margin-bottom:24px">Your Writing and Speaking history, band trends, and analytics will appear here once you complete your first practice session.</p><button class="btn">Start practising</button></div></div></main>`,
+  settings:()=>`<main class="view" data-v="settings">${vhead('Settings',I.cog)}<div class="vbody anim" style="max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+    ${sect('Language',`<div style="display:flex;gap:10px"><button class="btn sm" style="flex:1">English</button><button class="btn secondary sm" style="flex:1">Bahasa Indonesia</button></div>`)}
+    ${sect('Appearance',`<div style="display:flex;gap:10px"><button class="btn sm" style="flex:1" onclick="setTheme(false)">Light</button><button class="btn secondary sm" style="flex:1" onclick="setTheme(true)">Dark</button></div>`)}
+    ${sect('Reading font',['Default|Inter · Lexend|1','Dyslexia-friendly|OpenDyslexic|0','Hyperlegible|Atkinson Hyperlegible|0'].map(o=>{const a=o.split('|');return `<div class="radiocard" aria-checked="${a[2]==='1'}" style="padding:12px 14px;justify-content:space-between"><span style="font-weight:500">${a[0]}</span><span class="muted" style="font-size:12px">${a[1]}</span></div>`;}).join(''))}
+    ${sect('Profile',`<div style="display:flex;align-items:center;gap:16px;margin-bottom:16px"><div class="iconbox" style="width:56px;height:56px;border-radius:999px;background:var(--color-surface-2);color:var(--color-muted)">${I.user}</div><button class="btn secondary sm">Upload photo</button></div><div class="field" style="margin-bottom:12px"><span class="flabel">Display name</span><input class="input" value="Arjuna"></div><div class="field" style="margin-bottom:12px"><span class="flabel">Country</span><input class="input" placeholder="e.g. Indonesia"></div><button class="btn">Save profile</button>`)}
+    ${sect('Targets',`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:14px">Overall band target</span><select class="select" style="width:80px;min-height:36px"><option>6.0</option></select></div>${['Listening','Reading','Writing','Speaking'].map(s=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0"><span class="muted" style="font-size:14px">${s}</span><select class="select" style="width:70px;min-height:34px"><option>—</option></select></div>`).join('')}<button class="btn" style="margin-top:12px">Save targets</button>`)}
+    ${sect('Study reminder',`<div style="display:flex;justify-content:space-between;align-items:center"><div><p style="font-size:14px">Daily email reminder</p><p class="muted" style="font-size:12px;margin-top:2px">Fires at your local time. Requires SMTP on the server.</p></div><input type="checkbox" style="width:18px;height:18px;accent-color:var(--color-primary-600)"></div>`)}
+    ${sect('Help',['How does the placement test work?','Why do bands say "estimate"?','Is speech recognition exact?','Where is my data stored?'].map(q=>`<div class="acc" style="margin-bottom:8px;box-shadow:none"><button onclick="this.parentElement.classList.toggle('open')" style="padding:14px 16px;font-size:14px">${q}${I.chev}</button><div class="panel"><div class="inner" style="padding:0 16px 16px">A short, plain-language explanation appears here.</div></div></div>`).join(''))}
+  </div></main>`,
+};
+let curView='home';
+function setView(v){curView=v;const content=document.getElementById('content');setHTML(content,VIEWS[v]());content.querySelectorAll('.view').forEach(x=>x.classList.add('active'));document.querySelectorAll('.navitem').forEach(n=>n.classList.toggle('active',n.dataset.v===v));replay(content);const idx=STEPS.findIndex(s=>s.k==='app'&&s.v===v);if(idx>=0&&idx!==cur){cur=idx;updateLabel();}}
+
+/* NAVIGATOR */
+const STEPS=[
+  {k:'welcome',t:'Welcome',g:'Onboarding'},{k:'login',t:'Sign in',g:'Onboarding'},{k:'forgot',t:'Forgot password',g:'Onboarding'},
+  {k:'onboarding',s:0,t:'Onboarding · Name',g:'Onboarding'},{k:'onboarding',s:1,t:'Onboarding · Goal',g:'Onboarding'},{k:'onboarding',s:2,t:'Onboarding · Target',g:'Onboarding'},
+  {k:'intro',t:'Placement intro',g:'Placement'},{k:'placement',s:0,t:'Placement · Listening',g:'Placement'},{k:'placement',s:1,t:'Placement · Reading',g:'Placement'},{k:'placement',s:2,t:'Placement · Writing',g:'Placement'},{k:'placement',s:3,t:'Placement · Speaking',g:'Placement'},
+  {k:'generating',t:'Building your plan',g:'Placement'},{k:'results',t:'Results',g:'Placement'},{k:'register',t:'Create account',g:'Placement'},{k:'program',t:'Choose program',g:'Placement'},{k:'milestones',t:'Milestones',g:'Placement'},
+  {k:'app',v:'home',t:'Home',g:'App'},{k:'app',v:'reading',t:'Reading',g:'App'},{k:'app',v:'listening',t:'Listening',g:'App'},{k:'app',v:'speaking',t:'Speaking',g:'App'},{k:'app',v:'writing',t:'Writing',g:'App'},{k:'app',v:'pronounce',t:'Pronounce',g:'App'},{k:'app',v:'vocab',t:'Vocab',g:'App'},{k:'app',v:'test',t:'Test',g:'App'},{k:'app',v:'tips',t:'Tips',g:'App'},{k:'app',v:'progress',t:'Progress',g:'App'},{k:'app',v:'settings',t:'Settings',g:'App'},
+];
+let cur=0;
+const SCREENIDS={welcome:'s-welcome',login:'s-login',forgot:'s-forgot',onboarding:'s-onboarding',intro:'s-intro',placement:'s-placement',generating:'s-generating',results:'s-results',register:'s-register',program:'s-program',milestones:'s-milestones',app:'s-app'};
+function go(i){i=Math.max(0,Math.min(STEPS.length-1,i));cur=i;const st=STEPS[i];
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const scEl=document.getElementById(SCREENIDS[st.k]);scEl.classList.add('active');scEl.scrollTop=0;
+  if(st.k==='onboarding'){obStep=st.s;renderOb();}
+  if(st.k==='placement'){renderPlacement(st.s);}
+  if(st.k==='generating'){animateGenerating();}
+  if(st.k==='program'){renderProgram();}
+  if(st.k==='app'){setView(st.v);}
+  replay(scEl);updateLabel();}
+function updateLabel(){const st=STEPS[cur];setHTML(document.getElementById('pblabel'),`${String(cur+1).padStart(2,'0')} / ${STEPS.length} &nbsp;<small>&middot; ${st.t}</small>`);}
+document.getElementById('pbPrev').onclick=()=>go(cur-1);
+document.getElementById('pbNext').onclick=()=>go(cur+1);
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight')go(cur+1);if(e.key==='ArrowLeft')go(cur-1);if(e.key==='Escape')document.getElementById('jumpwrap').classList.remove('open');});
+
+let dark=false;
+function setTheme(d){dark=d;document.documentElement.classList.toggle('dark',d);document.getElementById('pbTheme').textContent=d?'☀':'☾';}
+document.getElementById('pbTheme').onclick=()=>setTheme(!dark);
+
+const jgrid=document.getElementById('jgrid');let lastG='';
+STEPS.forEach((s,i)=>{if(s.g!==lastG){lastG=s.g;jgrid.appendChild(el('div','jgroup',s.g));}const b=el('button','jitem',`<b>${String(i+1).padStart(2,'0')}</b>${s.t}`);b.onclick=()=>{go(i);document.getElementById('jumpwrap').classList.remove('open');};jgrid.appendChild(b);});
+document.getElementById('pbJump').onclick=()=>document.getElementById('jumpwrap').classList.toggle('open');
+document.getElementById('jumpwrap').onclick=e=>{if(e.target.id==='jumpwrap')e.target.classList.remove('open');};
+
+go(0);
+</script>
+</body>
+</html>

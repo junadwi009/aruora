@@ -8,16 +8,14 @@ const variantClasses: Record<NonNullable<CardProps["variant"]>, string> = {
   default:
     "bg-[var(--color-surface)] " +
     "border border-[color-mix(in_srgb,var(--color-border)_70%,transparent)] " +
-    "shadow-[var(--shadow-e2)]",
+    "shadow-[var(--shadow-premium)]",
   interactive:
     "bg-[var(--color-surface)] " +
     "border border-[color-mix(in_srgb,var(--color-border)_70%,transparent)] " +
-    "shadow-[var(--shadow-e2)] cursor-pointer " +
-    "transition-[transform,box-shadow] " +
-    "hover:-translate-y-0.5 hover:shadow-[var(--shadow-e3)]",
+    "shadow-[var(--shadow-premium)] cursor-pointer premium-hover",
   hero:
     "bg-[var(--color-primary-600)] text-white border-transparent " +
-    "shadow-[var(--shadow-e3)]",
+    "shadow-[var(--shadow-premium-card)]",
   stat:
     "bg-[var(--color-surface-2)] " +
     "border border-[color-mix(in_srgb,var(--color-border)_70%,transparent)] " +
@@ -46,7 +44,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
       <div
         ref={ref}
         className={[
-          "rounded-[var(--radius-xl)] p-5",
+          "rounded-[var(--radius-2xl)] p-5",
           variantClasses[variant],
           asButton
             ? "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary-600)]"

@@ -52,7 +52,14 @@ export const BottomTabs: React.FC = () => {
                   .filter(Boolean)
                   .join(" ")}
               >
-                {tab.icon}
+                <span
+                  className={[
+                    "flex h-8 w-10 items-center justify-center rounded-full transition-colors",
+                    isActive ? "bg-[color-mix(in_srgb,var(--color-primary-600)_12%,transparent)]" : "",
+                  ].join(" ")}
+                >
+                  {tab.icon}
+                </span>
                 <span>{t(tab.tkey)}</span>
               </button>
             </li>
