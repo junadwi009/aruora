@@ -12,6 +12,8 @@ from sqlalchemy import func, select
 from .models import (
     Attempt,
     Card,
+    Feedback,
+    GenUsage,
     GeneratedSet,
     Lesson,
     Milestone,
@@ -21,6 +23,7 @@ from .models import (
     PlacementItem,
     Program,
     SkillLevel,
+    TestGate,
     UserProfile,
     now,
 )
@@ -476,6 +479,99 @@ class Repository:
             if not rows:
                 return None
             return random.choice(rows).payload
+
+    # ── Test-phase gate + feedback ─────────────────────────────────────────────
+
+    def gate_get(self, uid: int) -> dict:
+        with self._sf() as s:
+            g = s.get(TestGate, uid)
+            if g is None:
+                g = TestGate(user_id=uid, active_seconds=0)
+                s.add(g)
+                s.commit()
+                s.refresh(g)
+            return {"active_seconds": g.active_seconds, "unlocked_at": g.unlocked_at}
+
+    def gate_add_seconds(self, uid: int, secs: int) -> int:
+        with self._sf() as s:
+            g = s.get(TestGate, uid)
+            if g is None:
+                g = TestGate(user_id=uid, active_seconds=0)
+                s.add(g)
+            g.active_seconds = (g.active_seconds or 0) + max(0, int(secs))
+            s.commit()
+            return g.active_seconds
+
+    def gate_unlock(self, uid: int) -> None:
+        with self._sf() as s:
+            g = s.get(TestGate, uid)
+            if g is None:
+                g = TestGate(user_id=uid, active_seconds=0)
+                s.add(g)
+            if g.unlocked_at is None:
+                g.unlocked_at = now()
+            s.commit()
+
+    def feedback_add(self, uid: int, stars: int, insight: str) -> int:
+        with self._sf() as s:
+            f = Feedback(user_id=uid, stars=int(stars), insight=insight)
+            s.add(f)
+            s.commit()
+            s.refresh(f)
+            return f.id
+
+    def feedback_list(self) -> list[dict]:
+        with self._sf() as s:
+            rows = s.execute(select(Feedback).order_by(Feedback.created_at.desc())).scalars().all()
+            return [
+                {"id": f.id, "user_id": f.user_id, "stars": f.stars,
+                 "insight": f.insight, "created_at": f.created_at.isoformat()}
+                for f in rows
+            ]
+
+    # ── Generation cap ─────────────────────────────────────────────────────────
+
+    def gen_count_today(self, uid: int, day: str) -> int:
+        with self._sf() as s:
+            row = s.execute(
+                select(GenUsage).where(GenUsage.user_id == uid, GenUsage.day == day)
+            ).scalars().first()
+            return row.count if row else 0
+
+    def gen_incr_today(self, uid: int, day: str) -> int:
+        with self._sf() as s:
+            row = s.execute(
+                select(GenUsage).where(GenUsage.user_id == uid, GenUsage.day == day)
+            ).scalars().first()
+            if row is None:
+                row = GenUsage(user_id=uid, day=day, count=0)
+                s.add(row)
+            row.count += 1
+            s.commit()
+            return row.count
+
+    # ── Pool sizing ────────────────────────────────────────────────────────────
+
+    def count_sets(self, skill: str, band: str) -> int:
+        with self._sf() as s:
+            return s.execute(
+                select(func.count()).select_from(GeneratedSet).where(
+                    GeneratedSet.skill == skill, GeneratedSet.band == band
+                )
+            ).scalar_one()
+
+    def add_set(self, skill: str, band: str, payload: dict, source: str = "generated") -> int:
+        with self._sf() as s:
+            idx = s.execute(
+                select(func.count()).select_from(GeneratedSet).where(
+                    GeneratedSet.skill == skill, GeneratedSet.band == band
+                )
+            ).scalar_one()
+            row = GeneratedSet(skill=skill, band=band, set_index=idx, payload=payload, source=source)
+            s.add(row)
+            s.commit()
+            s.refresh(row)
+            return row.id
 
     # ── Programs & milestones ─────────────────────────────────────────────────
 
