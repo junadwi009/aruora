@@ -1,3 +1,6 @@
+// Registers jest-dom matchers (toBeDisabled, toBeEnabled, etc.) on Vitest's expect.
+import "@testing-library/jest-dom/vitest";
+
 // jsdom doesn't have ResizeObserver — Recharts' ResponsiveContainer needs it.
 // Provide a no-op stub so tests don't crash.
 if (typeof globalThis.ResizeObserver === "undefined") {

@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { api } from "./lib/api/client";
 import { JourneyProvider, useJourney } from "./lib/journey";
+import { useGate } from "./lib/gate";
 import { Welcome } from "./components/welcome/Welcome";
 import { Onboarding } from "./components/onboarding/Onboarding";
 import { PlacementRunner } from "./components/placement/PlacementRunner";
@@ -11,6 +12,7 @@ import { AppShell } from "./components/menu/AppShell";
 import { PasscodeGate } from "./components/auth/PasscodeGate";
 import { LoginScreen, RegisterScreen, ForgotScreen } from "./components/auth/AuthScreens";
 import { ResetPassword } from "./components/auth/ResetPassword";
+import { FeedbackGate } from "./components/gate/FeedbackGate";
 
 // Code-split: recharts lives only in Results, so lazy-loading it keeps the main chunk smaller
 const Results = lazy(() => import("./components/results/Results"));
@@ -136,6 +138,18 @@ export default function App() {
 
   if (!unlocked) {
     return <PasscodeGate onUnlock={() => setUnlocked(true)} />;
+  }
+
+  return <GatedJourney />;
+}
+
+// Test-phase feedback gate: sits after the passcode check and only ever locks
+// signed-in users (useGate's status stays null — locked=false — for anonymous
+// visitors, since /api/gate/status 401s until they're authenticated).
+function GatedJourney() {
+  const gate = useGate();
+  if (gate.locked) {
+    return <FeedbackGate onUnlocked={gate.markUnlocked} />;
   }
 
   return (
