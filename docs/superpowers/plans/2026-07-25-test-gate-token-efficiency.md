@@ -1058,7 +1058,7 @@ git commit -m "feat(web): gate api client methods + EN/ID strings"
 - Test: `web/src/lib/gate.test.ts` (new, Vitest)
 
 **Interfaces:**
-- Consumes: `gateStatus`, `gateHeartbeat` from client.
+- Consumes: `api.gateStatus`, `api.gateHeartbeat`, and the `GateStatus` type from `./api/client` (the client exports a single `api` object plus standalone types — call `api.gateStatus()`, `api.gateHeartbeat(seconds)`).
 - Produces: `useGate()` hook returning `{ locked: boolean; loading: boolean; refresh: () => void; markUnlocked: () => void }`. Starts an interval that, only when `document.visibilityState === "visible"` and `document.hasFocus()`, POSTs a heartbeat of `heartbeatSec` seconds and updates `locked`. Interval cleared on unmount. No heartbeat once `unlocked` or `isAdmin` is true.
 
 - [ ] **Step 1: Write the failing test**
@@ -1091,7 +1091,7 @@ Create `web/src/lib/gate.ts`:
 
 ```typescript
 import { useCallback, useEffect, useRef, useState } from "react";
-import { gateHeartbeat, gateStatus, type GateStatus } from "./api/client";
+import { api, type GateStatus } from "./api/client";
 
 export function computeShouldBeat(s: {
   visible: boolean; focused: boolean; unlocked: boolean; isAdmin: boolean;
@@ -1106,7 +1106,7 @@ export function useGate() {
 
   const refresh = useCallback(async () => {
     try {
-      const s = await gateStatus();
+      const s = await api.gateStatus();
       setStatus(s);
     } catch {
       setStatus(null); // signed-out / error → no gate
@@ -1133,7 +1133,7 @@ export function useGate() {
       });
       if (!should) return;
       try {
-        const r = await gateHeartbeat(status.heartbeatSec);
+        const r = await api.gateHeartbeat(status.heartbeatSec);
         if (r.locked) setStatus((prev) => (prev ? { ...prev, locked: true } : prev));
       } catch { /* ignore transient heartbeat errors */ }
     }, intervalMs);
@@ -1166,7 +1166,7 @@ git commit -m "feat(web): focus-aware gate heartbeat hook"
 - Test: `web/src/components/gate/FeedbackGate.test.tsx` (new)
 
 **Interfaces:**
-- Consumes: `useI18n`/`t` from i18n; `gateUnlock` from client; `useGate` from `lib/gate`.
+- Consumes: `useT` (`const { t } = useT()`) from `../../lib/i18n`; `api.gateUnlock` from `../../lib/api/client`; `useGate` from `lib/gate` (used in App.tsx, not the modal).
 - `FeedbackGate` props: `{ onUnlocked: () => void }`. Renders stars (1–5) + textarea; submit disabled until `stars>=1 && insight.trim().length>=20`; on success calls `onUnlocked`.
 - App: after the signed-in branch resolves, if `gate.locked` render `<FeedbackGate onUnlocked={gate.markUnlocked} />` INSTEAD of the app shell.
 
@@ -1180,10 +1180,10 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { FeedbackGate } from "./FeedbackGate";
 
 vi.mock("../../lib/api/client", () => ({
-  gateUnlock: vi.fn(async () => ({ unlocked: true })),
+  api: { gateUnlock: vi.fn(async () => ({ unlocked: true })) },
 }));
 vi.mock("../../lib/i18n", () => ({
-  useI18n: () => ({ t: (k: string) => k, lang: "en" }),
+  useT: () => ({ t: (k: string) => k }),
 }));
 
 describe("FeedbackGate", () => {
@@ -1215,13 +1215,13 @@ Create `web/src/components/gate/FeedbackGate.tsx`:
 ```tsx
 import { useState } from "react";
 import { Star } from "lucide-react";
-import { useI18n } from "../../lib/i18n";
-import { gateUnlock } from "../../lib/api/client";
+import { useT } from "../../lib/i18n";
+import { api } from "../../lib/api/client";
 
 const MIN = 20;
 
 export function FeedbackGate({ onUnlocked }: { onUnlocked: () => void }) {
-  const { t } = useI18n();
+  const { t } = useT();
   const [stars, setStars] = useState(0);
   const [insight, setInsight] = useState("");
   const [busy, setBusy] = useState(false);
@@ -1232,7 +1232,7 @@ export function FeedbackGate({ onUnlocked }: { onUnlocked: () => void }) {
     if (!valid || busy) return;
     setBusy(true); setErr(null);
     try {
-      await gateUnlock(stars, insight.trim());
+      await api.gateUnlock(stars, insight.trim());
       onUnlocked();
     } catch {
       setErr(t("gate.validation"));
