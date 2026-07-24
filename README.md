@@ -49,6 +49,26 @@ Copy `.env.example` to `.env` and fill in your values:
 | `OPENROUTER_API_KEY` | — | Required only when `LLM_MODE=openrouter` |
 | `DATABASE_URL` | set by Compose | PostgreSQL connection string |
 
+### Test-phase gate & efficiency knobs
+
+Two operational features are controlled by env vars (all in `.env.example`):
+
+- **Feedback gate** (`GATE_ENABLED`, `GATE_LOCK_SECONDS`, `GATE_HEARTBEAT_SEC`) —
+  after a user accumulates `GATE_LOCK_SECONDS` of focused, heartbeat-tracked use
+  (default 25200s / 7h), the app locks and asks for feedback. It's **one-time per
+  user** and accounts listed in `ADMIN_EMAILS` are **exempt**. Set
+  `GATE_ENABLED=0` to disable the gate entirely, or `GATE_LOCK_SECONDS=60` to
+  demo it fast. `GATE_HEARTBEAT_SEC` controls how often the client pings the
+  server (default 60s).
+- **Token efficiency** (`POOL_TARGET`, `DAILY_GEN_CAP`, `MODEL_SCORE`) —
+  `POOL_TARGET` is how many pre-generated sets are kept per (skill, band) before
+  generation freezes (default 7). `DAILY_GEN_CAP` limits per-user generations per
+  day (default 20; 0 = unlimited) and applies only to **vocab/lesson/pronounce**
+  generation — Reading and Listening serve from a pre-seeded pool and never call
+  the LLM. `MODEL_SCORE` is the model used for Writing/Speaking review; it
+  defaults to a **free model** (`deepseek/deepseek-chat-v3.1:free`) — override it
+  to upgrade scoring quality.
+
 ## Development
 
 ```bash
