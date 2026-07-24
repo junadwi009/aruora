@@ -74,6 +74,11 @@ const post = <T>(p: string, b: unknown) =>
   request<T>(p, { method: "POST", body: JSON.stringify(b ?? {}) });
 const get = <T>(p: string) => request<T>(p);
 
+export type GateStatus = {
+  activeSeconds: number; thresholdSeconds: number; heartbeatSec: number;
+  locked: boolean; unlocked: boolean; isAdmin: boolean;
+};
+
 // Multipart upload — let the browser set the multipart boundary; do NOT force
 // a JSON Content-Type (that would corrupt the form encoding).
 async function upload<T>(path: string, form: FormData): Promise<T> {
@@ -174,4 +179,10 @@ export const api = {
   cardReview: (id: number, quality: number) =>
     post<Flashcard>(`/api/cards/${id}/review`, { quality }),
   cardDelete: (id: number) => request<{ deleted: number }>(`/api/cards/${id}`, { method: "DELETE" }),
+  // Test-phase gate (feedback-to-unlock).
+  gateStatus: () => get<GateStatus>("/api/gate/status"),
+  gateHeartbeat: (seconds: number) =>
+    post<{ activeSeconds: number; locked: boolean; unlocked: boolean }>("/api/gate/heartbeat", { seconds }),
+  gateUnlock: (stars: number, insight: string) =>
+    post<{ unlocked: boolean }>("/api/gate/unlock", { stars, insight }),
 };

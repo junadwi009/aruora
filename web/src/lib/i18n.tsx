@@ -459,6 +459,16 @@ const EN: Dict = {
   "set.faqA4": "Everything stays in this app’s own database, scoped to your account. Other accounts can’t see your attempts, cards or progress.",
   "set.faqQ5": "Does the app work offline?",
   "set.faqA5": "The journey and practice run on built-in sample content with no internet. Generating fresh material and AI scoring need a connection.",
+  // test-phase gate
+  "gate.title": "Quick check-in before you continue",
+  "gate.body": "Thanks for testing IELTS Coach! To keep going, please rate your experience and share one insight.",
+  "gate.starsLabel": "Your rating",
+  "gate.insightLabel": "Your insight",
+  "gate.insightPlaceholder": "What worked, what didn't, what to improve… (at least 20 characters)",
+  "gate.submit": "Submit & continue",
+  "gate.thanks": "Thank you! Enjoy the app.",
+  "gate.validation": "Please give a star rating and at least 20 characters of insight.",
+  "gen.capReached": "You've reached today's practice-generation limit. Please come back tomorrow.",
 };
 
 const ID: Dict = {
@@ -908,6 +918,16 @@ const ID: Dict = {
   "set.faqA4": "Semuanya tersimpan di database aplikasi ini sendiri, terbatas pada akun Anda. Akun lain tidak dapat melihat percobaan, kartu, atau progres Anda.",
   "set.faqQ5": "Apakah aplikasi ini bisa bekerja offline?",
   "set.faqA5": "Perjalanan dan latihan berjalan dengan konten contoh bawaan tanpa internet. Membuat materi baru dan penilaian AI memerlukan koneksi.",
+  // test-phase gate
+  "gate.title": "Cek sebentar sebelum lanjut",
+  "gate.body": "Terima kasih sudah menguji IELTS Coach! Untuk melanjutkan, beri rating dan satu masukan.",
+  "gate.starsLabel": "Rating kamu",
+  "gate.insightLabel": "Masukan kamu",
+  "gate.insightPlaceholder": "Apa yang bagus, apa yang kurang, apa yang perlu diperbaiki… (minimal 20 karakter)",
+  "gate.submit": "Kirim & lanjut",
+  "gate.thanks": "Terima kasih! Selamat belajar.",
+  "gate.validation": "Beri rating bintang dan minimal 20 karakter masukan.",
+  "gen.capReached": "Kamu sudah mencapai batas pembuatan soal hari ini. Silakan kembali besok.",
 };
 
 const DICT: Record<Lang, Dict> = { en: EN, id: ID };
