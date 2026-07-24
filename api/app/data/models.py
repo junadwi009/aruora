@@ -79,6 +79,27 @@ class GeneratedSet(Base):
     source: Mapped[str] = mapped_column(String(12), default="seed")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
+class TestGate(Base):
+    __tablename__ = "test_gate"
+    user_id: Mapped[int] = mapped_column(ForeignKey("user_profile.id"), primary_key=True)
+    active_seconds: Mapped[int] = mapped_column(Integer, default=0)
+    unlocked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+class Feedback(Base):
+    __tablename__ = "feedback"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("user_profile.id"))
+    stars: Mapped[int] = mapped_column(Integer)
+    insight: Mapped[str] = mapped_column(String, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+class GenUsage(Base):
+    __tablename__ = "gen_usage"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("user_profile.id"))
+    day: Mapped[str] = mapped_column(String(10))  # YYYY-MM-DD (UTC)
+    count: Mapped[int] = mapped_column(Integer, default=0)
+
 class Program(Base):
     __tablename__ = "programs"
     id: Mapped[int] = mapped_column(primary_key=True)
