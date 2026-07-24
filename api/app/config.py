@@ -63,7 +63,15 @@ class Config:
         # Fallback timezone for users who haven't set a reminder timezone.
         self.REMINDER_DEFAULT_TZ = o.get("REMINDER_DEFAULT_TZ", os.getenv("REMINDER_DEFAULT_TZ", "Asia/Jakarta"))
         self.MODEL_GENERATE = o.get("MODEL_GENERATE", os.getenv("MODEL_GENERATE", "anthropic/claude-haiku-4-5"))
-        self.MODEL_SCORE = o.get("MODEL_SCORE", os.getenv("MODEL_SCORE", "anthropic/claude-sonnet-4-6"))
+        self.MODEL_SCORE = o.get("MODEL_SCORE", os.getenv("MODEL_SCORE", "deepseek/deepseek-chat-v3.1:free"))
+        # Test-phase feedback gate (Feature A).
+        self.GATE_ENABLED = _truthy(o.get("GATE_ENABLED", os.getenv("GATE_ENABLED", "1")))
+        self.GATE_LOCK_SECONDS = int(o.get("GATE_LOCK_SECONDS", os.getenv("GATE_LOCK_SECONDS", "25200")))
+        self.GATE_HEARTBEAT_SEC = int(o.get("GATE_HEARTBEAT_SEC", os.getenv("GATE_HEARTBEAT_SEC", "60")))
+        # Token efficiency (Feature B). POOL_TARGET sets per (skill,band) before
+        # generation freezes; DAILY_GEN_CAP=0 means unlimited.
+        self.POOL_TARGET = int(o.get("POOL_TARGET", os.getenv("POOL_TARGET", "7")))
+        self.DAILY_GEN_CAP = int(o.get("DAILY_GEN_CAP", os.getenv("DAILY_GEN_CAP", "20")))
         # Speaking ASR (faster-whisper, fully local/offline). Phase 2b-2.
         self.ASR_ENABLED = o.get("ASR_ENABLED", _truthy(os.getenv("ASR_ENABLED", "1")))
         self.ASR_MODEL = o.get("ASR_MODEL", os.getenv("ASR_MODEL", "base"))

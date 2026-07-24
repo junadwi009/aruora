@@ -53,3 +53,23 @@ def test_pool_count_and_add():
     r.add_set("reading", "B2", {"passage": "x"})
     assert r.count_sets("reading", "B2") == 1
     assert r.count_sets("reading", "B1") == 0
+
+
+from app.config import Config
+
+
+def test_efficiency_config_defaults():
+    c = Config({})
+    assert c.GATE_ENABLED is True
+    assert c.GATE_LOCK_SECONDS == 25200
+    assert c.GATE_HEARTBEAT_SEC == 60
+    assert c.POOL_TARGET == 7
+    assert c.DAILY_GEN_CAP == 20
+    assert c.MODEL_SCORE == "deepseek/deepseek-chat-v3.1:free"
+
+
+def test_efficiency_config_overrides():
+    c = Config({"POOL_TARGET": 3, "DAILY_GEN_CAP": 0, "GATE_ENABLED": "0"})
+    assert c.POOL_TARGET == 3
+    assert c.DAILY_GEN_CAP == 0
+    assert c.GATE_ENABLED is False
