@@ -123,6 +123,6 @@
 
 ## Commit hash
 
-This commit (docs: update log for test-gate + token-efficiency), on branch
+`f1b9e2c` — docs: update log for test-gate + token-efficiency, on branch
 `feat/test-gate-token-efficiency`, built on top of Tasks 1-12
 (`8074f34` .. `a61cb22`).
