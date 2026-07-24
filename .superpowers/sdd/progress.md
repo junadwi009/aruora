@@ -158,3 +158,6 @@ Decisions: feature branch (not master); Task 6 extracts shared serve_or_generate
 - Task 12: complete (commit a61cb22, review clean — README documents all new env vars accurately; docker + migration verified).
 - Task 13: complete (commits f1b9e2c+6ed95ba — full regression: api 198, web 68, tsc clean, build ok, secret scan clean; update-log logs/test-gate-token-efficiency_2026-07-25_log.md with latent-B1 + free-model caveats).
 === ALL 13 TASKS COMPLETE. Whole-branch review next. ===
+- FINAL REVIEW (opus, whole-branch): 0 Critical, 2 Important, ~5 Minor — READY TO MERGE. B1-latent confirmed honest+harmless.
+- Fix wave (commit c5135b8): all 7 items — GenUsage unique-index model/migration parity, admin docstring, unused import, GEN_CAP_CODE constant, gate.thanks removed, idempotent unlock guard + 2 new tests (idempotent-unlock, per-user gate isolation). api 200, web 68.
+- Fix wave re-review (sonnet): all 7 verified against source — APPROVED. === PHASE 5 COMPLETE. Branch feat/test-gate-token-efficiency ready to merge. api 200, web 68, tsc clean, build ok, secret scan clean. ===
