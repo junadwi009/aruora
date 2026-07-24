@@ -706,10 +706,11 @@ git commit -m "feat(api): test-phase feedback gate endpoints"
 **Interfaces:**
 - Consumes: `_repo`, `_cfg`, `_gateway`, `_require_uid`; repo `count_sets/add_set/serve_set/serve_any_set/gen_count_today/gen_incr_today`; config `POOL_TARGET/DAILY_GEN_CAP`; `ApiError`.
 - Produces in `_gencap.py`:
-  - `_today() -> str` (UTC `YYYY-MM-DD`).
+  - `today_utc() -> str` (UTC `YYYY-MM-DD`).
   - `cap_reached(uid, repo, cfg) -> bool` (`DAILY_GEN_CAP>0 and count>=cap`).
   - `note_generation(uid, repo) -> None` (increments today's counter).
-  - `GEN_CAP_MSG = "GEN_CAP_REACHED"` error code constant.
+  - `serve_or_generate(skill, default_band, uid, repo, cfg, gateway, body) -> dict` — the shared pool-freeze + cap policy used by BOTH reading and listening (DRY; the two routes differ only by `skill` + `default_band`).
+  - `GEN_CAP_CODE = "GEN_CAP_REACHED"` error code constant.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -780,11 +781,13 @@ Expected: FAIL — currently reading/listening always call generate (gw.calls ke
 
 - [ ] **Step 3: Write the helper and rewire routes**
 
-Create `api/app/routes/_gencap.py`:
+Create `api/app/routes/_gencap.py` (the shared policy lives here so reading and listening don't duplicate it):
 
 ```python
 """Shared token-efficiency helpers for generation routes (Feature B)."""
 from datetime import datetime, timezone
+
+from app.errors import ApiError
 
 GEN_CAP_CODE = "GEN_CAP_REACHED"
 
@@ -801,24 +804,49 @@ def cap_reached(uid: int, repo, cfg) -> bool:
 
 def note_generation(uid: int, repo) -> None:
     repo.gen_incr_today(uid, today_utc())
+
+
+def serve_or_generate(skill: str, default_band: str, uid: int, repo, cfg, gateway, body) -> dict:
+    """
+    Pool-freeze + daily-cap policy shared by reading & listening.
+
+    - Pool full (count_sets >= POOL_TARGET) → serve a random stored set, no LLM.
+    - Under target but daily cap reached → serve from pool if any, else 429.
+    - Otherwise → generate, grow the pool, count the generation, return it.
+    A new band starts with an empty pool, so generation resumes on level-up.
+    """
+    band = (body or {}).get("band", default_band)
+
+    if repo.count_sets(skill, band) >= cfg.POOL_TARGET:
+        return repo.serve_set(skill, band)
+
+    if cap_reached(uid, repo, cfg):
+        served = repo.serve_set(skill, band) or repo.serve_any_set(skill)
+        if served is not None:
+            return served
+        raise ApiError(GEN_CAP_CODE, "Daily generation limit reached", 429)
+
+    out = gateway.generate("generate", skill=skill, band=band)
+    repo.add_set(skill, band, out)
+    note_generation(uid, repo)
+    return out
 ```
 
-Replace `api/app/routes/reading.py` body:
+Replace `api/app/routes/reading.py` body (thin wrapper over the shared helper):
 
 ```python
 """
 POST /api/reading/generate — serve a reading set.
 
-Efficiency (Feature B): once POOL_TARGET sets exist for (reading, band) the
-pool is frozen and we serve a random stored set (no LLM). Below target, and
-while under the daily cap, we generate + grow the pool. When capped, we fall
-back to the pool if one exists, else 429.
+Efficiency (Feature B) is in app.routes._gencap.serve_or_generate: once
+POOL_TARGET sets exist for (reading, band) the pool is frozen and a random
+stored set is served (no LLM); below target and under the daily cap we
+generate + grow the pool; when capped we fall back to the pool or 429.
 """
 from flask import Blueprint, jsonify, request
 
-from app.errors import ApiError
 from app.routes._deps import _cfg, _gateway, _repo, _require_uid
-from app.routes._gencap import cap_reached, note_generation
+from app.routes._gencap import serve_or_generate
 
 bp = Blueprint("reading", __name__)
 
@@ -826,36 +854,22 @@ bp = Blueprint("reading", __name__)
 @bp.post("/api/reading/generate")
 def reading_generate():
     uid = _require_uid()
-    band = (request.get_json(force=True) or {}).get("band", "B2")
-    repo, cfg = _repo(), _cfg()
-
-    if repo.count_sets("reading", band) >= cfg.POOL_TARGET:
-        return jsonify(repo.serve_set("reading", band)), 200
-
-    if cap_reached(uid, repo, cfg):
-        served = repo.serve_set("reading", band) or repo.serve_any_set("reading")
-        if served is not None:
-            return jsonify(served), 200
-        raise ApiError("GEN_CAP_REACHED", "Daily generation limit reached", 429)
-
-    out = _gateway().generate("generate", skill="reading", band=band)
-    repo.add_set("reading", band, out)
-    note_generation(uid, repo)
+    body = request.get_json(force=True) or {}
+    out = serve_or_generate("reading", "B2", uid, _repo(), _cfg(), _gateway(), body)
     return jsonify(out), 200
 ```
 
-Replace `api/app/routes/listening.py` body identically but for `"listening"` and default band `"B1"`:
+Replace `api/app/routes/listening.py` body (same helper, `"listening"` + default band `"B1"`):
 
 ```python
 """
-POST /api/listening/generate — serve a listening set (see reading.py for the
-efficiency policy; identical pool-freeze + daily-cap behaviour).
+POST /api/listening/generate — serve a listening set. Efficiency policy is the
+shared app.routes._gencap.serve_or_generate (see reading.py).
 """
 from flask import Blueprint, jsonify, request
 
-from app.errors import ApiError
 from app.routes._deps import _cfg, _gateway, _repo, _require_uid
-from app.routes._gencap import cap_reached, note_generation
+from app.routes._gencap import serve_or_generate
 
 bp = Blueprint("listening", __name__)
 
@@ -863,21 +877,8 @@ bp = Blueprint("listening", __name__)
 @bp.post("/api/listening/generate")
 def listening_generate():
     uid = _require_uid()
-    band = (request.get_json(force=True) or {}).get("band", "B1")
-    repo, cfg = _repo(), _cfg()
-
-    if repo.count_sets("listening", band) >= cfg.POOL_TARGET:
-        return jsonify(repo.serve_set("listening", band)), 200
-
-    if cap_reached(uid, repo, cfg):
-        served = repo.serve_set("listening", band) or repo.serve_any_set("listening")
-        if served is not None:
-            return jsonify(served), 200
-        raise ApiError("GEN_CAP_REACHED", "Daily generation limit reached", 429)
-
-    out = _gateway().generate("generate", skill="listening", band=band)
-    repo.add_set("listening", band, out)
-    note_generation(uid, repo)
+    body = request.get_json(force=True) or {}
+    out = serve_or_generate("listening", "B1", uid, _repo(), _cfg(), _gateway(), body)
     return jsonify(out), 200
 ```
 
