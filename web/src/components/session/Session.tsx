@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { GraduationCap, Check, X, ArrowRight, RefreshCw } from "lucide-react";
-import { api } from "../../lib/api/client";
+import { api, ApiError } from "../../lib/api/client";
 import type { Lesson, LessonToday, LessonExercise } from "../../lib/types";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
@@ -45,8 +45,8 @@ export const Session: React.FC = () => {
       const m = await api.lessonGenerate({ day: meta.day, focus: meta.focus, band: meta.band, force });
       setMeta(m);
       setStage("teach");
-    } catch {
-      setError(t("session.generateError"));
+    } catch (e) {
+      setError(e instanceof ApiError && e.code === "GEN_CAP_REACHED" ? t("gen.capReached") : t("session.generateError"));
     } finally {
       setGenerating(false);
     }

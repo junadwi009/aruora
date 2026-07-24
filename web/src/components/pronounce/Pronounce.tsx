@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Volume2, RefreshCw } from "lucide-react";
-import { api } from "../../lib/api/client";
+import { api, ApiError } from "../../lib/api/client";
 import type { PronounceTarget, PronounceFeedback } from "../../lib/types";
 import { wordAccuracy } from "../../lib/pron";
 import { useT } from "../../lib/i18n";
@@ -22,16 +22,19 @@ export const Pronounce: React.FC = () => {
   const [result, setResult] = useState<{ accuracy: number; missed: string[] } | null>(null);
   const [feedback, setFeedback] = useState<PronounceFeedback | null>(null);
   const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const newSentence = async () => {
     setLoadingTarget(true);
     setTranscript(null);
     setResult(null);
     setFeedback(null);
+    setNotice(null);
     try {
       setTarget(await api.pronounceSentence({ level: "B1" }));
-    } catch {
-      /* keep current target */
+    } catch (e) {
+      if (e instanceof ApiError && e.code === "GEN_CAP_REACHED") setNotice(t("gen.capReached"));
+      /* otherwise keep current target */
     } finally {
       setLoadingTarget(false);
     }
@@ -75,6 +78,8 @@ export const Pronounce: React.FC = () => {
       </div>
 
       <div className="p-4 md:p-6 max-w-2xl mx-auto flex flex-col gap-4">
+        {notice && <p className="text-xs text-[var(--color-danger)]">{notice}</p>}
+
         {/* Target */}
         <Card>
           <div className="flex items-start justify-between gap-3">

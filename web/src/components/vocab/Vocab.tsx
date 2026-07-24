@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Layers, Plus, RotateCcw } from "lucide-react";
-import { api } from "../../lib/api/client";
+import { api, ApiError } from "../../lib/api/client";
 import type { VocabWord, Flashcard, CardStats } from "../../lib/types";
 import { useT } from "../../lib/i18n";
 import { Button } from "../ui/Button";
@@ -65,8 +65,8 @@ const Build: React.FC<{ onChange: () => void }> = ({ onChange }) => {
       const r = await api.vocab({ topic, level: "B1" });
       setWords(r.words ?? []);
       setAdded(new Set());
-    } catch {
-      setError(t("vocab.generateError"));
+    } catch (e) {
+      setError(e instanceof ApiError && e.code === "GEN_CAP_REACHED" ? t("gen.capReached") : t("vocab.generateError"));
     } finally {
       setLoading(false);
     }
