@@ -73,3 +73,63 @@ def test_efficiency_config_overrides():
     assert c.POOL_TARGET == 3
     assert c.DAILY_GEN_CAP == 0
     assert c.GATE_ENABLED is False
+
+
+def _seeded_client(overrides=None):
+    from app import create_app
+    from app.data.seed import seed_all
+    from app.services.llm import LlmGateway
+    eng = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(eng)
+    Session = sessionmaker(bind=eng)
+    seed_all(Session)
+    repo = Repository(Session)
+
+    class FakeGW:
+        calls = 0
+        def generate(self, *a, **k):
+            FakeGW.calls += 1
+            return {"passage": "generated", "questions": []}
+    gw = FakeGW()
+    cfg = {"TESTING": True, "REPO": repo, "GATEWAY": gw, "POOL_TARGET": 2, "DAILY_GEN_CAP": 3}
+    cfg.update(overrides or {})
+    app = create_app(cfg)
+    c = app.test_client()
+    c.post("/api/account/register", json={"email": "g@example.com", "password": "secret123"})
+    return c, repo, gw
+
+
+def test_reading_generates_until_pool_target_then_serves():
+    c, repo, gw = _seeded_client()
+    # POOL_TARGET=2. Use band "A2": fixtures/seed_sets.json only seeds "B2"
+    # reading sets, so "A2" starts with an empty pool (unlike "B2", which
+    # ships with 5 seeded sets and would already be frozen at POOL_TARGET=2).
+    # first two calls generate + grow pool
+    c.post("/api/reading/generate", json={"band": "A2"})
+    c.post("/api/reading/generate", json={"band": "A2"})
+    assert repo.count_sets("reading", "A2") == 2
+    assert gw.calls == 2
+    # third call: pool full -> serve from pool, no new generate
+    c.post("/api/reading/generate", json={"band": "A2"})
+    assert gw.calls == 2
+    assert repo.count_sets("reading", "A2") == 2
+
+
+def test_new_band_reenters_generation():
+    c, repo, gw = _seeded_client()
+    c.post("/api/reading/generate", json={"band": "B2"})
+    c.post("/api/reading/generate", json={"band": "B2"})  # B2 pool full (target 2)
+    before = gw.calls
+    c.post("/api/reading/generate", json={"band": "C1"})  # new band -> generates
+    assert gw.calls == before + 1
+    assert repo.count_sets("reading", "C1") == 1
+
+
+def test_daily_cap_blocks_further_generation():
+    c, repo, gw = _seeded_client(overrides={"POOL_TARGET": 99, "DAILY_GEN_CAP": 2})
+    c.post("/api/listening/generate", json={"band": "B1"})
+    c.post("/api/listening/generate", json={"band": "B1"})
+    # cap=2 reached; pool has 2 sets -> fall back to serve, status 200, no generate
+    r = c.post("/api/listening/generate", json={"band": "B1"})
+    assert r.status_code == 200
+    assert gw.calls == 2

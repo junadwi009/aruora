@@ -1,19 +1,18 @@
 """
-POST /api/listening/generate — generate a listening transcript + questions via the gateway.
+POST /api/listening/generate — serve a listening set. Efficiency policy is the
+shared app.routes._gencap.serve_or_generate (see reading.py).
 """
 from flask import Blueprint, jsonify, request
 
-from app.routes._deps import _gateway, _require_uid
+from app.routes._deps import _cfg, _gateway, _repo, _require_uid
+from app.routes._gencap import serve_or_generate
 
 bp = Blueprint("listening", __name__)
 
 
 @bp.post("/api/listening/generate")
 def listening_generate():
-    _require_uid()  # authenticated only — this calls the paid LLM
+    uid = _require_uid()
     body = request.get_json(force=True) or {}
-    band = body.get("band", "B1")
-    gateway = _gateway()
-    out = gateway.generate("generate", skill="listening", band=band)
-    # gateway-defined shape; passthrough dict — shape validated client-side
+    out = serve_or_generate("listening", "B1", uid, _repo(), _cfg(), _gateway(), body)
     return jsonify(out), 200
