@@ -163,6 +163,7 @@ def create_app(overrides=None):
     from .routes.auth import bp as auth_bp
     from .routes.account import bp as account_bp
     from .routes.admin import bp as admin_bp
+    from .routes.feedback import bp as gate_bp
     from .routes.internal import bp as internal_bp
 
     app.register_blueprint(health_bp)
@@ -185,6 +186,7 @@ def create_app(overrides=None):
     app.register_blueprint(auth_bp)
     app.register_blueprint(account_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(gate_bp)
     app.register_blueprint(internal_bp)
 
     return app
