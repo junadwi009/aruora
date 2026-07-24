@@ -12,7 +12,7 @@ from flask import Blueprint, jsonify, request
 from app.domain.lesson_plan import current_day, pick_focus
 from app.errors import ApiError
 from app.routes._deps import _cfg, _gateway, _lang, _repo, _uid, _require_uid
-from app.routes._gencap import cap_reached, note_generation
+from app.routes._gencap import cap_reached, note_generation, GEN_CAP_CODE
 
 bp = Blueprint("lesson", __name__)
 
@@ -67,7 +67,7 @@ def lesson_generate():
                         "band": band, "lesson": cached["lesson"]}), 200
 
     if cap_reached(uid, repo, _cfg()):
-        raise ApiError("GEN_CAP_REACHED", "Daily generation limit reached", 429)
+        raise ApiError(GEN_CAP_CODE, "Daily generation limit reached", 429)
     lesson = _gateway().generate("lesson", skill=focus, band=band, lang=_lang(), day=day, focus=focus, tasks=focus)
     note_generation(uid, repo)
     repo.save_lesson(uid, day, lesson, focus)

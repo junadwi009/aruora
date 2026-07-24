@@ -136,3 +136,25 @@ Decisions: provider=OpenRouter (OpenAI SDK, base_url https://openrouter.ai/api/v
 
 ## Remaining
 Tasks 2–22 pending.
+
+## PHASE 5 — Test-phase feedback gate + token efficiency (in progress)
+Branch: feat/test-gate-token-efficiency (base 99cb68e). Plan: docs/superpowers/plans/2026-07-25-test-gate-token-efficiency.md
+Decisions: feature branch (not master); Task 6 extracts shared serve_or_generate helper into _gencap.py (no reading/listening duplication).
+13 tasks. A=gate (1-5,8-10), B=efficiency (3,6,7), C=docker (12), verify (13).
+- Task 1: complete (commit 8074f34, review clean — TestGate/Feedback/GenUsage models, 1 test)
+- Task 2: complete (commit 6297241, review clean — repo gate/feedback/gen-usage/pool methods, 5 tests). MINOR(final): lazy-create TestGate/GenUsage row has theoretical concurrent-first-write PK race (brief-prescribed pattern; SQLite single-user OK).
+- Task 3: complete (commit be06280, review clean — config gate/efficiency knobs; MODEL_SCORE default = deepseek/deepseek-chat-v3.1:free, 2 tests)
+- Task 4: complete (commit a15cc6d, review clean — alembic e631087d0920 down_rev 9413f2a93a7e; test_gate/feedback/gen_usage + unique ix_gen_usage_user_day; SQLite-verified)
+- Task 5: complete (commit 95178b6, review clean — gate blueprint: status/heartbeat/unlock/admin-feedback; 6 tests, full suite 194). MINOR(final): (a) unused import current_uid in feedback.py:74; (b) heartbeat does 2 DB reads; (c) test_admin comment implies cross-user but only 1 user; (d) /unlock has no repeat-submit guard (re-inserts+re-emails if called after unlock).
+- Task 6: complete (commit 46d75f3, review clean — _gencap.serve_or_generate shared helper + reading/listening thin wrappers; note_generation only on real gen; 10 test_efficiency, full 197. Test band B2->A2 to dodge seeded pool collision, verified legit).
+- Task 7: complete (commit 08c02b9, review clean — daily cap on vocab/lesson/pronounce generate; pronounce SCORE uncapped; counter only after success; full suite 198). MINOR(final): 3 call sites hardcode 'GEN_CAP_REACHED' string instead of importing GEN_CAP_CODE (cosmetic).
+=== BACKEND (T1-7) DONE. Frontend T8-11 next. ===
+- Task 8: complete (commit 31dbe97, review clean — client api.gateStatus/gateHeartbeat/gateUnlock + GateStatus type; 9 i18n keys EN+ID; tsc clean). NOTE: client exports single 'api' object, so downstream calls api.gateX(); GateStatus + ApiError are standalone exports.
+- Task 9: complete (commit f2319a0, review clean — lib/gate.ts computeShouldBeat + useGate focus-aware heartbeat; 1 vitest, tsc clean. Trimmed unused vi/beforeEach test imports for noUnusedLocals).
+- Task 10: complete (commit f2b9cb8, review clean — FeedbackGate modal (real design tokens, a11y stars/aria, useT) + App.tsx GatedJourney wrapper hosting useGate after passcode gate; 1 new test, full web 68 tests, tsc clean. Added @testing-library/jest-dom/vitest to test-setup.ts (additive). Update-log deferred to Task 13).
+- Task 11: complete (commit 7e1f82b + fix 72b918e, review clean after fix — friendly gen.capReached notice at the 3 REAL capped call sites: Vocab/Session/Pronounce. Removed dead R/L cap branch from QuizRunner (practice/set serves pool, never 429s). tsc clean, web 68 tests).
+- ARCH NOTE (final review + update-log): Reading/Listening practice serves from seeded GeneratedSet pool via GET /api/practice/set (zero LLM). POST /api/reading|listening/generate (Task 6 pool-freeze) are NOT called by UI -> B1 pool-freeze is a correct-but-LATENT safeguard. User decided (2026-07-25) to keep R/L pool-only. Daily cap live for vocab/lesson/pronounce; free MODEL_SCORE live for all scoring.
+- Task 12: complete (commit a61cb22, docker verified — stack boots, alembic auto-runs 9413f2a93a7e->e631087d0920 at container start; .env.example (gitignored) + README document GATE_*/POOL_TARGET/DAILY_GEN_CAP/MODEL_SCORE; compose already passes .env via env_file, no compose change).
+- Task 12: complete (commit a61cb22, review clean — README documents all new env vars accurately; docker + migration verified).
+- Task 13: complete (commits f1b9e2c+6ed95ba — full regression: api 198, web 68, tsc clean, build ok, secret scan clean; update-log logs/test-gate-token-efficiency_2026-07-25_log.md with latent-B1 + free-model caveats).
+=== ALL 13 TASKS COMPLETE. Whole-branch review next. ===

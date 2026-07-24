@@ -12,7 +12,6 @@ from app.errors import ApiError
 from app.routes._deps import _cfg, _repo, _require_uid
 from app.routes.admin import _is_admin_email, _require_admin
 from app.services import mailer
-from app.session import current_uid
 
 bp = Blueprint("gate", __name__)
 
@@ -84,6 +83,9 @@ def gate_unlock():
     if len(insight) < MIN_INSIGHT:
         raise ApiError("VALIDATION", f"insight must be at least {MIN_INSIGHT} characters", 422)
     repo = _repo()
+    already = repo.gate_get(uid)["unlocked_at"] is not None
+    if already:
+        return jsonify({"unlocked": True}), 200
     repo.feedback_add(uid, stars, insight)
     repo.gate_unlock(uid)
     u = repo.get_user_by_id(uid)

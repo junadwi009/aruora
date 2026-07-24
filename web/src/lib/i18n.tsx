@@ -466,7 +466,6 @@ const EN: Dict = {
   "gate.insightLabel": "Your insight",
   "gate.insightPlaceholder": "What worked, what didn't, what to improve… (at least 20 characters)",
   "gate.submit": "Submit & continue",
-  "gate.thanks": "Thank you! Enjoy the app.",
   "gate.validation": "Please give a star rating and at least 20 characters of insight.",
   "gen.capReached": "You've reached today's practice-generation limit. Please come back tomorrow.",
 };
@@ -925,7 +924,6 @@ const ID: Dict = {
   "gate.insightLabel": "Masukan kamu",
   "gate.insightPlaceholder": "Apa yang bagus, apa yang kurang, apa yang perlu diperbaiki… (minimal 20 karakter)",
   "gate.submit": "Kirim & lanjut",
-  "gate.thanks": "Terima kasih! Selamat belajar.",
   "gate.validation": "Beri rating bintang dan minimal 20 karakter masukan.",
   "gen.capReached": "Kamu sudah mencapai batas pembuatan soal hari ini. Silakan kembali besok.",
 };

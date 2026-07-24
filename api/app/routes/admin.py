@@ -7,8 +7,9 @@ ADMIN_EMAILS. There is no is_admin DB column, so admin can't be granted by a
 DB write or an app bug — only by deployment config (a Secret / env var).
 
 Privacy: admin manages the *account list* (who exists, usage counts) and can
-remove or password-reset a user. It does NOT expose other users' essays,
-answers, or feedback.
+remove or password-reset a user. It does NOT expose other users' essays or
+answers, but it DOES surface submitted test-phase feedback (star rating +
+insight text) for review via /api/admin/feedback.
 """
 from flask import Blueprint, current_app, jsonify
 from itsdangerous import URLSafeTimedSerializer

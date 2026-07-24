@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy import String, Integer, Float, ForeignKey, DateTime, JSON
+from sqlalchemy import String, Integer, Float, ForeignKey, DateTime, JSON, Index
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 def now():
@@ -95,6 +95,7 @@ class Feedback(Base):
 
 class GenUsage(Base):
     __tablename__ = "gen_usage"
+    __table_args__ = (Index("ix_gen_usage_user_day", "user_id", "day", unique=True),)
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("user_profile.id"))
     day: Mapped[str] = mapped_column(String(10))  # YYYY-MM-DD (UTC)

@@ -75,3 +75,33 @@ def test_admin_never_locked_and_can_list_feedback():
     c.post("/api/gate/unlock", json={"stars": 3, "insight": "Admin can read this insight row."})
     rows = c.get("/api/admin/feedback").get_json()
     assert any(r["stars"] == 3 for r in rows)
+
+
+def test_unlock_is_idempotent_no_duplicate_feedback():
+    c = _client(overrides={"ADMIN_EMAILS": "admin@example.com"})
+    r1 = c.post("/api/gate/unlock", json={"stars": 4, "insight": "First unlock call with insight."})
+    assert r1.status_code == 200 and r1.get_json()["unlocked"] is True
+    r2 = c.post("/api/gate/unlock", json={"stars": 2, "insight": "Second unlock call, should be a no-op."})
+    assert r2.status_code == 200 and r2.get_json()["unlocked"] is True
+
+    # register a second, admin account (same client — cookie jar switches session)
+    c.post("/api/account/logout")
+    c.post("/api/account/register", json={"email": "admin@example.com", "password": "secret123"})
+    rows = c.get("/api/admin/feedback").get_json()
+    assert len([r for r in rows if r["stars"] == 4]) == 1
+    assert not any(r["stars"] == 2 for r in rows)
+
+
+def test_gate_state_is_per_user():
+    c = _client()
+    c.post("/api/gate/heartbeat", json={"seconds": 120})
+    c.post("/api/gate/heartbeat", json={"seconds": 120})
+    j = c.get("/api/gate/status").get_json()
+    assert j["activeSeconds"] == 240 and j["locked"] is True
+
+    # switch to a second account on the same client
+    c.post("/api/account/logout")
+    c.post("/api/account/register", json={"email": "second@example.com", "password": "secret123"})
+    j2 = c.get("/api/gate/status").get_json()
+    assert j2["activeSeconds"] == 0
+    assert j2["locked"] is False
