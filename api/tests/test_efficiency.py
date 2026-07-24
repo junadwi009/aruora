@@ -133,3 +133,13 @@ def test_daily_cap_blocks_further_generation():
     r = c.post("/api/listening/generate", json={"band": "B1"})
     assert r.status_code == 200
     assert gw.calls == 2
+
+
+def test_vocab_capped_returns_429():
+    c, repo, gw = _seeded_client(overrides={"DAILY_GEN_CAP": 1})
+    # vocab route is POST /api/vocab (not /generate); FakeGW.generate returns a dict
+    first = c.post("/api/vocab", json={"level": "B1", "topic": "travel"})
+    assert first.status_code == 200
+    second = c.post("/api/vocab", json={"level": "B1", "topic": "travel"})
+    assert second.status_code == 429
+    assert second.get_json()["error"]["code"] == "GEN_CAP_REACHED"

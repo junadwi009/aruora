@@ -8,17 +8,22 @@ Scoring is approximate (browser recogniser word-match + LLM tips), not phoneme-l
 """
 from flask import Blueprint, jsonify, request
 
-from app.routes._deps import _gateway, _lang, _require_uid
+from app.errors import ApiError
+from app.routes._deps import _cfg, _gateway, _lang, _repo, _require_uid
+from app.routes._gencap import cap_reached, note_generation
 
 bp = Blueprint("pronounce", __name__)
 
 
 @bp.post("/api/pronounce/sentence")
 def pronounce_sentence():
-    _require_uid()  # authenticated only — this calls the paid LLM
+    uid = _require_uid()  # authenticated only — this calls the paid LLM
     b = request.get_json(force=True) or {}
+    if cap_reached(uid, _repo(), _cfg()):
+        raise ApiError("GEN_CAP_REACHED", "Daily generation limit reached", 429)
     out = _gateway().generate("generate", skill="pronounce", band=b.get("level", "B1"),
                               topic=b.get("topic"))
+    note_generation(uid, _repo())
     return jsonify(out), 200
 
 
