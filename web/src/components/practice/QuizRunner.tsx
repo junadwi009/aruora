@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { BookOpen, Headphones } from "lucide-react";
-import { api, ApiError } from "../../lib/api/client";
+import { api } from "../../lib/api/client";
 import { bandFromPct } from "../../lib/band";
 import type { QuizQuestion, QuizSet } from "../../lib/types";
 import type { CefrBand } from "../ui/LevelChip";
@@ -69,11 +69,7 @@ export const QuizRunner: React.FC<QuizRunnerProps> = ({ skill, band, mode }) => 
         setLoading(false);
       })
       .catch((e: unknown) => {
-        if (e instanceof ApiError && e.code === "GEN_CAP_REACHED") {
-          setError(t("gen.capReached"));
-        } else {
-          setError(e instanceof Error ? e.message : t("quiz.loadError"));
-        }
+        setError(e instanceof Error ? e.message : t("quiz.loadError"));
         setLoading(false);
       });
   };
