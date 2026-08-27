@@ -27,6 +27,7 @@ import type {
   AdminUser,
   AdminStats,
   AdminAuditEntry,
+  JobStatus,
 } from "../types";
 
 const BASE = (import.meta as { env?: { VITE_API_BASE?: string } }).env?.VITE_API_BASE ?? "http://localhost:5050";
@@ -189,6 +190,8 @@ export const api = {
     form.append("audio", audio, "speech.webm");
     return upload<Transcript>("/api/speaking/transcribe", form);
   },
+  /** WS06-02: poll the queued ASR job (owner-scoped status). */
+  jobStatus: (jobId: string) => get<JobStatus>(`/api/jobs/${encodeURIComponent(jobId)}`),
   readingGenerate: (band: string) => post<QuizSet>("/api/reading/generate", { band }),
   listeningGenerate: (band: string) => post<QuizSet>("/api/listening/generate", { band }),
   statsTrends: () => get<Trends>("/api/stats/trends"),

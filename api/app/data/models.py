@@ -486,3 +486,117 @@ class SystemFlag(Base):
     key: Mapped[str] = mapped_column(String(64), primary_key=True)
     value: Mapped[str] = mapped_column(String(255), default="")
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
+
+
+# ═══ WS28 — Auto-RAG knowledge layer ════════════════════════════════════════
+# Allowlist-first source registry → staged versioned ingestion → ACTIVE
+# index. Vectors are stored as JSON float lists: the retrieval adapter is the
+# seam for PostgreSQL+pgvector later (28 §3); exact cosine scoring over a
+# small corpus is the documented correctness baseline.
+
+
+class RagSource(Base):
+    __tablename__ = "rag_source"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    namespace: Mapped[str] = mapped_column(String(40))
+    name: Mapped[str] = mapped_column(String(160))
+    source_type: Mapped[str] = mapped_column(String(20), default="manual_text")  # repo_file|uploaded_file|url|manual_text
+    locator: Mapped[str] = mapped_column(String(500), default="")
+    owner: Mapped[str] = mapped_column(String(120), default="")
+    trust_tier: Mapped[str] = mapped_column(String(2), default="T1")  # T0..T4
+    allowed_use: Mapped[list] = mapped_column(JSON, default=list)
+    license_type: Mapped[str] = mapped_column(String(40), default="proprietary")
+    license_reference: Mapped[str] = mapped_column(String(300), default="")
+    contains_personal_data: Mapped[bool] = mapped_column(Boolean, default=False)
+    access_scope: Mapped[str] = mapped_column(String(12), default="internal")  # public|internal
+    update_policy: Mapped[str] = mapped_column(String(12), default="manual")  # manual|scheduled
+    status: Mapped[str] = mapped_column(String(12), default="draft")  # draft|active|paused|rejected|retired
+    last_content_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    last_checked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_success_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
+
+
+class RagDocument(Base):
+    """A versioned fetched/parsed source document. Exactly ONE version per
+    source is ACTIVE at a time; new versions stage, canary, then swap (28 §7
+    step 9) so a failed version can never replace the last known-good one."""
+    __tablename__ = "rag_document"
+    __table_args__ = (Index("ix_rag_doc_source_ver", "source_id", "source_version"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    source_id: Mapped[int] = mapped_column(
+        ForeignKey("rag_source.id", ondelete="CASCADE"), index=True
+    )
+    source_version: Mapped[int] = mapped_column(Integer, default=1)
+    content_hash: Mapped[str] = mapped_column(String(64))
+    title: Mapped[str] = mapped_column(String(300), default="")
+    language: Mapped[str] = mapped_column(String(8), default="en")
+    status: Mapped[str] = mapped_column(String(14), default="staged")  # staged|active|quarantined|retired
+    supersedes_document_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    parser_version: Mapped[str] = mapped_column(String(20), default="v1")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class RagChunk(Base):
+    __tablename__ = "rag_chunk"
+    __table_args__ = (
+        Index("ix_rag_chunk_doc", "document_id", "chunk_index"),
+        Index("ix_rag_chunk_status", "status"),
+    )
+    id: Mapped[int] = mapped_column(primary_key=True)
+    document_id: Mapped[int] = mapped_column(
+        ForeignKey("rag_document.id", ondelete="CASCADE"), index=True
+    )
+    chunk_index: Mapped[int] = mapped_column(Integer)
+    heading_path: Mapped[str] = mapped_column(String(500), default="")
+    chunk_text: Mapped[str] = mapped_column(String)
+    chunk_hash: Mapped[str] = mapped_column(String(64))
+    token_count: Mapped[int] = mapped_column(Integer, default=0)
+    metadata_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    # JSON float list of the versioned embedding (pgvector swap = migration +
+    # adapter change only; see retrieval adapter seam note on RagDocument).
+    embedding: Mapped[list] = mapped_column(JSON, default=list)
+    embedding_model: Mapped[str] = mapped_column(String(60), default="")
+    status: Mapped[str] = mapped_column(String(14), default="staged")  # staged|active|quarantined|retired
+    quarantine_reasons: Mapped[list] = mapped_column(JSON, default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class RagIngestionRun(Base):
+    __tablename__ = "rag_ingestion_run"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    source_id: Mapped[int] = mapped_column(
+        ForeignKey("rag_source.id", ondelete="CASCADE"), index=True
+    )
+    trigger: Mapped[str] = mapped_column(String(20), default="manual")  # scheduled|manual|change_detected|reindex
+    status: Mapped[str] = mapped_column(String(12), default="ok")  # ok|failed|skipped
+    content_changed: Mapped[bool] = mapped_column(Boolean, default=False)
+    chunks_created: Mapped[int] = mapped_column(Integer, default=0)
+    chunks_reused: Mapped[int] = mapped_column(Integer, default=0)
+    chunks_quarantined: Mapped[int] = mapped_column(Integer, default=0)
+    error_code: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class RagRetrievalEvent(Base):
+    """Privacy-safe retrieval telemetry: query HASH only, never raw learner
+    text. user_id nullable = anonymous/feature calls; CASCADE with account
+    (same governance as analytics, WS21)."""
+    __tablename__ = "rag_retrieval_event"
+    __table_args__ = (Index("ix_rag_retr_use_time", "use_case", "created_at"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("user_profile.id", ondelete="CASCADE"), nullable=True
+    )
+    use_case: Mapped[str] = mapped_column(String(40))
+    namespace_set: Mapped[list] = mapped_column(JSON, default=list)
+    query_hash: Mapped[str] = mapped_column(String(64))
+    retrieval_version: Mapped[str] = mapped_column(String(20), default="")
+    embedding_model: Mapped[str] = mapped_column(String(60), default="")
+    keyword_candidates: Mapped[int] = mapped_column(Integer, default=0)
+    vector_candidates: Mapped[int] = mapped_column(Integer, default=0)
+    chunk_ids: Mapped[list] = mapped_column(JSON, default=list)
+    latency_ms: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)

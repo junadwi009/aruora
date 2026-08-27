@@ -134,6 +134,33 @@ class Config:
         # ASR-specific upload cap (bytes). Tighter than MAX_CONTENT_BYTES so a huge
         # audio decode can't tie up the CPU. Default 10 MB.
         self.ASR_MAX_UPLOAD_BYTES = int(o.get("ASR_MAX_UPLOAD_BYTES", os.getenv("ASR_MAX_UPLOAD_BYTES", str(10 * 1024 * 1024))))
+        # ── WS06: audio evidence pipeline ─────────────────────────────────────
+        # Voice-activity filtering before decode (WS06-04 quality gate input).
+        self.ASR_VAD = o.get("ASR_VAD", _truthy(os.getenv("ASR_VAD", "1")))
+        # Hard duration cap for a single recording (seconds, WS06-04).
+        self.ASR_MAX_DURATION_SEC = int(o.get("ASR_MAX_DURATION_SEC", os.getenv("ASR_MAX_DURATION_SEC", "300")))
+        # Recordings below this much actual speech are rejected as near-silence
+        # ("insufficient audio quality") instead of being scored (WS06-04).
+        self.ASR_MIN_SPEECH_SEC = float(o.get("ASR_MIN_SPEECH_SEC", os.getenv("ASR_MIN_SPEECH_SEC", "1.0")))
+        # Allowed audio MIME types for the transcribe upload (WS06-04).
+        self.ASR_ALLOWED_MIME = _email_set(o.get(
+            "ASR_ALLOWED_MIME", os.getenv(
+                "ASR_ALLOWED_MIME",
+                "audio/webm,audio/webm;codecs=opus,audio/ogg,audio/wav,audio/x-wav,audio/wave,audio/mpeg,audio/mp3,audio/mp4,audio/m4a,audio/aac,audio/flac",
+            )))
+        # WS06-02: when 1, /api/speaking/transcribe ALWAYS answers 202 + jobId
+        # (real queue or eager dispatcher); default follows REDIS_URL topology.
+        self.ASR_FORCE_QUEUE = _truthy(o.get("ASR_FORCE_QUEUE", os.getenv("ASR_FORCE_QUEUE", "0")))
+        # WS06-07: ephemeral audio location + TTL. Files are deleted right
+        # after processing; the TTL janitor reaps crashed-run leftovers.
+        self.ASR_AUDIO_DIR = o.get("ASR_AUDIO_DIR", os.getenv("ASR_AUDIO_DIR", "data/audio_tmp"))
+        self.ASR_AUDIO_TTL_MIN = int(o.get("ASR_AUDIO_TTL_MIN", os.getenv("ASR_AUDIO_TTL_MIN", "30")))
+        # WS06-05: pronunciation evidence is FAIL-CLOSED. Both a validated
+        # estimator key AND its frozen calibration-pack version must be set
+        # before any pronunciation score can exist. Empty (default) = off.
+        self.PRONUNCIATION_ESTIMATOR = o.get("PRONUNCIATION_ESTIMATOR", os.getenv("PRONUNCIATION_ESTIMATOR", ""))
+        self.PRONUNCIATION_CALIBRATION_VERSION = o.get(
+            "PRONUNCIATION_CALIBRATION_VERSION", os.getenv("PRONUNCIATION_CALIBRATION_VERSION", ""))
         # ── WS05-05/06: LLM input/cost bounds and retry policy ────────────────
         # An authenticated account is not permission for unlimited paid inference.
         self.LLM_TIMEOUT_S = int(o.get("LLM_TIMEOUT_S", os.getenv("LLM_TIMEOUT_S", "60")))
@@ -149,6 +176,19 @@ class Config:
         self.MAX_ROLEPLAY_HISTORY_CHARS = int(o.get("MAX_ROLEPLAY_HISTORY_CHARS", os.getenv("MAX_ROLEPLAY_HISTORY_CHARS", "4000")))
         self.MAX_ROLEPLAY_TURN_CHARS = int(o.get("MAX_ROLEPLAY_TURN_CHARS", os.getenv("MAX_ROLEPLAY_TURN_CHARS", "1200")))
         self.MAX_LESSON_FIELD_CHARS = int(o.get("MAX_LESSON_FIELD_CHARS", os.getenv("MAX_LESSON_FIELD_CHARS", "160")))
+        # ── WS28: Auto-RAG knowledge layer ────────────────────────────────────
+        # Provider-neutral: the domain layer never hard-codes an embedding
+        # provider; "local" = deterministic hashing embedder for dev/test.
+        self.RAG_ENABLED = _truthy(o.get("RAG_ENABLED", os.getenv("RAG_ENABLED", "1")))
+        self.RAG_DEFAULT_TOP_K = int(o.get("RAG_DEFAULT_TOP_K", os.getenv("RAG_DEFAULT_TOP_K", "8")))
+        self.RAG_VECTOR_CANDIDATES = int(o.get("RAG_VECTOR_CANDIDATES", os.getenv("RAG_VECTOR_CANDIDATES", "30")))
+        self.RAG_TEXT_CANDIDATES = int(o.get("RAG_TEXT_CANDIDATES", os.getenv("RAG_TEXT_CANDIDATES", "30")))
+        self.RAG_RERANK_ENABLED = _truthy(o.get("RAG_RERANK_ENABLED", os.getenv("RAG_RERANK_ENABLED", "0")))
+        self.RAG_MAX_CONTEXT_TOKENS = int(o.get("RAG_MAX_CONTEXT_TOKENS", os.getenv("RAG_MAX_CONTEXT_TOKENS", "1600")))
+        self.RAG_SOURCE_MAX_BYTES = int(o.get("RAG_SOURCE_MAX_BYTES", os.getenv("RAG_SOURCE_MAX_BYTES", str(2 * 1024 * 1024))))
+        self.EMBEDDING_PROVIDER = o.get("EMBEDDING_PROVIDER", os.getenv("EMBEDDING_PROVIDER", "local"))
+        self.EMBEDDING_MODEL = o.get("EMBEDDING_MODEL", os.getenv("EMBEDDING_MODEL", "local-hash-v1"))
+        self.EMBEDDING_DIM = int(o.get("EMBEDDING_DIM", os.getenv("EMBEDDING_DIM", "256")))
         # ── WS07: jobs / distributed rate limits / cost control ────────────────
         # (REDIS_URL itself is declared in the WS03-08 section above and shared:
         # it turns on the distributed limiter, queued jobs and shared counters.)
@@ -176,6 +216,12 @@ class Config:
         # Idempotency keys / finished jobs are retained (and deduplicated) for
         # this long, then purgeable; expired jobs answer status with EXPIRED.
         self.JOB_RETENTION_HOURS = int(o.get("JOB_RETENTION_HOURS", os.getenv("JOB_RETENTION_HOURS", "24")))
+        # WS27 §9.4: anti-repeat horizon — a pooled task served to a user
+        # within this window is deprioritised (unseen items are preferred).
+        self.POOL_REPEAT_COOLDOWN_HOURS = int(o.get("POOL_REPEAT_COOLDOWN_HOURS", os.getenv("POOL_REPEAT_COOLDOWN_HOURS", "24")))
+        # WS10: structured JSON logs in production ("json" | "text") + level.
+        self.LOG_FORMAT = o.get("LOG_FORMAT", os.getenv("LOG_FORMAT", "text"))
+        self.LOG_LEVEL = o.get("LOG_LEVEL", os.getenv("LOG_LEVEL", "INFO"))
         # ── WS08: database operations / data lifecycle ────────────────────────
         # Maintenance purge windows for DEAD security/operational state only.
         # Learning history is NEVER purged by these (app/jobs/maintenance.py).

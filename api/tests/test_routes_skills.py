@@ -51,12 +51,16 @@ def test_speaking_transcribe_returns_text(client_with_seed, monkeypatch):
     monkeypatch.setattr(
         asr,
         "transcribe",
-        lambda audio, cfg: {"transcript": "Hello world.", "language": "en",
-                            "durationSec": 3.0, "model": "base", "asr": True},
+        lambda audio, cfg, **k: {"transcript": "Hello world.", "language": "en",
+                                "durationSec": 3.0, "model": "base", "asr": True,
+                                "vad": True,
+                                "segments": [{"start": 0.0, "end": 3.0,
+                                              "avg_logprob": -0.2,
+                                              "no_speech_prob": 0.05}]},
     )
     r = client_with_seed.post(
         "/api/speaking/transcribe",
-        data={"audio": (io.BytesIO(b"fake-audio"), "speech.webm")},
+        data={"audio": (io.BytesIO(b"fake-audio"), "speech.webm", "audio/webm")},
         content_type="multipart/form-data",
     )
     assert r.status_code == 200

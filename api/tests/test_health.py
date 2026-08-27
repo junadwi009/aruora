@@ -10,9 +10,11 @@ def test_health_ok():
     assert r.status_code == 200
     body = r.get_json()
     assert body["ok"] is True
-    assert body["llmMode"] == "stub"
-    assert body["providerConfigured"] is False
     assert body["asrReady"] is False
+    # WS09-10: the public liveness surface no longer discloses provider
+    # topology (mode/provider configuration moved to the admin detail view).
+    assert "llmMode" not in body
+    assert "providerConfigured" not in body
 
 
 def test_health_asr_ready_reflects_probe(monkeypatch):

@@ -171,3 +171,48 @@ def ai_budget_set():
                       actor_user_id=admin.id, actor_email=admin.email,
                       ip_hash=hash_ip(_client_ip()))
     return jsonify({"ok": True, "halt": halt}), 200
+
+
+# ── WS27: pool health + AI spend dashboard source ─────────────────────────────
+
+@bp.get("/api/admin/ai-usage")
+def ai_usage():
+    """Derived (read-only) view over the append-only ledger + Task Bank
+    inventory. Content-free by construction — no learner text ever appears."""
+    _require_admin()
+    from app.services.ai_usage import usage_summary
+
+    repo = _repo()
+    return jsonify({
+        "usage": usage_summary(repo),
+        "poolInventory": repo.pool_inventory(),
+    }), 200
+
+
+@bp.get("/api/admin/metrics")
+def prometheus_metrics():
+    """WS10-03: Prometheus text exposition, admin-only (never public). In-process
+    registry per API worker plus live DB/queue gauges (pool inventory, job
+    backlog, AI finance). No request bodies, no learner content, no topology."""
+    _require_admin()
+    from app.observability import metrics as reg
+
+    repo = _repo()
+    extra = []
+    # Pool health gauges (WS10 Task-Pool dashboard §182).
+    for row in repo.pool_inventory():
+        extra.append(
+            f'pool_tasks{{skill="{row["skill"]}",band="{row["band"]}",'
+            f'status="{row["status"]}"}} {row["count"]}'
+        )
+    # Job backlog by queue/state.
+    try:
+        for row in repo.job_backlog():
+            extra.append(
+                f'job_backlog{{queue="{row["queue"]}",status="{row["status"]}"}} '
+                f'{row["count"]}'
+            )
+    except Exception:
+        pass
+    body = reg.render() + "\n".join(extra)
+    return current_app.response_class(body + ("\n" if body else ""), mimetype="text/plain")

@@ -96,7 +96,10 @@ def _seeded_client(overrides=None):
         calls = 0
         def generate(self, *a, **k):
             FakeGW.calls += 1
-            return {"passage": "generated", "questions": []}
+            # WS27: content is hashed + deduplicated on insert, so each
+            # generated set must be distinct for the pool to actually grow.
+            return {"title": f"Generated {FakeGW.calls}",
+                    "passage": f"generated {FakeGW.calls}", "questions": []}
     gw = FakeGW()
     cfg = {"TESTING": True, "REPO": repo, "GATEWAY": gw, "POOL_TARGET": 2, "DAILY_GEN_CAP": 3}
     cfg.update(overrides or {})

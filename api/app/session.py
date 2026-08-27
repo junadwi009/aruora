@@ -430,6 +430,12 @@ class CsrfAwareClient(_WerkzeugClient):
     in X-CSRF-Token on unsafe API requests. Dedicated CSRF tests use a raw
     FlaskClient to prove enforcement instead."""
 
+    @property
+    def app(self):
+        """Backwards/forwards compatibility: expose the wrapped application
+        (some test helpers reach app.config through the client)."""
+        return self.application
+
     def _csrf_from_jar(self) -> str | None:
         getter = getattr(self, "get_cookie", None)
         if getter is None:  # pragma: no cover - very old werkzeug

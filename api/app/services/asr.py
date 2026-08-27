@@ -73,7 +73,7 @@ def _get_model(config):
     return model
 
 
-def transcribe(audio_bytes: bytes, config) -> dict:
+def transcribe(audio_bytes: bytes, config, *, collect_segments: bool = False) -> dict:
     """
     Transcribe recorded speech audio to text.
 
@@ -83,16 +83,22 @@ def transcribe(audio_bytes: bytes, config) -> dict:
         Raw audio file bytes (webm/opus, wav, m4a, mp3 — decoded by PyAV).
     config : Config
         App config (ASR_ENABLED / ASR_MODEL / ASR_DEVICE / ASR_COMPUTE_TYPE).
+    collect_segments : bool
+        WS06-03: also return normalized segment timestamps/probabilities so
+        the audio feature contract can be derived (worker path only).
 
     Returns
     -------
     dict
-        Transcript payload (see module docstring).
+        Transcript payload (see module docstring); with ``segments`` when
+        ``collect_segments`` is true.
 
     Raises
     ------
     ApiError("ASR_UNAVAILABLE", 502)
         If ASR is disabled, the model can't load, or decoding/transcription fails.
+    ApiError("PAYLOAD_TOO_LARGE", 413)
+        When the decoded audio exceeds ASR_MAX_DURATION_SEC (WS06-04).
     """
     if not getattr(config, "ASR_ENABLED", True):
         raise ApiError("ASR_UNAVAILABLE", "Speech transcription is disabled", 502)
@@ -107,9 +113,26 @@ def transcribe(audio_bytes: bytes, config) -> dict:
             502,
         ) from exc
 
+    # WS06-04: VAD keeps silence/non-speech out of the decode (quality gate
+    # input, not a scoring feature). Resource-bounded decode via PyAV.
+    vad = bool(getattr(config, "ASR_VAD", True))
     try:
-        segments, info = model.transcribe(io.BytesIO(audio_bytes), beam_size=5)
-        text = " ".join(s.text.strip() for s in segments).strip()
+        segments, info = model.transcribe(io.BytesIO(audio_bytes), beam_size=5,
+                                          vad_filter=vad)
+        text_parts: list[str] = []
+        collected: list[dict] = []
+        for s in segments:
+            text_parts.append(s.text.strip())
+            if collect_segments:
+                collected.append({
+                    "start": getattr(s, "start", None),
+                    "end": getattr(s, "end", None),
+                    "avg_logprob": getattr(s, "avg_logprob", None),
+                    "no_speech_prob": getattr(s, "no_speech_prob", None),
+                })
+        text = " ".join(t for t in text_parts if t).strip()
+    except ApiError:
+        raise
     except Exception as exc:  # noqa: BLE001
         logger.warning("asr: transcription failed — %s", exc)
         raise ApiError(
@@ -119,10 +142,23 @@ def transcribe(audio_bytes: bytes, config) -> dict:
         ) from exc
 
     duration = getattr(info, "duration", 0.0) or 0.0
-    return {
+    max_duration = float(getattr(config, "ASR_MAX_DURATION_SEC", 300))
+    if duration > max_duration:
+        # WS06-04: bounded worker time — reject over-long audio, never score it.
+        raise ApiError(
+            "PAYLOAD_TOO_LARGE",
+            f"The recording is too long (max {int(max_duration)} seconds)",
+            413,
+        )
+
+    out = {
         "transcript": text,
         "language": getattr(info, "language", None),
         "durationSec": round(float(duration), 2),
         "model": config.ASR_MODEL,
         "asr": True,
     }
+    if collect_segments:
+        out["segments"] = collected
+        out["vad"] = vad
+    return out

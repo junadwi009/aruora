@@ -715,6 +715,29 @@ class Repository:
                 gs.retired_at = now()
                 s.commit()
 
+    def count_active_sets(self, skill: str, band: str) -> int:
+        """Active inventory in a bucket — the replenishment threshold signal
+        (quarantined/retired rows never count, 27 §12)."""
+        with self._sf() as s:
+            return int(s.execute(
+                select(func.count()).select_from(GeneratedSet).where(
+                    GeneratedSet.skill == skill,
+                    GeneratedSet.band == band,
+                    GeneratedSet.status == "active",
+                )
+            ).scalar_one() or 0)
+
+    def job_backlog(self) -> list[dict]:
+        """Pending/running job counts per queue+status (queue-age gauges)."""
+        with self._sf() as s:
+            rows = s.execute(
+                select(Job.queue, Job.status, func.count()).where(
+                    Job.status.in_(["queued", "running"])
+                ).group_by(Job.queue, Job.status)
+            ).all()
+            return [{"queue": r[0], "status": r[1], "count": int(r[2])}
+                    for r in rows]
+
     def pool_inventory(self) -> list[dict]:
         """Per-bucket inventory counters (active/quarantined/retired) for the
         pool-health dashboard (27 §21)."""

@@ -77,7 +77,7 @@ def test_roleplay_ok_when_signed_in():
 
 def test_transcribe_requires_auth(monkeypatch):
     from app.services import asr
-    monkeypatch.setattr(asr, "transcribe", lambda b, c: {"transcript": "x", "asr": True})
+    monkeypatch.setattr(asr, "transcribe", lambda b, c, **k: {"transcript": "x", "asr": True, "durationSec": 5.0})
     app, _ = _app()
     r = app.test_client().post(
         "/api/speaking/transcribe",
@@ -118,12 +118,12 @@ def test_speaking_evaluate_no_llm_when_unauth():
 
 def test_transcribe_rejects_oversize(monkeypatch):
     from app.services import asr
-    monkeypatch.setattr(asr, "transcribe", lambda b, c: {"transcript": "x", "asr": True})
+    monkeypatch.setattr(asr, "transcribe", lambda b, c, **k: {"transcript": "x", "asr": True, "durationSec": 5.0})
     app, _ = _app({"ASR_MAX_UPLOAD_BYTES": 16})
     c = _authed(app)
     r = c.post(
         "/api/speaking/transcribe",
-        data={"audio": (io.BytesIO(b"x" * 100), "a.webm")},
+        data={"audio": (io.BytesIO(b"x" * 100), "a.webm", "audio/webm")},
         content_type="multipart/form-data",
     )
     assert r.status_code == 413
@@ -131,12 +131,12 @@ def test_transcribe_rejects_oversize(monkeypatch):
 
 def test_transcribe_ok_within_cap(monkeypatch):
     from app.services import asr
-    monkeypatch.setattr(asr, "transcribe", lambda b, c: {"transcript": "hello", "asr": True})
+    monkeypatch.setattr(asr, "transcribe", lambda b, c, **k: {"transcript": "hello", "asr": True, "durationSec": 5.0, "vad": True, "segments": [{"start": 0.0, "end": 5.0, "avg_logprob": -0.2, "no_speech_prob": 0.05}]})
     app, _ = _app({"ASR_MAX_UPLOAD_BYTES": 1024})
     c = _authed(app)
     r = c.post(
         "/api/speaking/transcribe",
-        data={"audio": (io.BytesIO(b"x" * 10), "a.webm")},
+        data={"audio": (io.BytesIO(b"x" * 10), "a.webm", "audio/webm")},
         content_type="multipart/form-data",
     )
     assert r.status_code == 200

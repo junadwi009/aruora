@@ -112,8 +112,14 @@ def serve_next(skill: str, default_band: str, user_id: int, repo, cfg,
     """
     band = band or default_band
     rows = repo.list_active_sets(skill, band)
+    context = "practice"
     if not rows:
-        return None
+        # Documented adjacent-bucket fallback: same skill, different difficulty.
+        # Never crosses skill (exam-variant integrity, 27 §25).
+        rows = repo.list_active_sets(skill, None)
+        context = "fallback_adjacent"
+        if not rows:
+            return None
 
     now = datetime.now(timezone.utc)
     cooldown = timedelta(hours=max(0, int(getattr(cfg, "POOL_REPEAT_COOLDOWN_HOURS", 24))))
@@ -121,13 +127,6 @@ def serve_next(skill: str, default_band: str, user_id: int, repo, cfg,
     exposures = repo.recent_exposure_map(user_id)
 
     pick = _pick(rows, exposures, cutoff, now)
-    context = "practice"
-    if pick is None:
-        # Documented adjacent-bucket fallback: same skill, different difficulty.
-        # Never crosses skill (exam-variant integrity, 27 §25).
-        alt_rows = repo.list_active_sets(skill, None)
-        pick = _pick(alt_rows, exposures, cutoff, now)
-        context = "fallback_adjacent"
     if pick is None:
         return None
 

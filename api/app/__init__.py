@@ -106,6 +106,11 @@ def create_app(overrides=None):
         )
     register_error_handlers(app)
 
+    # ── WS10: structured logging + request telemetry + metrics ───────────────
+    # Consumes WS09's X-Request-ID correlation. Never sees request bodies.
+    from .observability import init_observability
+    init_observability(app, cfg)
+
     # ── WS09-02: trusted-host validation (fail closed) ────────────────────────
     # When TRUSTED_HOSTS is configured, any request whose Host header is not on
     # the allow-list is rejected before any other work. This kills host-header

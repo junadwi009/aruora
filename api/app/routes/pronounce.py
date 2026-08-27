@@ -10,8 +10,9 @@ from flask import Blueprint, jsonify
 
 from app.errors import ApiError
 from app.routes._deps import _cfg, _gateway, _lang, _repo, _require_uid
-from app.routes._gencap import cap_reached, note_generation, GEN_CAP_CODE
+from app.routes._gencap import GEN_CAP_CODE
 from app.schemas import PronounceFeedbackIn, PronounceSentenceIn
+from app.services.ai_usage import note_custom_generation, require_custom_generation
 from app.validation import parse_body
 
 bp = Blueprint("pronounce", __name__)
@@ -25,11 +26,10 @@ def pronounce_sentence():
     if len(topic) > _cfg().MAX_TOPIC_CHARS:
         raise ApiError("VALIDATION",
                        f"Topic is too long (max {_cfg().MAX_TOPIC_CHARS} characters)", 422)
-    if cap_reached(uid, _repo(), _cfg()):
-        raise ApiError(GEN_CAP_CODE, "Daily generation limit reached", 429)
+    require_custom_generation(uid, _repo(), _cfg())
     out = _gateway().generate("generate", skill="pronounce", band=b.level or "B1",
                               topic=topic or None)
-    note_generation(uid, _repo())
+    note_custom_generation(uid, _repo())
     return jsonify(out), 200
 
 

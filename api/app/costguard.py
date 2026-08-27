@@ -198,6 +198,16 @@ def record_llm_usage(
             cache_hit=bool(m.get("cachedTokens")),
             job_id=job_id,
         )
+        # WS10: AI finance metrics (bounded labels: config-set models only).
+        try:
+            from app.observability import metrics
+            metrics.inc("ai_calls_total", costCenter=cost_center, op=op,
+                        status=status)
+            if cost_micros:
+                metrics.inc("ai_cost_micros_total", costCenter=cost_center,
+                            value=cost_micros)
+        except Exception:
+            pass
     except Exception:
         pass
 

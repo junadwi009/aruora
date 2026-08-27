@@ -25,6 +25,18 @@ def parse_body(model: type[BaseModel]):
     try:
         return model.model_validate(raw)
     except ValidationError as e:
-        # detail list is field paths + machine types only — no payload echo
-        raise ApiError("VALIDATION", "Invalid request", 422,
-                       e.errors(include_url=False, include_input=False))
+        raise ApiError("VALIDATION", "Invalid request", 422, _safe_details(e))
+
+
+def _safe_details(e: ValidationError):
+    """JSON-safe, payload-free validation details: field paths + machine
+    types + messages only (raw ctx values may hold non-serializable objects,
+    and echoing input would leak nothing but bloat error responses)."""
+    details = []
+    for err in e.errors(include_url=False, include_input=False):
+        details.append({
+            "field": ".".join(map(str, err.get("loc", ()))),
+            "type": err.get("type"),
+            "message": err.get("msg"),
+        })
+    return details

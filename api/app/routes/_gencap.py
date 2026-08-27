@@ -52,37 +52,53 @@ def serve_or_generate(skill: str, default_band: str, uid: int, repo, cfg, gatewa
     """
     Pool-freeze + daily-cap policy shared by reading & listening.
 
-    Inline mode (default, no REDIS_URL — behaviour preserved):
+    Inline mode (default, no REDIS_URL — self-host behaviour preserved):
     - Pool full (count_sets >= POOL_TARGET) → serve a random stored set, no LLM.
     - Under target but daily cap reached → serve from pool if any, else 429.
     - Otherwise → generate, grow the pool, count the generation, return it.
     A new band starts with an empty pool, so generation resumes on level-up.
 
-    Queued mode (jobs configured with REDIS_URL — WS07-10 migration rule):
-    - pool serves stay free and inference-free;
-    - pool underfill ENQUEUES a system replenishment job (idempotent per
-      bucket per daily epoch, background budget envelope) instead of doing a
-      synchronous learner-triggered generation;
+    Queued mode (REDIS_URL set — WS27 §25 transition policy):
+    - pool-first, generate-second: the learner ALWAYS receives an eligible
+      pooled task selected with per-user anti-repeat exposure (27 §9);
+    - the request path is inference-free — pool underfill ENQUEUES a system
+      replenishment job (idempotent per bucket per daily epoch, background
+      budget envelope) instead of generating synchronously;
     - a learner entitlement is NEVER decremented for pool content, and an
-      empty pool answers 503 POOL_EMPTY (retryable) instead of generating
-      inline under concurrent traffic.
+      unservable bucket answers 503 POOL_EMPTY (retryable).
     """
     band = check_band((body or {}).get("band", default_band))
 
     # WS21 — content-free task-served analytics (WS27 economics input).
-    def _served(source: str, payload: dict) -> dict:
-        # repeat_within_cooldown becomes real once WS27 per-user exposure lands.
+    def _served(source: str, payload: dict, *, served_band: str = band,
+                repeat: bool = False, context: str = "practice") -> dict:
         emit("practice_task_served", skill=skill, source=source,
-             difficulty_bucket=band, repeat_within_cooldown=False)
+             difficulty_bucket=served_band, repeat_within_cooldown=repeat,
+             selection_context=context)
         return payload
 
-    if repo.count_sets(skill, band) >= cfg.POOL_TARGET:
-        return _served("pool", public_result(repo.serve_set(skill, band)) or {})
-
     if jobs is not None and getattr(jobs, "mode", "inline") == "queued":
-        served = repo.serve_set(skill, band) or repo.serve_any_set(skill)
+        from app.services import task_pool
+
+        served = task_pool.serve_next(skill, band, uid, repo, cfg)
+        underfilled = repo.count_active_sets(skill, band) < cfg.POOL_TARGET
         if served is not None:
-            return _served("pool", public_result(served))
+            if underfilled:
+                try:  # best-effort background replenishment (27 §12)
+                    jobs.enqueue(
+                        "replenish_pool",
+                        queue="llm_generate",
+                        payload={"skill": skill, "band": band},
+                        idempotency_key=f"{skill}:{band}:{today_utc()}",
+                    )
+                except ApiError:
+                    pass  # duplicate race / backpressure — serving still works
+            out = served["payload"]
+            return _served(
+                "pool", public_result(out) if isinstance(out, dict) else out,
+                served_band=served["servedFrom"]["band"],
+                repeat=served["repeat"], context=served["context"],
+            )
         try:
             jobs.enqueue(
                 "replenish_pool",
@@ -98,6 +114,9 @@ def serve_or_generate(skill: str, default_band: str, uid: int, repo, cfg, gatewa
             503,
             details=[{"retryAfter": 30}],
         )
+
+    if repo.count_sets(skill, band) >= cfg.POOL_TARGET:
+        return _served("pool", public_result(repo.serve_set(skill, band)) or {})
 
     if cap_reached(uid, repo, cfg):
         served = repo.serve_set(skill, band) or repo.serve_any_set(skill)

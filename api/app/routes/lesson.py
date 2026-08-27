@@ -12,7 +12,8 @@ from flask import Blueprint, jsonify, request
 from app.domain.lesson_plan import current_day, pick_focus
 from app.errors import ApiError
 from app.routes._deps import _cfg, _gateway, _lang, _repo, _uid, _require_uid
-from app.routes._gencap import cap_reached, note_generation, public_result, check_band, GEN_CAP_CODE
+from app.routes._gencap import public_result, check_band, GEN_CAP_CODE
+from app.services.ai_usage import custom_generation_allowed, note_custom_generation
 from app.schemas import LessonGenerateIn
 from app.validation import parse_body
 
@@ -68,14 +69,14 @@ def lesson_generate():
         return jsonify({"day": day, "focus": cached["focus"], "skill": focus,
                         "band": band, "lesson": cached["lesson"]}), 200
 
-    if cap_reached(uid, repo, _cfg()):
+    if not custom_generation_allowed(uid, repo, _cfg()):
         raise ApiError(GEN_CAP_CODE, "Daily generation limit reached", 429)
     lesson = _gateway().generate(
         "lesson", skill=focus, band=check_band(band), lang=_lang(),
         day=str(day), focus=str(focus)[:_cfg().MAX_LESSON_FIELD_CHARS],
         tasks=str(focus)[:_cfg().MAX_LESSON_FIELD_CHARS],
     )
-    note_generation(uid, repo)
+    note_custom_generation(uid, repo)
     clean = public_result(lesson)
     repo.save_lesson(uid, day, clean, focus)
     return jsonify({"day": day, "focus": focus, "skill": focus, "band": band, "lesson": clean}), 200

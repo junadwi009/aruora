@@ -176,11 +176,15 @@ class FlakyGateway:
         self.calls += 1
         if self.calls <= self.failures:
             raise ApiError("LLM_UNAVAILABLE", "LLM call failed: Timeout", 502)
-        return {"passage": "ok", "questions": [], "_meta_llm": {
-            "provider": "stub", "requestedModel": "stub", "resolvedModel": None,
-            "latencyMs": 1, "promptTokens": None, "completionTokens": None,
-            "cachedTokens": None, "reasoningTokens": None, "costUsd": None,
-        }}
+        # Schema-valid reading set (WS27 lifecycle validates before activation).
+        return {"title": "Generated", "passage": "generated",
+                "questions": [{"stem": "q?", "options": ["a", "b"],
+                               "answer": "a", "explanation": "e"}],
+                "_meta_llm": {
+                    "provider": "stub", "requestedModel": "stub", "resolvedModel": None,
+                    "latencyMs": 1, "promptTokens": None, "completionTokens": None,
+                    "cachedTokens": None, "reasoningTokens": None, "costUsd": None,
+                }}
 
 
 def _ctx(repo, cfg, gw):

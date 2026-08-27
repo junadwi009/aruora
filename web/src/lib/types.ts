@@ -150,6 +150,36 @@ export interface Transcript {
   durationSec?: number;
   model?: string;
   asr?: boolean;
+  /** WS06: deterministic audio evidence (server-computed, contract-shaped). */
+  features?: AudioFeatures | null;
+  /** WS06-02: present when the upload was queued (HTTP 202) instead of done. */
+  jobId?: string;
+  queued?: boolean;
+}
+
+/** WS06-03 contract (snake_case by spec). Uncomputed values stay null. */
+export interface AudioFeatures {
+  duration_sec: number | null;
+  speech_sec: number | null;
+  words_per_minute: number | null;
+  pause_count: number;
+  long_pause_count: number;
+  mean_pause_ms: number | null;
+  asr_confidence: number | null;
+  prosody: null;
+  alignment: null;
+  quality: { snr: number | null; clipping: boolean; vad: boolean };
+}
+
+/** WS06-02: owner-scoped job status (WS07 job record, safe fields only). */
+export interface JobStatus {
+  id: string;
+  type?: string;
+  status: "queued" | "running" | "succeeded" | "failed" | "cancelled" | "expired";
+  progress?: number;
+  errorCode?: string | null;
+  errorMessage?: string | null;
+  result?: Record<string, unknown> | null;
 }
 
 export interface AttemptSummary {

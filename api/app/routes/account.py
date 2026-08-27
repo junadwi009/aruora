@@ -352,12 +352,28 @@ def set_avatar():
 
 @bp.get("/api/account/export")
 def export_data():
-    return jsonify(_repo().export_data(_uid_or_401())), 200
+    uid = _uid_or_401()
+    # WS10-05: durable audit of data-subject export requests.
+    try:
+        _repo().add_audit("user.export", actor_user_id=uid,
+                          target_user_id=uid, ip_hash=hash_ip(_client_ip()))
+    except Exception:
+        pass
+    return jsonify(_repo().export_data(uid)), 200
 
 
 @bp.delete("/api/account")
 def delete_account():
     uid = _uid_or_401()
+    # WS10-05: durable audit of data-subject deletion (actor id denormalised
+    # into the audit row; the FK is SET NULL on purge by design).
+    try:
+        u = _repo().get_user_by_id(uid)
+        _repo().add_audit("user.delete", actor_user_id=uid,
+                          actor_email=(u.email if u else "") or "",
+                          target_user_id=uid, ip_hash=hash_ip(_client_ip()))
+    except Exception:
+        pass
     _repo().delete_account(uid)  # cascades auth_session + tokens by schema
     clear_session()
     return jsonify({"ok": True}), 200

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Mic, Square, Loader2, AlertCircle } from "lucide-react";
 import { api } from "../../lib/api/client";
+import type { Transcript } from "../../lib/types";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { useT } from "../../lib/i18n";
@@ -98,7 +99,8 @@ export const Recorder: React.FC<RecorderProps> = ({ onTranscript, disabled }) =>
     });
     try {
       const out = await api.speakingTranscribe(blob);
-      const text = (out.transcript || "").trim();
+      const done = await waitForTranscript(out);
+      const text = (done.transcript || "").trim();
       if (text) onTranscript(text);
       setState("idle");
       if (!text) setError(t("rec.noSpeech"));
@@ -108,6 +110,25 @@ export const Recorder: React.FC<RecorderProps> = ({ onTranscript, disabled }) =>
       );
       setState("error");
     }
+  };
+
+  // WS06-02: a queued upload answers 202 {jobId} — poll the owner-scoped job
+  // status until the result is ready. A direct 200 transcript (dev topology)
+  // resolves immediately.
+  const waitForTranscript = async (first: Transcript): Promise<Transcript> => {
+    if (!first.queued || !first.jobId) return first;
+    let out = first;
+    for (let i = 0; i < 60; i++) {
+      await new Promise((r) => setTimeout(r, 1000));
+      const st = await api.jobStatus(out.jobId as string);
+      if (st.status === "succeeded") {
+        return (st.result ?? {}) as unknown as Transcript;
+      }
+      if (st.status === "failed" || st.status === "cancelled" || st.status === "expired") {
+        throw new Error(st.errorMessage || t("rec.transcribeFailed"));
+      }
+    }
+    throw new Error(t("rec.transcribeFailed"));
   };
 
   const mmss = `${String(Math.floor(elapsed / 60)).padStart(2, "0")}:${String(

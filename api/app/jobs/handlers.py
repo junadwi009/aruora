@@ -16,6 +16,7 @@ synchronous generation storm; a depleted pool enqueues replenishment instead.
 """
 from __future__ import annotations
 
+import logging
 import random
 import time
 from datetime import datetime, timedelta, timezone
@@ -96,7 +97,7 @@ def replenish_pool(payload: dict, ctx: dict) -> tuple[dict, dict | None]:
     skill = str(payload.get("skill", ""))
     band = check_band(payload.get("band"))
 
-    if repo.count_sets(skill, band) >= cfg.POOL_TARGET:
+    if repo.count_active_sets(skill, band) >= cfg.POOL_TARGET:
         return {"status": "already_full", "skill": skill, "band": band}, None
 
     now = datetime.now(timezone.utc)
@@ -175,8 +176,71 @@ def _cost_micros(meta: dict | None) -> int | None:
         return None
 
 
+def transcribe_audio(payload: dict, ctx: dict) -> tuple[dict, dict | None]:
+    """WS06-02/03/04/07 — queued ASR: decode + transcribe + audio features.
+
+    Runs on the dedicated ``asr`` queue (a bounded worker, never a Gunicorn
+    web process). The raw audio object is read from the ephemeral private
+    store and DELETED as soon as this handler finishes, successfully or not
+    (WS06-07 retention). A quality gate runs BEFORE any result is accepted:
+    bad audio answers ``INSUFFICIENT_AUDIO_QUALITY``, never a confident score.
+    """
+    cfg = ctx["cfg"]
+    from app.services import asr, audio_features, audio_store
+
+    store = audio_store.store_for_config(cfg)
+    key = str(payload.get("audioKey") or "")
+    audio = store.read(key)
+    if audio is None:
+        raise ApiError("VALIDATION",
+                       "The recording is no longer available — please record again", 422)
+    try:
+        out = asr.transcribe(audio, cfg, collect_segments=True)
+    finally:
+        store.delete(key)  # raw audio is ephemeral by policy, no matter the outcome
+
+    features = audio_features.build_features(
+        out.get("segments") or [],
+        {"duration": out.get("durationSec"), "language": out.get("language"),
+         "vad": out.get("vad", False)},
+        out.get("transcript") or "",
+    )
+    # WS06-04: duration bound enforced here as well (the ASR layer has its own
+    # check; this one guards any future feature pipeline).
+    duration = features.get("duration_sec")
+    max_duration = float(getattr(cfg, "ASR_MAX_DURATION_SEC", 300))
+    if duration is not None and duration > max_duration:
+        raise ApiError(
+            "PAYLOAD_TOO_LARGE",
+            f"The recording is too long (max {int(max_duration)} seconds)",
+            413,
+        )
+    problems = audio_features.quality_check(
+        features, min_speech_sec=float(cfg.ASR_MIN_SPEECH_SEC))
+    if problems:
+        raise ApiError(
+            "INSUFFICIENT_AUDIO_QUALITY",
+            "We couldn't get reliable speech from this recording — please try again "
+            "in a quieter place and speak clearly",
+            422,
+            details=[{"reasons": problems}],
+        )
+
+    return {
+        "transcript": out.get("transcript") or "",
+        "language": out.get("language"),
+        "durationSec": out.get("durationSec"),
+        "model": out.get("model"),
+        "asr": True,
+        # Deterministic acoustic evidence (WS06-03 contract), stored separately
+        # from any LLM judgment (WS06-06).
+        "features": features,
+    }, None
+
+
 HANDLERS = {
     "replenish_pool": replenish_pool,
+    "transcribe": transcribe_audio,
 }
 
 
@@ -186,7 +250,7 @@ def execute_job(job_id: str, ctx: dict, sleep=_backoff_sleep) -> None:
 
     Idempotent under redelivery: a job already ``running``/terminal is left
     alone (crash recovery requeues stale ``running`` rows separately).
-    """
+    WS10: emits structured logs + job metrics (no payload content ever)."""
     repo = ctx["repo"]
     job = repo.job_get(job_id)
     if job is None or job["status"] != "queued":
@@ -197,8 +261,12 @@ def execute_job(job_id: str, ctx: dict, sleep=_backoff_sleep) -> None:
         repo.job_fail(job_id, "UNKNOWN_JOB_TYPE", "No handler for this job type")
         return
 
+    from app.observability import log_op, metrics
+    started = time.monotonic()
     repo.job_set_running(job_id)
     attempts = int(job.get("attempts") or 0) + 1
+    log_op("app.jobs", logging.INFO, "job_started",
+           jobId=job_id, jobType=job_type, queue=job["queue"], attempt=attempts)
     while True:
         try:
             result, meta = handler(job["payload"], ctx)
@@ -210,9 +278,17 @@ def execute_job(job_id: str, ctx: dict, sleep=_backoff_sleep) -> None:
                 model_requested=m.get("requestedModel"),
                 model_used=m.get("resolvedModel") or m.get("requestedModel"),
             )
+            metrics.inc("jobs_total", jobType=job_type, status="succeeded")
+            metrics.observe("job_duration_seconds", time.monotonic() - started,
+                            jobType=job_type)
+            log_op("app.jobs", logging.INFO, "job_succeeded",
+                   jobId=job_id, jobType=job_type,
+                   durationMs=round((time.monotonic() - started) * 1000, 1))
             return
         except ApiError as e:
             if is_retryable(job_type, e.code, attempts):
+                metrics.inc("job_retries_total", jobType=job_type,
+                            errorCode=e.code)
                 attempts += 1
                 sleep(attempts - 1)
                 continue
@@ -221,14 +297,23 @@ def execute_job(job_id: str, ctx: dict, sleep=_backoff_sleep) -> None:
                 # Expected budget-pressure outcome, not a malfunction:
                 # replenishment stops before calibrated scoring is touched.
                 repo.job_cancel(job_id, code, message)
+                metrics.inc("jobs_total", jobType=job_type, status="cancelled")
             else:
                 repo.job_fail(job_id, code, message)
                 _record_failed(repo, ctx, job, code)
+                metrics.inc("jobs_total", jobType=job_type, status="failed",
+                            errorCode=code)
+            log_op("app.jobs", logging.WARNING, "job_finished_not_ok",
+                   jobId=job_id, jobType=job_type, errorCode=code)
             return
         except Exception:
             repo.job_fail(job_id, "INTERNAL_JOB_ERROR",
                           "The job failed — please try again shortly")
             _record_failed(repo, ctx, job, "INTERNAL_JOB_ERROR")
+            metrics.inc("jobs_total", jobType=job_type, status="failed",
+                        errorCode="INTERNAL_JOB_ERROR")
+            log_op("app.jobs", logging.ERROR, "job_failed",
+                   jobId=job_id, jobType=job_type)
             return
 
 

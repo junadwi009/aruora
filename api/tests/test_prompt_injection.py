@@ -27,9 +27,11 @@ INJECTIONS = [
 
 @pytest.mark.parametrize("payload", INJECTIONS)
 def test_writing_contract_holds_under_injection(client_with_seed, payload):
+    # WS09 caps prompt at 4000 chars — hostile bulk goes in the essay field.
+    prompt = payload if len(payload) <= 3900 else payload[:3900]
     r = client_with_seed.post(
         "/api/writing/evaluate",
-        json={"taskType": "task2", "prompt": payload, "essay": payload},
+        json={"taskType": "task2", "prompt": prompt, "essay": payload},
     )
     assert r.status_code == 200
     body = r.get_json()

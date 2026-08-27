@@ -79,6 +79,9 @@ class SpeakingEvaluateIn(BaseModel):
     transcript: str = ""
     part: str | None = Field(default=None, max_length=64)
     question: str | None = Field(default=None, max_length=1000)
+    # WS06-06: the client's own ASR job id — its SERVER-side acoustic features
+    # (never client-supplied metrics) are attached to the stored attempt.
+    asrJobId: str | None = Field(default=None, max_length=64)
 
 
 class RoleplayTurn(BaseModel):

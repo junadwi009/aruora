@@ -34,6 +34,8 @@ Reviewed at commit range introducing revision `c8d21e4b7a30` (2026-08-27).
 | `cards` | user | user_id (**NOT NULL**) | yes | CASCADE | yes (`cards`) | learner content | counts only |
 | `analytics_events` | system (pseudonymised) | user_id **nullable** | — | CASCADE when attributed; unattributed beacons expire via 180d purge | **no** (content-free by construction; PII-shaped values rejected at write) | bounded retention (180d cron hook `purge_old_analytics_events`) | admin aggregate only (`/api/admin/analytics/summary`), cohorts never merged |
 | `user_profile.acquisition_source` / `cohort_id` | user (dimension) | — | no | dies with profile | yes (as dimensions) | account lifetime | admin summary breakdown |
+| `rag_source` / `rag_document` / `rag_chunk` / `rag_ingestion_run` | global (approved knowledge) | — | — | retained; source retirement retires chunks (never user data) | no (content, not learner data) | knowledge lifecycle (28 §11) | operational metrics only |
+| `rag_retrieval_event` | system (pseudonymised) | user_id nullable | — | CASCADE when attributed | **no** (query HASH only — raw learner queries never stored) | ops telemetry; purge candidate with analytics retention | operational metrics only |
 
 ## Session/anonymous draft-profile lifecycle (WS04-02 policy)
 

@@ -74,6 +74,11 @@ services:
       TRUSTED_PROXY_PROTO: ${TRUSTED_PROXY_PROTO:-0}
       # WS09-02: pin your public hostname(s) in .env (e.g. TRUSTED_HOSTS=aruora.app).
       TRUSTED_HOSTS: ${TRUSTED_HOSTS:-}
+    volumes:
+      # WS06-02: ephemeral audio handoff between the API (upload) and the ASR
+      # worker (processing). Private internal volume — never publicly served;
+      # deleted right after processing (WS06-07 retention policy).
+      - ielts_audio:/app/data/audio_tmp
     depends_on:
       db:
         condition: service_healthy
@@ -117,9 +122,13 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://ielts:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-ielts}}
       REDIS_URL: redis://redis:6379/0
+    volumes:
+      # WS06-02: same ephemeral audio handoff as the api service above.
+      - ielts_audio:/app/data/audio_tmp
     command: >
       celery -A app.jobs.celery_app:celery worker
       -Q mail,asr --concurrency=1 --prefetch-multiplier=1
+      --time-limit=240 --soft-time-limit=180 --max-tasks-per-child=8
       --loglevel=info
     depends_on:
       db:
@@ -161,3 +170,4 @@ services:
 volumes:
   ielts_pgdata:
   ielts_redisdata:
+  ielts_audio:
