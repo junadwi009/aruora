@@ -6,7 +6,11 @@ from app.data.models import Base
 
 config = context.config
 if config.config_file_name:
-    fileConfig(config.config_file_name)
+    # disable_existing_loggers must stay False: when migrations run in-process
+    # (tests, embedded tooling) the default True silently disables every
+    # logger created before this point — including app.* telemetry — for the
+    # rest of the process (WS10).
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 config.set_main_option("sqlalchemy.url", os.getenv("DATABASE_URL", ""))
 target_metadata = Base.metadata
 

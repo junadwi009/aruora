@@ -72,35 +72,71 @@ def test_json_formatter_shape():
     assert out["requestId"] == "abcd1234" and out["route"] == "/api/x"
 
 
-def test_request_logs_never_contain_learner_content(caplog):
+class _ListHandler(logging.Handler):
+    """Self-managed capture — immune to pytest logging-plugin state after
+    hundreds of create_app calls in one session."""
+
+    def __init__(self):
+        super().__init__()
+        self.records = []
+
+    def emit(self, record):
+        self.records.append(record)
+
+
+def test_request_logs_never_contain_learner_content():
     app, repo = _app()
-    with caplog.at_level(logging.INFO):
+    handler = _ListHandler()
+    root = logging.getLogger()
+    old_level = root.level
+    root.addHandler(handler)
+    try:
         c = app.test_client()
         _register(c, "loguser@example.com")
         c.post("/api/writing/evaluate",
                json={"taskType": "task2", "prompt": "p",
                      "essay": "SUPER-SECRET-ESSAY-CONTENT 42"})
-    blob = caplog.text
+    finally:
+        root.removeHandler(handler)
+        root.setLevel(old_level)
+    blob = "\n".join(r.getMessage() + str(getattr(r, "obs", {}))
+                     for r in handler.records)
     assert "SUPER-SECRET-ESSAY-CONTENT" not in blob
-    assert "http_request" in blob
-    # Structured fields survive on the record (json formatter would render them).
-    http_records = [r for r in caplog.records
+    assert "loguser@example.com" not in blob
+    http_records = [r for r in handler.records
                     if r.name == "app.http" and r.getMessage() == "http_request"]
-    assert http_records, "expected request telemetry records"
+    if not http_records:
+        lg = logging.getLogger("app.http")
+        state = {
+            "disable": logging.root.manager.disable,
+            "rootLevel": root.level,
+            "rootHandlers": [type(h).__name__ for h in root.handlers],
+            "httpLevel": lg.level,
+            "httpEffective": lg.getEffectiveLevel(),
+            "httpPropagate": lg.propagate,
+            "nRecords": len(handler.records),
+            "names": sorted({r.name for r in handler.records})[:20],
+        }
+        assert False, f"no telemetry records captured: {state}"
     rec = http_records[-1]
     assert rec.obs["route"] == "/api/writing/evaluate"
     assert rec.obs["status"] == 200
     assert rec.obs["uid"] is not None  # numeric id only — never email
-    assert "loguser@example.com" not in blob
+    assert "requestId" in rec.obs and rec.obs["requestId"]
 
 
-def test_health_paths_are_quiet_but_counted(caplog):
+def test_health_paths_are_quiet_but_counted():
     app, repo = _app()
-    with caplog.at_level(logging.INFO):
+    handler = _ListHandler()
+    root = logging.getLogger()
+    root.addHandler(handler)
+    try:
         c = app.test_client()
         c.get("/api/health")
         c.get("/api/health/ready")
-    assert "http_request" not in caplog.text  # noise paths stay quiet
+    finally:
+        root.removeHandler(handler)
+    assert all(r.getMessage() != "http_request" for r in handler.records)
     assert metrics.inc is not None
 
 
@@ -163,13 +199,14 @@ def test_ai_finance_metrics_on_ledger_write():
     assert 'ai_cost_micros_total{costCenter="learner_scoring"} 2000' in body
 
 
-def test_job_metrics_and_logs_without_payload_content(caplog):
+def test_job_metrics_and_logs_without_payload_content():
     from app.jobs import handlers
     app, repo = _app()
     payload = {"title": "T", "passage": "SECRET-PASSAGE-XYZ",
                "questions": [{"stem": "q", "options": ["a"], "answer": "a",
                               "explanation": "e"}]}
     gw_payload = dict(payload)
+
     class GW:
         def generate(self, *a, **k):
             return {**gw_payload, "_meta_llm": {
@@ -177,16 +214,23 @@ def test_job_metrics_and_logs_without_payload_content(caplog):
                 "resolvedModel": None, "latencyMs": 1, "promptTokens": None,
                 "completionTokens": None, "cachedTokens": None,
                 "reasoningTokens": None, "costUsd": None}}
+
     cfg = Config({"POOL_TARGET": "7", "REPLENISH_DAILY_BUDGET": "10"})
     job = repo.job_create("bbbb1111-2222-3333-4444-555566667777",
                           "replenish_pool", "llm_generate",
                           {"skill": "reading", "band": "B2"}, "h")
-    with caplog.at_level(logging.INFO):
+    handler = _ListHandler()
+    root = logging.getLogger()
+    root.addHandler(handler)
+    try:
         handlers.execute_job(job["id"], {"repo": repo, "cfg": cfg, "gateway": GW()},
                              sleep=lambda a: None)
+    finally:
+        root.removeHandler(handler)
     body = metrics.render()
     assert 'jobs_total{jobType="replenish_pool",status="succeeded"}' in body
-    blob = caplog.text
+    blob = "\n".join(r.getMessage() + str(getattr(r, "obs", {}))
+                     for r in handler.records)
     assert "SECRET-PASSAGE-XYZ" not in blob  # job payloads never reach logs
     assert "job_succeeded" in blob
 

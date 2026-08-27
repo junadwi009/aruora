@@ -44,9 +44,17 @@ def test_heartbeat_accumulates_and_locks_at_threshold():
 
 
 def test_heartbeat_clamps_huge_jumps():
+    """Integration resolution (WS09 x legacy gate clamp): two defensive layers.
+
+    Layer 1 (WS09 edge): seconds > 7200 is rejected 422 BEFORE any LLM/DB work.
+    Layer 2 (route clamp): in-range resumed-tab jumps (e.g. 5000) are clamped
+    to 2x GATE_HEARTBEAT_SEC (60) -> +120s.
+    """
     c = _client()
-    j = c.post("/api/gate/heartbeat", json={"seconds": 99999}).get_json()
-    assert j["activeSeconds"] == 120  # clamped to 2x GATE_HEARTBEAT_SEC (60)
+    r = c.post("/api/gate/heartbeat", json={"seconds": 99999})
+    assert r.status_code == 422                       # edge rejects absurd input
+    j = c.post("/api/gate/heartbeat", json={"seconds": 5000}).get_json()
+    assert j["activeSeconds"] == 120                  # route clamps in-range jumps
 
 
 def test_unlock_requires_valid_stars_and_insight():

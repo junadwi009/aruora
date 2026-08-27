@@ -148,3 +148,18 @@ WS03 residual notes for other workstreams:
 - `Repository.session_factory` property added (additive, used by `SessionStore` to share the engine in the test DI path).
 - `EMAIL_VERIFICATION_REQUIRED` (default 0) gates expensive LLM routes centrally in `create_app`; flip to 1 (with SMTP configured) before public launch or startup refuses.
 - Admin MFA via `ADMIN_TOTP_SECRET` is optional per-deployment; GA release gate still requires mandatory MFA for all admin accounts.
+
+## Handoff — WS06 Speaking/ASR/Audio Pipeline (integrated with WS07 jobs; WS09/WS10 landed concurrently)
+
+WS06 was implemented on top of the WS07 job infrastructure and overlapped with concurrent WS09 (edge) and WS10 (observability) passes.
+
+- `api/app/jobs/handlers.py` (WS07-owned): added the `transcribe` job handler (queue `asr`) — decode/transcribe + WS06-03 features + WS06-04 quality gate + immediate audio deletion. The existing `JOB_COST_CENTERS["transcribe"]` ledger mapping is reused unchanged.
+- `api/app/session.py` (WS03-owned): `CsrfAwareClient` gained an `app` property for helpers that reach `app.config` via the client (WS09 tests expect it).
+- Transcribe route contract change (WS06-02): uploads now enqueue on the `asr` queue and answer `202 {jobId}` when REDIS_URL/ASR_FORCE_QUEUE is set; dev (inline dispatcher) still returns the completed transcript with 200. Existing tests that fake `asr.transcribe` were updated to (a) accept `collect_segments` kwarg, (b) declare part mimetype `audio/webm` (the new MIME gate rejects `application/octet-stream`), and (c) include speech segments so the near-silence gate passes.
+- WS06-05 is intentionally inert: `services/pronunciation.py` refuses to produce any pronunciation score until both `PRONUNCIATION_ESTIMATOR` and `PRONUNCIATION_CALIBRATION_VERSION` are configured against a frozen human-rated eval pack. Nothing else may call faster-whisper probabilities as "pronunciation".
+- `docker-compose.prod.yml`: added a shared internal `ielts_audio` volume between `api` and `worker-infra` (ephemeral audio handoff, never publicly served) plus Celery time limits (`--time-limit=240 --soft-time-limit=180 --max-tasks-per-child=8`) on the ASR/mail worker (WS06-08).
+- Known conflicts left to the owning workstreams: `test_ws09_edge_security.py` failures (expects `CORS_ORIGINS` config + its hostile-header test crashes inside werkzeug's own test client) and `test_ws10_observability.py` failures (scrubbing functions not yet implemented). Also `test_efficiency.py::test_reading_generates_until_pool_target_then_serves` conflicts with the WS07 duplicate-dedup design (identical stub payloads now hash-equal).
+
+WS06 residual notes for other workstreams:
+- `evaluate` accepts an optional `asrJobId`; only the caller's OWN succeeded `transcribe` job's server-computed features are attached (`metrics.audioFeatures`), and they are always stored separately from `metrics.llm` (WS06-06).
+- Audio files live only in `ASR_AUDIO_DIR` (private volume), are deleted in the handler's `finally`, and a TTL janitor runs on every save. No audio URL exists anywhere in the API surface.
