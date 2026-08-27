@@ -1,4 +1,5 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { currentPath, pathForView, pushUrl, viewFromPath } from "../../lib/urlSync";
 
 export type View =
   | "home"
@@ -32,14 +33,32 @@ export interface ViewContextValue {
 const ViewContext = createContext<ViewContextValue | null>(null);
 
 export const ViewProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [view, setViewState] = useState<View>("home");
+  // WS13-01: /app/<view> deep links — boot from the URL when it maps to a
+  // known shell view (refresh on /app/writing returns to writing).
+  const [view, setViewState] = useState<View>(
+    () => (viewFromPath(currentPath()) as View) ?? "home"
+  );
   const [prefill, setPrefill] = useState<Prefill | null>(null);
 
-  const setView = useCallback((v: View) => setViewState(v), []);
+  const setView = useCallback((v: View) => {
+    setViewState(v);
+    pushUrl(pathForView(v));
+  }, []);
 
   const goWithPrefill = useCallback((skill: string, text: string) => {
     setPrefill({ skill, text });
     setViewState(skill as View);
+    pushUrl(pathForView(skill));
+  }, []);
+
+  // Back/forward restores the matching shell view while inside /app.
+  useEffect(() => {
+    const onPop = () => {
+      const v = viewFromPath(currentPath());
+      if (v) setViewState(v as View);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
   }, []);
 
   const consumePrefill = useCallback(

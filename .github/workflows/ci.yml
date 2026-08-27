@@ -94,6 +94,13 @@ jobs:
         run: npm run build
       - name: Secret scan (no API key in bundle)
         run: bash tests/secret_scan.sh
+      # WS11 brand check: the shipped bundle carries ARUORA naming and the
+      # legacy product name is gone (claim-integrity + rename regression).
+      - name: Brand check (ARUORA naming, no legacy name)
+        working-directory: web
+        run: |
+          grep -q "ARUORA" dist/assets/*.js
+          if grep -Rq "IELTS Coach" dist/; then echo "legacy product name found in bundle" && exit 1; fi
 
 # NOTE: Playwright e2e (web/e2e) needs the full docker-compose stack + browsers,
 # so it is run locally (`npm run e2e`), not in this workflow.

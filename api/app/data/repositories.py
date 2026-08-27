@@ -1120,6 +1120,27 @@ class Repository:
                 **(r.criteria or {}),
             }
 
+    def latest_skill_estimates(self, user_id: int) -> dict[str, float | None]:
+        """WS20 readiness inputs: the learner's LATEST overall estimate per
+        skill (None when never assessed). Ownership predicate included."""
+        skills = ("listening", "reading", "writing", "speaking")
+        out: dict[str, float | None] = {sk: None for sk in skills}
+        with self._sf() as s:
+            rows = s.execute(
+                select(Attempt.type, Attempt.bands)
+                .where(
+                    Attempt.user_id == user_id,
+                    Attempt.type.in_(skills),
+                )
+                .order_by(Attempt.id.desc())
+            ).all()
+            for t, bands in rows:
+                if t in out and out[t] is None:
+                    ov = (bands or {}).get("overall")
+                    if isinstance(ov, (int, float)):
+                        out[t] = float(ov)
+        return out
+
     def activity_stats(self, user_id: int, today) -> dict:
         """Streak + daily activity derived from this user's attempts (no extra table)."""
         from datetime import timedelta

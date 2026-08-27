@@ -1,5 +1,6 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { PlacementResult, Milestone } from "./types";
+import { currentPath, pathForStep, pushUrl, stepFromPath } from "./urlSync";
 
 export type Step =
   | "welcome"
@@ -28,13 +29,31 @@ const JourneyContext = createContext<JourneyContextValue | null>(null);
 export const JourneyProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [step, setStep] = useState<Step>("welcome");
+  // WS13-01/03: deep-linkable journey — boot from the URL when it maps to a
+  // known step (refresh on /onboarding returns to onboarding), otherwise the
+  // welcome default.
+  const [step, setStep] = useState<Step>(
+    () => (stepFromPath(currentPath()) ?? "welcome") as Step
+  );
   const [placementResult, setPlacementResult] = useState<PlacementResult | null>(
     null
   );
   const [milestones, setMilestones] = useState<Milestone[]>([]);
 
-  const go = useCallback((next: Step) => setStep(next), []);
+  const go = useCallback((next: Step) => {
+    setStep(next);
+    pushUrl(pathForStep(next));
+  }, []);
+
+  // Browser back/forward restores the matching journey step (WS13-03).
+  useEffect(() => {
+    const onPop = () => {
+      const s = stepFromPath(currentPath());
+      if (s) setStep(s as Step);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
 
   const value = useMemo<JourneyContextValue>(
     () => ({

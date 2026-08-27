@@ -1,0 +1,19 @@
+ARUORA — Copyright (c) 2026 ARUSTUDIO. All rights reserved.
+
+Repository licensing posture (WS11-09, interim default):
+
+This source code is made publicly viewable for transparency. Viewing the
+repository does NOT grant permission to copy, modify, distribute, or use any
+part of this codebase, its brand assets, prompts, rubrics, or evaluation
+packs. Commercial reuse, derivative works, and redistribution require prior
+written permission from ARUSTUDIO.
+
+A change to an open-source license requires a deliberate product/legal
+decision and MUST be recorded in docs/production-readiness/19_IMPLEMENTATION_TRACKER.md
+before any external contribution terms (CLA/DCO) are accepted.
+
+Trademarks: ARUORA and ARUSTUDIO are product/brand marks of ARUSTUDIO.
+"IELTS" is a trademark of its respective owner — ARUORA is an independent
+preparation service and is not affiliated with, endorsed by, or an official
+source of IELTS. See docs/privacy/TERMS_OF_SERVICE.md and
+docs/production-readiness/12_PRIVACY_COMPLIANCE.md (WS12-05).

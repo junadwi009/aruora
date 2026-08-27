@@ -138,40 +138,41 @@ export const Home: React.FC<HomeProps> = ({ levels }) => {
             {t("home.journey")}
           </h2>
           <Card>
-            <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <div className="flex items-start gap-3">
+            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <li className="flex items-start gap-3">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[color-mix(in_srgb,var(--color-primary-600)_10%,transparent)] text-[var(--color-primary-600)]" aria-hidden="true">
                   <MapPin size={18} />
                 </span>
                 <div>
-                  <dt className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">{t("home.destination")}</dt>
-                  <dd className="text-sm font-bold text-[var(--color-text)]" style={DISPLAY}>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">{t("home.destination")}</p>
+                  <p className="text-sm font-bold text-[var(--color-text)]" style={DISPLAY}>
                     {goal ? goalLabel(goal) : t("home.noDestination")}
-                  </dd>
+                  </p>
                 </div>
-              </div>
-              <div className="flex items-start gap-3">
+              </li>
+              <li className="flex items-start gap-3">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[color-mix(in_srgb,var(--color-primary-600)_10%,transparent)] text-[var(--color-primary-600)]" aria-hidden="true">
                   <Target size={18} />
-                </span>                <div>
-                  <dt className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">{t("home.target")}</dt>
-                  <dd className="text-sm font-bold tabular-nums text-[var(--color-text)]" style={DISPLAY}>
+                </span>
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">{t("home.target")}</p>
+                  <p className="text-sm font-bold tabular-nums text-[var(--color-text)]" style={DISPLAY}>
                     {targetBand !== null ? targetBand.toFixed(1) : "—"}
-                  </dd>
+                  </p>
                 </div>
-              </div>
-              <div className="flex items-start gap-3">
+              </li>
+              <li className="flex items-start gap-3">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[color-mix(in_srgb,var(--color-primary-600)_10%,transparent)] text-[var(--color-primary-600)]" aria-hidden="true">
                   <CalendarDays size={18} />
                 </span>
                 <div>
-                  <dt className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">{t("home.deadline")}</dt>
-                  <dd className="text-sm font-bold tabular-nums text-[var(--color-text)]" style={DISPLAY}>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">{t("home.deadline")}</p>
+                  <p className="text-sm font-bold tabular-nums text-[var(--color-text)]" style={DISPLAY}>
                     {examDays !== null && examDays > 0 ? `${examDays} ${t("home.daysToGo")}` : "—"}
-                  </dd>
+                  </p>
                 </div>
-              </div>
-            </dl>
+              </li>
+            </ul>
             <p className="mt-4 border-t border-[var(--color-border)] pt-3 text-[11px] leading-relaxed text-[var(--color-muted)]">
               {t("home.estimateNote")}
             </p>

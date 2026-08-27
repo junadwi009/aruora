@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { PenLine } from "lucide-react";
 import { api } from "../../lib/api/client";
+import { describeApiError } from "../../lib/apiErrors";
 import type { WritingEval, EssayMetrics } from "../../lib/types";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
@@ -49,7 +50,7 @@ export const Writing: React.FC = () => {
       setResult(data);
       setPhase("feedback");
     } catch (e: unknown) {
-      setApiError(e instanceof Error ? e.message : t("write.evalFailed"));
+      setApiError(describeApiError(e));
       setPhase("editor");
     }
   };

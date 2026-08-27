@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Mic } from "lucide-react";
 import { api } from "../../lib/api/client";
+import { describeApiError } from "../../lib/apiErrors";
 import type { SpeakingEval } from "../../lib/types";
 import { useView } from "../menu/viewContext";
 import { Button } from "../ui/Button";
@@ -52,7 +53,8 @@ export const Speaking: React.FC = () => {
       setResult(data);
       setPhase("feedback");
     } catch (e: unknown) {
-      setApiError(e instanceof Error ? e.message : t("speak.evalFailed"));
+      // WS13-04: consistent, safe, actionable failure copy for every code.
+      setApiError(describeApiError(e));
       setPhase("editor");
     }
   };
