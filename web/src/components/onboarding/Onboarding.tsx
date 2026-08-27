@@ -6,7 +6,7 @@ import { useJourney } from "../../lib/journey";
 import { useT } from "../../lib/i18n";
 import type { Goal } from "../../lib/types";
 
-const STEP_KEYS = ["onb.name", "onb.goal", "onb.target"];
+const STEP_KEYS = ["onb.name", "onb.goal", "onb.target", "onb.deadline"];
 
 const GOALS: { value: Goal; titleKey: string; descKey: string; icon: React.ReactNode }[] = [
   {
@@ -37,6 +37,8 @@ export const Onboarding: React.FC = () => {
   const [name, setName] = useState("");
   const [goal, setGoal] = useState<Goal | null>(null);
   const [targetBand, setTargetBand] = useState(6.0);
+  // WS23: optional deadline — exam month, skippable (progressive onboarding).
+  const [examMonth, setExamMonth] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,7 +57,12 @@ export const Onboarding: React.FC = () => {
     setSubmitting(true);
     setError(null);
     try {
-      await api.onboarding({ name: name.trim(), goal, targetBand });
+      await api.onboarding({
+        name: name.trim(),
+        goal,
+        targetBand,
+        examDate: examMonth || undefined,
+      });
       go("placement");
     } catch (e) {
       const msg =
@@ -167,6 +174,31 @@ export const Onboarding: React.FC = () => {
               value={targetBand}
               onChange={setTargetBand}
             />
+          </div>
+        )}
+
+        {current === 3 && (
+          <div className="flex flex-col gap-2">
+            <h2 style={{ fontFamily: "var(--font-display)" }} className="text-lg font-semibold text-[var(--color-text)] tracking-tight">
+              {t("onb.deadlineHeading")}
+            </h2>
+            <p className="text-xs text-[var(--color-muted)]">{t("onb.deadlineHint")}</p>
+            <label className="flex flex-col gap-1 text-sm text-[var(--color-text-2)]">
+              {t("onb.deadlineLabel")}
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="YYYY-MM"
+                maxLength={7}
+                aria-describedby="onb-deadline-hint"
+                className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)]"
+                value={examMonth}
+                onChange={(e) => setExamMonth(e.target.value)}
+              />
+            </label>
+            <p id="onb-deadline-hint" className="sr-only">
+              {t("onb.deadlineHint")}
+            </p>
           </div>
         )}
 

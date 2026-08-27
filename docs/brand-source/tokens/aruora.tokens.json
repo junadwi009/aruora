@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json.schemastore.org/design-tokens.json",
+  "brand": {
+    "name": "ARUORA",
+    "tagline": "Your journey starts with language."
+  },
+  "color": {
+    "auraCream": {
+      "value": "#F4F0E9",
+      "type": "color"
+    },
+    "midnightInk": {
+      "value": "#19172B",
+      "type": "color"
+    },
+    "ink": {
+      "value": "#282631",
+      "type": "color"
+    },
+    "auraViolet": {
+      "value": "#7568F8",
+      "type": "color"
+    },
+    "auroraLavender": {
+      "value": "#A99DFB",
+      "type": "color"
+    },
+    "horizonBlue": {
+      "value": "#5DA7F7",
+      "type": "color"
+    },
+    "auroraMint": {
+      "value": "#68DDD2",
+      "type": "color"
+    },
+    "dawnCoral": {
+      "value": "#F28B82",
+      "type": "color"
+    },
+    "cloudLavender": {
+      "value": "#F4F2FA",
+      "type": "color"
+    },
+    "mist": {
+      "value": "#777482",
+      "type": "color"
+    },
+    "dark": {
+      "background": {
+        "value": "#12111D",
+        "type": "color"
+      },
+      "surface": {
+        "value": "#1C1A2A",
+        "type": "color"
+      },
+      "surfaceElevated": {
+        "value": "#252238",
+        "type": "color"
+      },
+      "text": {
+        "value": "#F4F1F8",
+        "type": "color"
+      },
+      "muted": {
+        "value": "#A8A4B2",
+        "type": "color"
+      },
+      "border": {
+        "value": "#353145",
+        "type": "color"
+      }
+    }
+  },
+  "radius": {
+    "xs": {
+      "value": "8px",
+      "type": "dimension"
+    },
+    "control": {
+      "value": "12px",
+      "type": "dimension"
+    },
+    "button": {
+      "value": "14px",
+      "type": "dimension"
+    },
+    "card": {
+      "value": "18px",
+      "type": "dimension"
+    },
+    "feature": {
+      "value": "24px",
+      "type": "dimension"
+    },
+    "pill": {
+      "value": "999px",
+      "type": "dimension"
+    }
+  },
+  "motion": {
+    "fast": {
+      "value": "160ms",
+      "type": "duration"
+    },
+    "normal": {
+      "value": "220ms",
+      "type": "duration"
+    },
+    "slow": {
+      "value": "320ms",
+      "type": "duration"
+    },
+    "auraReaction": {
+      "value": "650ms",
+      "type": "duration"
+    }
+  },
+  "font": {
+    "family": {
+      "primary": {
+        "value": "Plus Jakarta Sans, Inter, ui-sans-serif, system-ui, sans-serif",
+        "type": "fontFamily"
+      }
+    }
+  }
+}

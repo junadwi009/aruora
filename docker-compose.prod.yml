@@ -1,23 +1,52 @@
 # Production stack: built static web (nginx) reverse-proxying /api → gunicorn.
-# Only the web port is published; api + db stay on the internal network.
+# Only the web port is published; api + db + redis + workers stay internal.
 #
 #   cp .env.example .env   # set LLM_MODE/keys/etc, change DB creds for prod
 #   docker compose -f docker-compose.prod.yml up -d --build
 #   open http://<host>:${WEB_PORT:-80}
 #
+# WS08 DB profile: POSTGRES_PASSWORD is REQUIRED (no insecure default).
+# PostgreSQL 18 mounts its data volume at /var/lib/postgresql (image-declared
+# volume; PGDATA lives at /var/lib/postgresql/<major>/docker).
+#
 # Before exposing publicly, see the "Production deploy" section of README.md
 # (TLS termination + a passcode/auth gate are NOT included here).
+#
+# WS07 runtime topology: Redis is required in public production — it carries
+# the distributed rate limits, shared abuse counters and the Celery job
+# queues. Two worker services enforce the queue split (07 §WS07-04): heavy
+# LLM queues never share all slots with mail/ASR work.
 services:
   db:
     image: postgres:18
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-ielts}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ielts}
+      # WS08-04B: no insecure fallback. Set a strong POSTGRES_PASSWORD in .env.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required (WS08-04B) - set a strong value in .env}
       POSTGRES_DB: ${POSTGRES_DB:-ielts}
+      # WS08-02: optional least-privilege runtime role (created on first init).
+      POSTGRES_RUNTIME_USER: ${POSTGRES_RUNTIME_USER:-}
+      POSTGRES_RUNTIME_PASSWORD: ${POSTGRES_RUNTIME_PASSWORD:-}
     volumes:
-      - ielts_pgdata:/var/lib/postgresql/data
+      # WS08 P0: postgres:18 keeps PGDATA under /var/lib/postgresql/<major>/docker
+      # and declares its volume at /var/lib/postgresql - mount the PARENT.
+      # Never re-point a volume that already holds data without verified backup.
+      - ielts_pgdata:/var/lib/postgresql
+      - ./ops/db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ielts}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - ielts_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -27,9 +56,93 @@ services:
     build: ./api
     env_file: .env
     environment:
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-ielts}:${POSTGRES_PASSWORD:-ielts}@db:5432/${POSTGRES_DB:-ielts}
+      # WS08-02: point DATABASE_URL at the least-privilege runtime role in
+      # production (set DATABASE_URL in .env); default falls back to the
+      # DDL/owner credential for single-role self-hosts.
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://ielts:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-ielts}}
+      # Migrations (Dockerfile CMD) always run as the DDL/owner role.
+      MIGRATION_DATABASE_URL: ${MIGRATION_DATABASE_URL:-postgresql+psycopg://ielts:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-ielts}}
+      REDIS_URL: redis://redis:6379/0
+      # WS09-04: same-origin production — the SPA is served by nginx which
+      # proxies /api, so NO cross-origin browser access is needed. CORS stays
+      # disabled unless the operator explicitly configures origins in .env.
+      CORS_ORIGIN: ${CORS_ORIGIN:-}
+      # WS09-03: exact trusted proxy topology — Flask sits behind exactly one
+      # nginx proxy which sets X-Forwarded-For. Set TRUSTED_PROXY_PROTO=1 only
+      # when TLS terminates at the proxy. The API port is not published in prod.
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-1}
+      TRUSTED_PROXY_PROTO: ${TRUSTED_PROXY_PROTO:-0}
+      # WS09-02: pin your public hostname(s) in .env (e.g. TRUSTED_HOSTS=aruora.app).
+      TRUSTED_HOSTS: ${TRUSTED_HOSTS:-}
     depends_on:
       db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    # WS09-10: orchestrators read READINESS (dependency-aware), which never
+    # discloses topology; /api/health stays the liveness + client-config probe.
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request;urllib.request.urlopen('http://127.0.0.1:5050/api/health/ready', timeout=5)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # WS07-04: LLM queues (pool replenishment + async scoring). Concurrency is
+  # deliberately modest — the replenishment budget envelope (REPLENISH_DAILY_
+  # BUDGET) is the real spend ceiling, this only bounds parallelism.
+  worker-llm:
+    build: ./api
+    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://ielts:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-ielts}}
+      REDIS_URL: redis://redis:6379/0
+    command: >
+      celery -A app.jobs.celery_app:celery worker
+      -Q llm_generate,llm_score --concurrency=2 --prefetch-multiplier=1
+      --loglevel=info
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # WS07-04: mail + ASR — mail keeps dedicated slots so security mail (password
+  # reset) is never starved by heavy LLM/ASR work; ASR stays low-concurrency.
+  worker-infra:
+    build: ./api
+    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://ielts:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-ielts}}
+      REDIS_URL: redis://redis:6379/0
+    command: >
+      celery -A app.jobs.celery_app:celery worker
+      -Q mail,asr --concurrency=1 --prefetch-multiplier=1
+      --loglevel=info
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # WS08-08: periodic data-lifecycle maintenance (expired sessions/tokens,
+  # finished jobs, raw analytics retention). Learner history is NEVER purged
+  # here - see ops/db/ + docs/runbooks/DATABASE_BACKUP_RESTORE.md.
+  worker-beat:
+    build: ./api
+    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://ielts:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-ielts}}
+      REDIS_URL: redis://redis:6379/0
+    command: >
+      celery -A app.jobs.celery_app:celery beat --loglevel=info
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     restart: unless-stopped
 
@@ -47,3 +160,4 @@ services:
 
 volumes:
   ielts_pgdata:
+  ielts_redisdata:

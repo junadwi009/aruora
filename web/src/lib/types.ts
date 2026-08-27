@@ -10,11 +10,32 @@ export interface Health {
   googleClientId?: string;
 }
 
+/** WS03-09: an active signed-in session (device) for this account. */
+export interface AccountSession {
+  current: boolean;
+  device: string;
+  remember: boolean;
+  createdAt: string | null;
+  lastSeenAt: string | null;
+}
+
+/** WS03-07: privileged-action audit row (admin view). */
+export interface AdminAuditEntry {
+  id: number;
+  action: string;
+  actorEmail: string;
+  actorUserId: number | null;
+  targetUserId: number | null;
+  detail: Record<string, unknown>;
+  createdAt: string | null;
+}
+
 export interface OnboardingBody {
   name: string;
   goal: Goal;
   targetBand: number;
   skillTargets?: Record<string, unknown>;
+  examDate?: string;
 }
 
 export interface PlacementItem {
@@ -110,7 +131,8 @@ export interface WritingEval {
 }
 
 export interface SpeakingEval {
-  bands: Record<string, number>;
+  // Pronunciation is "unassessed" (string) until ASR audio evidence exists (WS02-04)
+  bands: Record<string, number | string>;
   cefr: Cefr;
   feedback?: string;
   modelAnswer?: string;
@@ -259,6 +281,8 @@ export interface AccountUser {
   isAdmin?: boolean;
   /** Whether a local password is set (false for Google-only accounts). */
   hasPassword?: boolean;
+  /** WS03-05: email ownership verified (Google-verified claims adopt true). */
+  emailVerified?: boolean;
   /** Only present on the Google sign-in response: true on first-ever sign-in. */
   isNew?: boolean;
 }

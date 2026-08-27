@@ -1,0 +1,23 @@
+{
+  "version": "1.0",
+  "date": "2026-08-21",
+  "recommended_strategy": {
+    "market": "Indonesia",
+    "track": "IELTS",
+    "access": "Free during Founding Beta with cost guardrails",
+    "uat_sequence": [
+      "internal_qa",
+      "lecturer_controlled_uat",
+      "linkedin_market_uat",
+      "founding_beta",
+      "manual_study_pods",
+      "community_beta",
+      "human_help_pilot",
+      "tutor_supply"
+    ],
+    "north_star": "Weekly Meaningful Learners",
+    "community_model": "Study Pool -> manual Study Pods -> automate after validation",
+    "whatsapp": "Optional re-engagement channel; not core dependency",
+    "jlpt": "Defer until IELTS mechanics are validated"
+  }
+}

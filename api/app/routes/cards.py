@@ -1,10 +1,12 @@
 """Phase 2d-4 — flashcard CRUD + SM-2 review."""
 from datetime import datetime, timezone
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify
 
 from app.errors import ApiError
 from app.routes._deps import _repo, _uid, _require_uid
+from app.schemas import CardAddIn, CardReviewIn
+from app.validation import parse_body
 
 bp = Blueprint("cards", __name__)
 
@@ -28,21 +30,21 @@ def due_cards():
 
 @bp.post("/api/cards")
 def add_cards():
-    b = request.get_json(force=True) or {}
+    b = parse_body(CardAddIn)
     repo = _repo()
     uid = _require_uid()
-    if isinstance(b.get("cards"), list):
-        return jsonify({"added": repo.add_cards(uid, b["cards"])}), 200
-    front, back = b.get("front", ""), b.get("back", "")
-    if not front or not back:
+    if b.cards is not None:
+        return jsonify({"added": repo.add_cards(
+            uid, [{"front": c.front, "back": c.back} for c in b.cards])}), 200
+    if not b.front or not b.back:
         raise ApiError("VALIDATION", "front and back are required", 422)
-    return jsonify({"id": repo.add_card(uid, front, back)}), 200
+    return jsonify({"id": repo.add_card(uid, b.front, b.back)}), 200
 
 
 @bp.post("/api/cards/<int:card_id>/review")
 def review_card(card_id):
-    b = request.get_json(force=True) or {}
-    out = _repo().review_card(_require_uid(), card_id, int(b.get("quality", 0)), datetime.now(timezone.utc))
+    b = parse_body(CardReviewIn)
+    out = _repo().review_card(_require_uid(), card_id, b.quality, datetime.now(timezone.utc))
     if out is None:
         raise ApiError("NOT_FOUND", "Card not found", 404)
     return jsonify(out), 200

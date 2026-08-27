@@ -3,7 +3,7 @@ Tests for domain/scoring.py and domain/placement.py.
 Follow the spec in task-08-brief.md verbatim.
 """
 
-from app.domain.scoring import locator_band, overall_band
+from app.domain.scoring import locator_band, overall_band, ielts_round_half_band
 
 
 # ── locator_band tests ────────────────────────────────────────────────────────
@@ -25,8 +25,35 @@ def test_locator_all_fail_floor():
     assert locator_band(tiers) == "A1A2"
 
 
+# ── IELTS official half-band rounding regression tests ─────────────────────────
+# WS02-01: official rounding with ties rounding UP (not banker's rounding)
+
+def test_ielts_round_half_band_official_cases():
+    # Official IELTS rounding cases
+    assert ielts_round_half_band(6.25) == 6.5
+    assert ielts_round_half_band(6.75) == 7.0
+    assert ielts_round_half_band(6.125) == 6.0
+    assert ielts_round_half_band(3.875) == 4.0
+
+    # Already half/whole values remain unchanged
+    assert ielts_round_half_band(6.0) == 6.0
+    assert ielts_round_half_band(6.5) == 6.5
+    assert ielts_round_half_band(7.0) == 7.0
+    assert ielts_round_half_band(4.5) == 4.5
+
+
 def test_overall_band_rounds_half():
+    # Uses IELTS rounding internally
     assert overall_band({"l": 6.0, "r": 7.0, "w": 5.0, "s": 5.0}) == 6.0
+
+
+def test_overall_band_ielts_rounding_edge_cases():
+    # mean = 6.25 → overall 6.5
+    assert overall_band({"l": 6.0, "r": 6.5, "w": 6.0, "s": 6.5}) == 6.5
+    # mean = 6.75 → overall 7.0
+    assert overall_band({"l": 7.0, "r": 6.5, "w": 7.0, "s": 6.5}) == 7.0
+    # mean = 6.125 → overall 6.0
+    assert overall_band({"l": 6.0, "r": 6.0, "w": 6.0, "s": 6.5}) == 6.0
 
 
 # ── grade_placement tests ─────────────────────────────────────────────────────

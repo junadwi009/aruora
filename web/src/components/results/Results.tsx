@@ -58,6 +58,10 @@ export const Results: React.FC = () => {
 
   return (
     <div className="animate-fade-slide-in flex min-h-full flex-col gap-6 p-6 max-w-2xl mx-auto">
+      {/* WS23: signature gradient is an EVENT, not wallpaper — placement
+          completion is exactly such a moment. Thin strip, never a page wash. */}
+      <div aria-hidden="true" className="aura-gradient-event h-2 w-full rounded-full" />
+
       {/* Header */}
       <div className="flex flex-col gap-4 border-b border-[color-mix(in_srgb,var(--color-border)_70%,transparent)] pb-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-2">
@@ -71,6 +75,8 @@ export const Results: React.FC = () => {
             <LevelChip band={cefr as CefrBand} />
           </div>
           <p className="text-sm text-[var(--color-muted)]">{headline}</p>
+          {/* Truthful estimate language (WS23 acceptance: readiness/score wording) */}
+          <p className="text-[11px] leading-relaxed text-[var(--color-muted)]">{t("home.estimateNote")}</p>
         </div>
         <Button pill size="lg" onClick={() => go("register")} className="shrink-0">
           {t("results.saveCta")}

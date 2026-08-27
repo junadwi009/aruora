@@ -20,31 +20,38 @@ def _repo():
     return Repository(sessionmaker(bind=eng))
 
 
-def test_gate_accumulate_and_unlock():
+def _repo_with_user():
+    """FKs are enforced everywhere now (WS04-04) — helper creates a real user."""
     r = _repo()
-    assert r.gate_get(1)["active_seconds"] == 0
-    assert r.gate_add_seconds(1, 60) == 60
-    assert r.gate_add_seconds(1, 60) == 120
-    assert r.gate_get(1)["unlocked_at"] is None
-    r.gate_unlock(1)
-    assert r.gate_get(1)["unlocked_at"] is not None
-    r.gate_unlock(1)  # idempotent, no raise
+    u = r.create_account("eff@example.com", "correct horse battery staple")
+    return r, u.id
+
+
+def test_gate_accumulate_and_unlock():
+    r, uid = _repo_with_user()
+    assert r.gate_get(uid)["active_seconds"] == 0
+    assert r.gate_add_seconds(uid, 60) == 60
+    assert r.gate_add_seconds(uid, 60) == 120
+    assert r.gate_get(uid)["unlocked_at"] is None
+    r.gate_unlock(uid)
+    assert r.gate_get(uid)["unlocked_at"] is not None
+    r.gate_unlock(uid)  # idempotent, no raise
 
 
 def test_feedback_add_and_list():
-    r = _repo()
-    fid = r.feedback_add(1, 5, "Really useful for listening drills.")
+    r, uid = _repo_with_user()
+    fid = r.feedback_add(uid, 5, "Really useful for listening drills.")
     assert isinstance(fid, int)
     rows = r.feedback_list()
-    assert rows[0]["stars"] == 5 and rows[0]["user_id"] == 1
+    assert rows[0]["stars"] == 5 and rows[0]["user_id"] == uid
 
 
 def test_gen_usage_counter_is_per_day():
-    r = _repo()
-    assert r.gen_count_today(1, "2026-07-25") == 0
-    assert r.gen_incr_today(1, "2026-07-25") == 1
-    assert r.gen_incr_today(1, "2026-07-25") == 2
-    assert r.gen_count_today(1, "2026-07-26") == 0
+    r, uid = _repo_with_user()
+    assert r.gen_count_today(uid, "2026-07-25") == 0
+    assert r.gen_incr_today(uid, "2026-07-25") == 1
+    assert r.gen_incr_today(uid, "2026-07-25") == 2
+    assert r.gen_count_today(uid, "2026-07-26") == 0
 
 
 def test_pool_count_and_add():
@@ -95,7 +102,7 @@ def _seeded_client(overrides=None):
     cfg.update(overrides or {})
     app = create_app(cfg)
     c = app.test_client()
-    c.post("/api/account/register", json={"email": "g@example.com", "password": "secret123"})
+    c.post("/api/account/register", json={"email": "g@example.com", "password": "correct horse battery staple"})
     return c, repo, gw
 
 

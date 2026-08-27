@@ -6,12 +6,14 @@ GATE_LOCK_SECONDS the app locks until the user submits a rating + insight
 (/api/gate/unlock), which is stored and emailed to the admin. One-time:
 once unlocked, never locks again. Admins are exempt.
 """
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify
 
 from app.errors import ApiError
 from app.routes._deps import _cfg, _repo, _require_uid
 from app.routes.admin import _is_admin_email, _require_admin
+from app.schemas import GateHeartbeatIn, GateUnlockIn
 from app.services import mailer
+from app.validation import parse_body
 
 bp = Blueprint("gate", __name__)
 
@@ -53,11 +55,8 @@ def gate_heartbeat():
     uid = _require_uid()
     cfg = _cfg()
     is_admin = _is_admin_uid(uid)
-    body = request.get_json(force=True) or {}
-    try:
-        secs = int(body.get("seconds", cfg.GATE_HEARTBEAT_SEC))
-    except (TypeError, ValueError):
-        secs = cfg.GATE_HEARTBEAT_SEC
+    body = parse_body(GateHeartbeatIn)
+    secs = body.seconds if body.seconds is not None else cfg.GATE_HEARTBEAT_SEC
     secs = max(0, min(secs, 2 * cfg.GATE_HEARTBEAT_SEC))  # clamp resumed-tab jumps
     active = _repo().gate_add_seconds(uid, secs)
     gate = {"active_seconds": active, "unlocked_at": _repo().gate_get(uid)["unlocked_at"]}
@@ -72,12 +71,9 @@ def gate_heartbeat():
 def gate_unlock():
     uid = _require_uid()
     cfg = _cfg()
-    body = request.get_json(force=True) or {}
-    try:
-        stars = int(body.get("stars", 0))
-    except (TypeError, ValueError):
-        stars = 0
-    insight = (body.get("insight") or "").strip()
+    body = parse_body(GateUnlockIn)
+    stars = body.stars
+    insight = body.insight.strip()
     if not (1 <= stars <= 5):
         raise ApiError("VALIDATION", "stars must be 1–5", 422)
     if len(insight) < MIN_INSIGHT:
@@ -92,7 +88,7 @@ def gate_unlock():
     admin_to = next(iter(cfg.ADMIN_EMAILS), None) or (cfg.SMTP_FROM or "")
     if admin_to:
         mailer.send_email(
-            cfg, admin_to, "[IELTS Coach] New test feedback",
+            cfg, admin_to, "[ARUORA IELTS] New test feedback",
             f"User {getattr(u, 'email', uid)} rated {stars}/5.\n\nInsight:\n{insight}",
         )
     return jsonify({"unlocked": True}), 200

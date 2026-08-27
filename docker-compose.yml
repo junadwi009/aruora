@@ -17,6 +17,8 @@ services:
     env_file: .env
     environment:
       DATABASE_URL: postgresql+psycopg://ielts:ielts@db:5432/ielts
+      # Dev compose serves the SPA on :5173 and the API on :5050 (cross-origin).
+      CORS_ORIGIN: http://localhost:5173
     volumes:
       - ./fixtures:/fixtures:ro
     ports:

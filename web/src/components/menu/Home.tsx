@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { BookOpen, Headphones, Mic, PenLine, ArrowRight } from "lucide-react";
+import { BookOpen, Headphones, Mic, PenLine, ArrowRight, MapPin, Target, CalendarDays } from "lucide-react";
 import { api } from "../../lib/api/client";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
@@ -29,6 +29,16 @@ const NEXT_BAND: Record<CefrBand, CefrBand> = {
   C2: "C2",
 };
 
+// WS23 hierarchy: lowest assessed band = the biggest gap (position 5).
+const BAND_ORDER: CefrBand[] = ["A1A2", "B1", "B2", "C1", "C2"];
+
+function weakestSkill(levels: Record<string, CefrBand>): Skill | null {
+  const assessed = SKILLS
+    .filter(({ skill }) => levels[skill])
+    .sort((a, b) => BAND_ORDER.indexOf(levels[a.skill]) - BAND_ORDER.indexOf(levels[b.skill]));
+  return assessed.length >= 2 ? assessed[0].skill : null;
+}
+
 function daysUntil(iso?: string | null): number | null {
   if (!iso) return null;
   const d = new Date(iso + "T00:00:00");
@@ -49,13 +59,22 @@ export const Home: React.FC<HomeProps> = ({ levels }) => {
   const [examDays, setExamDays] = useState<number | null>(null);
   const [streak, setStreak] = useState<{ current: number; today: number } | null>(null);
   const [name, setName] = useState<string>("");
+  const [goal, setGoal] = useState<string>("");
+  const [targetBand, setTargetBand] = useState<number | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     let active = true;
     Promise.allSettled([
       api.milestones().then((m) => { if (active) setMilestones(Array.isArray(m) ? m : []); }),
-      api.accountMe().then((u) => { if (active) { setExamDays(daysUntil(u.examDate)); setName(u.name || ""); } }),
+      api.accountMe().then((u) => {
+        if (active) {
+          setExamDays(daysUntil(u.examDate));
+          setName(u.name || "");
+          setGoal(u.goal || "");
+          setTargetBand(typeof u.targetBand === "number" ? u.targetBand : null);
+        }
+      }),
       api.statsActivity().then((a) => { if (active) setStreak({ current: a.current, today: a.today }); }),
     ]).finally(() => { if (active) setLoaded(true); });
     return () => { active = false; };
@@ -67,6 +86,13 @@ export const Home: React.FC<HomeProps> = ({ levels }) => {
   const hasStreak = !!streak && (streak.current > 0 || streak.today > 0);
   // Right rail only exists once there's real streak / exam data to show.
   const showRail = hasStreak || examDays !== null;
+  // WS23: mark the weakest assessed skill (biggest gap), never fabricate one.
+  const gapSkill = weakestSkill(levels);
+  const goalLabel = (g: string): string => {
+    if (g === "work") return t("onb.goalWork");
+    if (g === "study_abroad") return t("onb.goalStudy");
+    return t("onb.goalOther");
+  };
 
   return (
     <main className="flex-1 overflow-y-auto p-4 md:p-8">
@@ -104,6 +130,54 @@ export const Home: React.FC<HomeProps> = ({ levels }) => {
           </div>
         </section>
 
+        {/* WS23 journey hierarchy — Destination → Target → Deadline.
+            Answers "where am I going, what am I aiming for, by when?" before
+            any flow/gamification surface. */}
+        <section aria-labelledby="journey-heading">
+          <h2 id="journey-heading" className="mb-3 text-lg font-bold text-[var(--color-text)]" style={DISPLAY}>
+            {t("home.journey")}
+          </h2>
+          <Card>
+            <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="flex items-start gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[color-mix(in_srgb,var(--color-primary-600)_10%,transparent)] text-[var(--color-primary-600)]" aria-hidden="true">
+                  <MapPin size={18} />
+                </span>
+                <div>
+                  <dt className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">{t("home.destination")}</dt>
+                  <dd className="text-sm font-bold text-[var(--color-text)]" style={DISPLAY}>
+                    {goal ? goalLabel(goal) : t("home.noDestination")}
+                  </dd>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[color-mix(in_srgb,var(--color-primary-600)_10%,transparent)] text-[var(--color-primary-600)]" aria-hidden="true">
+                  <Target size={18} />
+                </span>                <div>
+                  <dt className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">{t("home.target")}</dt>
+                  <dd className="text-sm font-bold tabular-nums text-[var(--color-text)]" style={DISPLAY}>
+                    {targetBand !== null ? targetBand.toFixed(1) : "—"}
+                  </dd>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[color-mix(in_srgb,var(--color-primary-600)_10%,transparent)] text-[var(--color-primary-600)]" aria-hidden="true">
+                  <CalendarDays size={18} />
+                </span>
+                <div>
+                  <dt className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">{t("home.deadline")}</dt>
+                  <dd className="text-sm font-bold tabular-nums text-[var(--color-text)]" style={DISPLAY}>
+                    {examDays !== null && examDays > 0 ? `${examDays} ${t("home.daysToGo")}` : "—"}
+                  </dd>
+                </div>
+              </div>
+            </dl>
+            <p className="mt-4 border-t border-[var(--color-border)] pt-3 text-[11px] leading-relaxed text-[var(--color-muted)]">
+              {t("home.estimateNote")}
+            </p>
+          </Card>
+        </section>
+
         <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
           {/* Main column — spans full width when there's no right-rail data yet,
               so a fresh account doesn't leave the right third empty. */}
@@ -126,7 +200,13 @@ export const Home: React.FC<HomeProps> = ({ levels }) => {
                         >
                           {icon}
                         </span>
-                        {band && <LevelChip band={band} />}
+                        {skill === gapSkill ? (
+                          <span className="rounded-[var(--radius-pill,999px)] bg-[color-mix(in_srgb,var(--color-warning)_14%,transparent)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--color-warning-text)]">
+                            {t("home.biggestGap")}
+                          </span>
+                        ) : band ? (
+                          <LevelChip band={band} />
+                        ) : null}
                       </div>
                       <p className="text-sm font-bold text-[var(--color-text)]" style={DISPLAY}>{t("nav." + skill)}</p>
                       <p className="mt-0.5 text-xs text-[var(--color-muted)]">

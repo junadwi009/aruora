@@ -32,11 +32,11 @@ def test_repo_account_create_and_verify():
     eng = ce("sqlite+pysqlite:///:memory:")
     Base.metadata.create_all(eng)
     repo = Repository(sessionmaker(bind=eng))
-    u = repo.create_account("a@b.com", "secret123", name="Arjuna")
+    u = repo.create_account("a@b.com", "correct horse battery staple", name="Arjuna")
     assert u.id is not None and u.email == "a@b.com"
     # password is hashed, not stored plaintext
-    assert u.password_hash and u.password_hash != "secret123"
-    assert repo.verify_login("a@b.com", "secret123") is not None
+    assert u.password_hash and u.password_hash != "correct horse battery staple"
+    assert repo.verify_login("a@b.com", "correct horse battery staple") is not None
     assert repo.verify_login("a@b.com", "wrong") is None
     assert repo.get_account_by_email("a@b.com") is not None
 
@@ -45,7 +45,7 @@ def test_repo_account_create_and_verify():
 
 def test_register_login_me_logout():
     c, _ = _client()
-    r = c.post("/api/account/register", json={"email": "x@y.com", "password": "secret123"})
+    r = c.post("/api/account/register", json={"email": "x@y.com", "password": "correct horse battery staple"})
     assert r.status_code == 200 and r.get_json()["email"] == "x@y.com"
 
     me = c.get("/api/account/me")
@@ -54,22 +54,22 @@ def test_register_login_me_logout():
     c.post("/api/account/logout")
     assert c.get("/api/account/me").status_code == 401
 
-    li = c.post("/api/account/login", json={"email": "x@y.com", "password": "secret123"})
+    li = c.post("/api/account/login", json={"email": "x@y.com", "password": "correct horse battery staple"})
     assert li.status_code == 200
     assert c.get("/api/account/me").status_code == 200
 
 
 def test_duplicate_email_rejected():
     c, _ = _client()
-    c.post("/api/account/register", json={"email": "dup@y.com", "password": "secret123"})
+    c.post("/api/account/register", json={"email": "dup@y.com", "password": "correct horse battery staple"})
     c.post("/api/account/logout")
-    r = c.post("/api/account/register", json={"email": "dup@y.com", "password": "another123"})
+    r = c.post("/api/account/register", json={"email": "dup@y.com", "password": "another-passphrase-42"})
     assert r.status_code == 422
 
 
 def test_wrong_password_401():
     c, _ = _client()
-    c.post("/api/account/register", json={"email": "z@y.com", "password": "secret123"})
+    c.post("/api/account/register", json={"email": "z@y.com", "password": "correct horse battery staple"})
     c.post("/api/account/logout")
     assert c.post("/api/account/login", json={"email": "z@y.com", "password": "nope"}).status_code == 401
 
@@ -80,17 +80,17 @@ def test_remember_me_extends_timeout_to_seven_days(monkeypatch):
     real_now = sess._now
 
     c, _ = _client(timeout_min=30)
-    c.post("/api/account/register", json={"email": "r@y.com", "password": "secret123"})
+    c.post("/api/account/register", json={"email": "r@y.com", "password": "correct horse battery staple"})
     c.post("/api/account/logout")
 
     # Without remember: 31 min idle expires the session (as before).
-    c.post("/api/account/login", json={"email": "r@y.com", "password": "secret123"})
+    c.post("/api/account/login", json={"email": "r@y.com", "password": "correct horse battery staple"})
     monkeypatch.setattr(sess, "_now", lambda: real_now() + timedelta(minutes=31))
     assert c.get("/api/account/me").status_code == 401
     monkeypatch.setattr(sess, "_now", real_now)
 
     # With remember: 31 min idle is fine; 8 days idle forgets the session.
-    c.post("/api/account/login", json={"email": "r@y.com", "password": "secret123", "remember": True})
+    c.post("/api/account/login", json={"email": "r@y.com", "password": "correct horse battery staple", "remember": True})
     monkeypatch.setattr(sess, "_now", lambda: real_now() + timedelta(minutes=31))
     assert c.get("/api/account/me").status_code == 200
     monkeypatch.setattr(sess, "_now", lambda: real_now() + timedelta(days=8))
@@ -99,7 +99,7 @@ def test_remember_me_extends_timeout_to_seven_days(monkeypatch):
 
 def test_idle_timeout_expires_session(monkeypatch):
     c, _ = _client(timeout_min=30)
-    c.post("/api/account/register", json={"email": "t@y.com", "password": "secret123"})
+    c.post("/api/account/register", json={"email": "t@y.com", "password": "correct horse battery staple"})
     assert c.get("/api/account/me").status_code == 200
 
     # Force the stored last_seen far into the past.

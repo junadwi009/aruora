@@ -14,6 +14,7 @@ import { SecuritySection } from "./SecuritySection";
 import { MilestonesSection } from "./MilestonesSection";
 import { RemindersSection } from "./RemindersSection";
 import { DataSection } from "./DataSection";
+import { SessionsSection } from "./SessionsSection";
 import { HelpSection } from "./HelpSection";
 import { AdminSection } from "./AdminSection";
 import type { AccountUser } from "../../lib/types";
@@ -115,6 +116,9 @@ export const Settings: React.FC = () => {
 
         {/* Security — change password (or set one for Google-only accounts) */}
         <SecuritySection hasAccount={hasAccount} hasPassword={account?.hasPassword ?? true} />
+
+        {/* Devices & sessions — list and revoke active sessions (WS03-09) */}
+        {hasAccount && <SessionsSection />}
 
         {/* Study reminder */}
         <RemindersSection />

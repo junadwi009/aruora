@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 # ---------------------------------------------------------------------------
 # Enums / Literals
@@ -34,6 +34,11 @@ class OnboardingIn(BaseModel):
     goal: Goal
     target_band: float = Field(alias="targetBand", ge=4.0, le=9.0)
     skill_targets: dict = Field(alias="skillTargets", default_factory=dict)
+    # WS23: optional deadline captured as exam month (YYYY-MM) or full date.
+    exam_date: str | None = Field(
+        alias="examDate", default=None,
+        pattern=r"^\d{4}-\d{2}(-\d{2})?$",
+    )
 
 
 class PlacementSubmitIn(BaseModel):
@@ -50,6 +55,139 @@ class ProgramIn(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     length_days: ProgramLength = Field(alias="lengthDays")
+
+
+# ---------------------------------------------------------------------------
+# WS09-03B: request contracts for LLM/ASR/persistence surfaces.
+# Lengths are defensive static ceilings; routes may enforce tighter
+# config-driven bounds (cfg.MAX_*_CHARS) on top. Unknown fields are ignored
+# and never reach prompts, persistence, or analytics.
+# ---------------------------------------------------------------------------
+
+
+class WritingEvaluateIn(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    essay: str = ""
+    task_type: str | None = Field(alias="taskType", default=None, max_length=64)
+    prompt: str | None = Field(default=None, max_length=4000)
+
+
+class SpeakingEvaluateIn(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    transcript: str = ""
+    part: str | None = Field(default=None, max_length=64)
+    question: str | None = Field(default=None, max_length=1000)
+
+
+class RoleplayTurn(BaseModel):
+    role: str = Field(default="", max_length=32)
+    text: str = Field(default="", max_length=1200)
+
+
+class SpeakingRoleplayIn(BaseModel):
+    scenario: str = Field(default="casual conversation", max_length=512)
+    history: list[RoleplayTurn] = Field(default_factory=list, max_length=24)
+    user_text: str = Field(alias="userText", default="", max_length=1200)
+
+
+class BandGenerateIn(BaseModel):
+    """Body of reading/listening set requests. Strict band validation stays in
+    routes._gencap.check_band (single source of truth for allowed values)."""
+
+    band: str | None = Field(default=None, max_length=16)
+
+
+class VocabIn(BaseModel):
+    topic: str = Field(default="general", max_length=200)
+    level: str | None = Field(default="B1", max_length=16)
+
+
+class PronounceSentenceIn(BaseModel):
+    level: str | None = Field(default="B1", max_length=16)
+    topic: str | None = Field(default=None, max_length=200)
+
+
+class PronounceFeedbackIn(BaseModel):
+    target: str = Field(default="", max_length=240)
+    transcript: str = ""
+    accuracy: float = Field(default=0, ge=0, le=100)
+    missed: list[str] = Field(default_factory=list, max_length=50)
+
+    @model_validator(mode="after")
+    def _cap_missed_items(self):
+        self.missed = [str(m)[:64] for m in self.missed]
+        return self
+
+
+class LessonGenerateIn(BaseModel):
+    day: int | None = Field(default=None, ge=1, le=400)
+    focus: str | None = Field(default=None, max_length=200)
+    band: str | None = Field(default=None, max_length=16)
+    force: bool = False
+
+
+def _half_band_ok(v: float) -> bool:
+    return 0.0 <= v <= 9.0 and abs(v * 2 - round(v * 2)) < 1e-9
+
+
+class MockSaveIn(BaseModel):
+    """IELTS Listening/Reading mock scores: whole/half bands only."""
+
+    listening: float
+    reading: float
+    overall: float
+
+    @model_validator(mode="after")
+    def _bands(self):
+        for name in ("listening", "reading", "overall"):
+            v = getattr(self, name)
+            if not _half_band_ok(v):
+                raise ValueError(f"{name} must be a half-band score between 0 and 9")
+        return self
+
+
+class PracticeAttemptIn(BaseModel):
+    skill: Literal["reading", "listening"]
+    correct: int = Field(ge=0)
+    total: int = Field(ge=1)
+    band: float = Field(default=0.0, ge=0.0, le=9.0)
+    title: str | None = Field(default=None, max_length=200)
+
+    @model_validator(mode="after")
+    def _correct_le_total(self):
+        if self.correct > self.total:
+            raise ValueError("correct cannot exceed total")
+        return self
+
+
+class FlashcardIn(BaseModel):
+    front: str = Field(min_length=1, max_length=1000)
+    back: str = Field(min_length=1, max_length=1000)
+
+
+class CardAddIn(BaseModel):
+    front: str | None = Field(default=None, max_length=1000)
+    back: str | None = Field(default=None, max_length=1000)
+    cards: list[FlashcardIn] | None = Field(default=None, max_length=100)
+
+
+class CardReviewIn(BaseModel):
+    quality: int = Field(ge=0, le=5)
+
+
+class PasscodeLoginIn(BaseModel):
+    passcode: str = Field(default="", max_length=256)
+
+
+class GateHeartbeatIn(BaseModel):
+    seconds: int | None = Field(default=None, ge=0, le=7200)
+
+
+class GateUnlockIn(BaseModel):
+    stars: int = Field(default=0, ge=1, le=5)
+    insight: str = Field(default="", max_length=2000)
 
 
 # ---------------------------------------------------------------------------
@@ -147,6 +285,23 @@ __all__ = [
     "OnboardingOut",
     "PlacementSubmitIn",
     "ProgramIn",
+    "WritingEvaluateIn",
+    "SpeakingEvaluateIn",
+    "SpeakingRoleplayIn",
+    "RoleplayTurn",
+    "BandGenerateIn",
+    "VocabIn",
+    "PronounceSentenceIn",
+    "PronounceFeedbackIn",
+    "LessonGenerateIn",
+    "MockSaveIn",
+    "PracticeAttemptIn",
+    "FlashcardIn",
+    "CardAddIn",
+    "CardReviewIn",
+    "PasscodeLoginIn",
+    "GateHeartbeatIn",
+    "GateUnlockIn",
     "PlacementStartOut",
     "PerSkill",
     "PlacementResultOut",

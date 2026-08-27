@@ -1,87 +1,126 @@
 @import "tailwindcss";
 
-@theme {
-  /* ── Brand ── */
-  --color-primary-50: #EEF2FF;
-  --color-primary-100: #E0E7FF;
-  --color-primary-600: #4F46E5;
-  --color-primary-700: #4338CA;
-  --color-primary-800: #3730A3;
-  --color-accent-500: #14B8A6;
-  --color-accent-600: #0D9488;
+/* ══════════════════════════════════════════════════════════════════════════
+   ARUORA design tokens (WS23) — source: docs/brand-source/tokens/aruora.tokens.json
 
-  /* ── Semantic ── */
+   Layer 1 PRIMITIVES carry the ARUORA palette verbatim.
+   Layer 2 SEMANTIC tokens (existing --color-* contract) remap onto them, so
+   components keep working unchanged while the brand swaps underneath.
+
+   Accessibility rule (23 §Accessibility): brand fidelity never overrides
+   contrast. Aura Violet #7568F8 measures ~4.1:1 with white — below WCAG AA
+   for normal text — so interactive/text-facing semantic shades use
+   darkened, AA-passing derivations of it, while the raw primitive stays
+   available for decorative surfaces and the signature gradient.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@theme {
+  /* ── Layer 1: ARUORA palette primitives ── */
+  --color-aura-cream: #F4F0E9;
+  --color-midnight-ink: #19172B;
+  --color-ink: #282631;
+  --color-aura-violet: #7568F8;
+  --color-aurora-lavender: #A99DFB;
+  --color-horizon-blue: #5DA7F7;
+  --color-aurora-mint: #68DDD2;
+  --color-dawn-coral: #F28B82;
+  --color-cloud-lavender: #F4F2FA;
+  --color-mist: #777482;
+
+  /* Dark-surface primitives (restrained, warm-neutral violet — not neon) */
+  --color-dark-background: #12111D;
+  --color-dark-surface: #1C1A2A;
+  --color-dark-surface-elevated: #252238;
+  --color-dark-text: #F4F1F8;
+  --color-dark-muted: #A8A4B2;
+  --color-dark-border: #353145;
+
+  /* ── Layer 2: semantic brand colors (AA-checked derivations) ── */
+  /* Primary = Aura Violet family. 600 is the text/CTA shade: #5B50D8 vs white
+     ≈ 6.1:1 (AAA large / AA normal); raw #7568F8 stays available above for
+     decorative + gradient use. */
+  --color-primary-50: var(--color-cloud-lavender);
+  --color-primary-100: #E5E1FC;
+  --color-primary-600: #5B50D8;
+  --color-primary-700: #4A3FC4;
+  --color-primary-800: #3A30A8;
+  --color-accent-500: var(--color-aurora-mint);
+  --color-accent-600: #3FBDB3;
+
+  /* ── Semantic status ── */
   --color-success: #16A34A;
   --color-warning: #D97706;
+  /* AA-safe deepened warning for small text on light surfaces (~4.9:1). */
+  --color-warning-text: #A15C07;
   --color-danger: #DC2626;
-  --color-info: #2563EB;
+  --color-info: var(--color-horizon-blue);
 
-  /* ── Neutrals (light) — "warm paper" identity (approachable-premium) ── */
-  --color-bg: #FCFAF6;
+  /* ── Neutrals (light) — Aura Cream paper identity ── */
+  --color-bg: #FAF7F1;
   --color-surface: #FFFFFF;
-  --color-surface-2: #F5F3EE;
-  --color-border: #EAE6DF;
-  --color-text: #231F1C;
-  --color-text-2: #45403A;
-  /* Warm muted — WCAG AA for small text: ~5.2:1 on the warm surface-2. */
-  --color-muted: #6B6456;
+  --color-surface-2: var(--color-aura-cream);
+  --color-border: #E7E1D6;
+  --color-text: var(--color-midnight-ink);
+  --color-text-2: var(--color-ink);
+  /* Mist is the brand muted; #6E6B7B is its AA-safe deepening on cream. */
+  --color-muted: #6E6B7B;
 
-  /* ── CEFR band colours ── */
-  --color-cefr-a: #64748B;
-  --color-cefr-b1: #0EA5E9;
-  --color-cefr-b2: #14B8A6;
-  --color-cefr-c1: #6366F1;
-  --color-cefr-c2: #8B5CF6;
+  /* ── CEFR band colours — remapped onto the Aurora family ── */
+  --color-cefr-a: var(--color-mist);
+  --color-cefr-b1: #3E8FDB;           /* Horizon Blue, darkened for text use */
+  --color-cefr-b2: #2FA79B;           /* Aurora Mint, darkened */
+  --color-cefr-c1: var(--color-primary-600);
+  --color-cefr-c2: #7C4FD0;           /* violet→purple bridge */
 
   /* ── Skill line colours (Progress trend chart) ── */
   --color-skill-writing: var(--color-primary-600);
-  --color-skill-speaking: #0D9488;
+  --color-skill-speaking: var(--color-accent-600);
   --color-skill-reading: #D97706;
-  --color-skill-listening: #6D5AE6;
+  --color-skill-listening: #3E8FDB;
 
-  /* ── Typography ── */
-  --font-ui: "Inter", system-ui, sans-serif;
+  /* ── Typography — Plus Jakarta Sans leads the brand voice ── */
+  --font-ui: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
   --font-reading: "Lexend", "Inter", system-ui, sans-serif;
-  /* Display face for the brand wordmark + page headings — warm rounded Quicksand.
-     The a11y-font setting (settings.ts) overrides this too, so dyslexic/
-     hyperlegible users get their chosen face on headings as well. */
-  --font-display: "Quicksand", "Lexend", "Inter", system-ui, sans-serif;
+  /* Display face for the brand wordmark + page headings. The a11y-font
+     setting (settings.ts) overrides this too, so dyslexic/hyperlegible users
+     get their chosen face on headings as well. */
+  --font-display: "Plus Jakarta Sans", "Quicksand", "Lexend", "Inter", system-ui, sans-serif;
 
-  /* ── Radius — larger, softer "approachable" shapes ── */
-  --radius-sm:  8px;
-  --radius-md: 12px;
+  /* ── Radius — ARUORA token scale ── */
+  --radius-sm:  var(--radius-xs, 8px);       /* token: xs        */
+  --radius-md: 12px;                          /* token: control   */
   --radius-lg: 16px;
-  --radius-xl: 22px;
-  --radius-2xl: 24px;   /* cards / surfaces */
-  --radius-3xl: 32px;   /* large hero surfaces */
+  --radius-xl: 20px;
+  --radius-2xl: 18px;                         /* token: card      */
+  --radius-3xl: 24px;                         /* token: feature   */
 
-  /* ── Elevation (indigo-tinted shadows) ── */
-  --shadow-e1: 0 1px 2px rgba(15,23,42,.06);
-  --shadow-e2: 0 6px 20px -6px rgba(30,41,59,.18), 0 2px 6px -2px rgba(30,41,59,.10);
-  --shadow-e3: 0 18px 48px -12px rgba(49,46,129,.28), 0 6px 16px -8px rgba(30,41,59,.16);
-  /* Soft "premium" shadows — subtle indigo lift used across cards. */
-  --shadow-premium: 0 4px 24px -2px rgba(99,102,241,.06), 0 2px 8px -1px rgba(0,0,0,.02);
-  --shadow-premium-card: 0 20px 40px -15px rgba(99,102,241,.10), 0 1px 8px rgba(0,0,0,.02);
-  --shadow-premium-hover: 0 24px 48px -12px rgba(99,102,241,.16), 0 4px 12px -2px rgba(0,0,0,.03);
+  /* ── Elevation (violet-tinted shadows) ── */
+  --shadow-e1: 0 1px 2px rgba(25,23,43,.06);
+  --shadow-e2: 0 6px 20px -6px rgba(25,23,43,.18), 0 2px 6px -2px rgba(25,23,43,.10);
+  --shadow-e3: 0 18px 48px -12px rgba(58,48,168,.28), 0 6px 16px -8px rgba(25,23,43,.16);
+  /* Soft "premium" shadows — subtle aura-violet lift used across cards. */
+  --shadow-premium: 0 4px 24px -2px rgba(117,104,248,.07), 0 2px 8px -1px rgba(0,0,0,.02);
+  --shadow-premium-card: 0 20px 40px -15px rgba(117,104,248,.10), 0 1px 8px rgba(0,0,0,.02);
+  --shadow-premium-hover: 0 24px 48px -12px rgba(117,104,248,.16), 0 4px 12px -2px rgba(0,0,0,.03);
 
-  /* ── Motion ── */
+  /* ── Motion — ARUORA token durations ── */
   --ease-default: cubic-bezier(.2,0,.2,1);
-  --duration-fast: 120ms;
-  --duration-base: 180ms;
-  --duration-slow: 280ms;
+  --duration-fast: 160ms;      /* token: fast          */
+  --duration-base: 220ms;      /* token: normal        */
+  --duration-slow: 320ms;      /* token: slow          */
+  --duration-aura: 650ms;      /* token: auraReaction  */
 }
 
-/* ── Dark mode — warm charcoal to match the paper identity ── */
+/* ── Dark mode — ARUORA dark primitives; restrained, never neon/cyberpunk ── */
 .dark {
-  --color-bg: #12100E;
-  --color-surface: #1E1B18;
-  --color-surface-2: #2A2622;
-  --color-border: #3E3732;
-  --color-text: #FDFCFB;
-  --color-text-2: #CFC7B8;
-  /* Warm muted — AA on the warm dark surface-2. */
-  --color-muted: #A69C8A;
-  /* Premium shadows read as near-black lifts on the dark paper. */
+  --color-bg: var(--color-dark-background);
+  --color-surface: var(--color-dark-surface);
+  --color-surface-2: var(--color-dark-surface-elevated);
+  --color-border: var(--color-dark-border);
+  --color-text: var(--color-dark-text);
+  --color-text-2: #D9D5E8;
+  --color-muted: var(--color-dark-muted);
+  /* Premium shadows read as near-black lifts on the dark surfaces. */
   --shadow-premium: 0 4px 24px -2px rgba(0,0,0,.40), 0 2px 8px -1px rgba(0,0,0,.30);
   --shadow-premium-card: 0 20px 40px -15px rgba(0,0,0,.55), 0 1px 8px rgba(0,0,0,.30);
   --shadow-premium-hover: 0 24px 48px -12px rgba(0,0,0,.60), 0 4px 12px -2px rgba(0,0,0,.35);
@@ -173,4 +212,48 @@ p {
     transition-delay: 0ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ARUORA signature gradient (WS23) — an EVENT, not a wallpaper.
+
+   Reserve `.aura-gradient-event` for meaningful improvement / achievement /
+   Aura moments only (placement result, milestone completion, onboarding
+   finish). Never apply it as a page background or to ordinary cards.
+   ══════════════════════════════════════════════════════════════════════════ */
+.aura-gradient-event {
+  background: linear-gradient(
+    120deg,
+    var(--color-aura-violet) 0%,
+    var(--color-aurora-lavender) 38%,
+    var(--color-horizon-blue) 72%,
+    var(--color-aurora-mint) 100%
+  );
+}
+
+/* Subtle animated drift for the signature gradient — the "aurora" moment.
+   Automatically inert under prefers-reduced-motion (see the global override). */
+@keyframes auraDrift {
+  from { background-position: 0% 50%; }
+  to   { background-position: 100% 50%; }
+}
+.aura-gradient-event.aura-gradient-live {
+  background-size: 200% 200%;
+  animation: auraDrift var(--duration-aura) var(--ease-default) alternate infinite;
+}
+
+/* ── Wordmark helpers ──
+   ARUORA wordmark in display face; optional secondary endorsement
+   "by ARUSTUDIO" must always be the smaller, quieter line (23 §Brand). */
+.aruora-wordmark {
+  font-family: var(--font-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.aruora-endorsement {
+  font-family: var(--font-ui);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-size: 0.625rem;
+  opacity: 0.72;
 }

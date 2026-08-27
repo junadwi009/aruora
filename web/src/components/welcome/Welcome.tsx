@@ -48,9 +48,12 @@ export const Welcome: React.FC = () => {
             >
               <BookOpen size={20} />
             </div>
-            <span className="text-lg font-bold tracking-tight text-[var(--color-text)]" style={DISPLAY}>
-              IELTS Coach
-            </span>
+            <div className="flex flex-col gap-0.5">
+              <span className="aruora-wordmark text-lg font-bold text-[var(--color-text)]" style={DISPLAY}>
+                ARUORA
+              </span>
+              <span className="aruora-endorsement">by ARUSTUDIO</span>
+            </div>
           </div>
           <Button variant="ghost" pill size="sm" onClick={() => go("login")}>
             {t("auth.signIn")}

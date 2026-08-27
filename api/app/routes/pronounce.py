@@ -6,11 +6,13 @@ Phase 2d-3 — pronunciation read-aloud drill.
 
 Scoring is approximate (browser recogniser word-match + LLM tips), not phoneme-level.
 """
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify
 
 from app.errors import ApiError
 from app.routes._deps import _cfg, _gateway, _lang, _repo, _require_uid
 from app.routes._gencap import cap_reached, note_generation, GEN_CAP_CODE
+from app.schemas import PronounceFeedbackIn, PronounceSentenceIn
+from app.validation import parse_body
 
 bp = Blueprint("pronounce", __name__)
 
@@ -18,11 +20,15 @@ bp = Blueprint("pronounce", __name__)
 @bp.post("/api/pronounce/sentence")
 def pronounce_sentence():
     uid = _require_uid()  # authenticated only — this calls the paid LLM
-    b = request.get_json(force=True) or {}
+    b = parse_body(PronounceSentenceIn)
+    topic = b.topic or ""
+    if len(topic) > _cfg().MAX_TOPIC_CHARS:
+        raise ApiError("VALIDATION",
+                       f"Topic is too long (max {_cfg().MAX_TOPIC_CHARS} characters)", 422)
     if cap_reached(uid, _repo(), _cfg()):
         raise ApiError(GEN_CAP_CODE, "Daily generation limit reached", 429)
-    out = _gateway().generate("generate", skill="pronounce", band=b.get("level", "B1"),
-                              topic=b.get("topic"))
+    out = _gateway().generate("generate", skill="pronounce", band=b.level or "B1",
+                              topic=topic or None)
     note_generation(uid, _repo())
     return jsonify(out), 200
 
@@ -30,13 +36,17 @@ def pronounce_sentence():
 @bp.post("/api/pronounce/feedback")
 def pronounce_feedback():
     _require_uid()  # authenticated only — this calls the paid LLM
-    b = request.get_json(force=True) or {}
+    b = parse_body(PronounceFeedbackIn)
+    cfg = _cfg()
+    if len(b.transcript) > cfg.MAX_TRANSCRIPT_CHARS:
+        raise ApiError("VALIDATION",
+                       f"Transcript is too long (max {cfg.MAX_TRANSCRIPT_CHARS})", 422)
     out = _gateway().score(
         "pronounce",
         lang=_lang(),
-        target=b.get("target", ""),
-        transcript=b.get("transcript", ""),
-        accuracy=b.get("accuracy", 0),
-        missed=", ".join(b.get("missed", [])) or "none",
+        target=b.target,
+        transcript=b.transcript,
+        accuracy=b.accuracy,
+        missed=", ".join(b.missed)[:400] or "none",
     )
     return jsonify(out), 200

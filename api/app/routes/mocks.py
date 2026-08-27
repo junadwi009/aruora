@@ -1,20 +1,25 @@
 """Phase 2d-2 — mock-test score persistence (Listening + Reading)."""
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify
 
 from app.routes._deps import _repo, _uid, _require_uid
+from app.schemas import MockSaveIn
+from app.validation import parse_body
 
 bp = Blueprint("mocks", __name__)
 
 
 @bp.post("/api/mocks")
 def save_mock():
-    b = request.get_json(force=True) or {}
+    b = parse_body(MockSaveIn)
     mid = _repo().save_mock(
         _require_uid(),
-        float(b.get("listening", 0.0)),
-        float(b.get("reading", 0.0)),
-        float(b.get("overall", 0.0)),
+        float(b.listening),
+        float(b.reading),
+        float(b.overall),
     )
+    # WS21 — WML qualifying event after persistence.
+    from app.routes._analytics import emit
+    emit("mock_completed")
     return jsonify({"id": mid}), 200
 
 

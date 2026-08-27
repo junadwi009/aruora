@@ -6,8 +6,9 @@ GET  /api/practice/set       — serve a generated set by skill + optional band.
 from flask import Blueprint, jsonify, request
 
 from app.errors import ApiError
-from app.schemas import GenerateJobOut, JobStatusOut
+from app.schemas import GenerateJobOut, JobStatusOut, PracticeAttemptIn
 from app.routes._deps import _repo, _require_uid
+from app.validation import parse_body
 
 bp = Blueprint("practice", __name__)
 
@@ -25,23 +26,24 @@ def practice_status():
 @bp.post("/api/practice/attempt")
 def practice_attempt():
     """Persist a Reading/Listening practice score so it shows in Progress trends."""
-    b = request.get_json(force=True) or {}
-    skill = b.get("skill")
-    if skill not in ("reading", "listening"):
-        raise ApiError("VALIDATION", "skill must be reading or listening", 422)
-    correct, total = int(b.get("correct", 0)), int(b.get("total", 0))
-    band = float(b.get("band", 0.0))
+    b = parse_body(PracticeAttemptIn)
+    skill = b.skill
+    correct, total = b.correct, b.total
+    band = float(b.band)
     saved_id = _repo().save_attempt(
         _require_uid(),
         type=skill,
         task=f"{correct}/{total}",
-        prompt=b.get("title", ""),
+        prompt=b.title or "",
         body="",
         bands={"overall": band},
         criteria={},
         cefr="",
         metrics={"correct": correct, "total": total},
     )
+    # WS21 — WML qualifying event after the set is persisted server-side.
+    from app.routes._analytics import emit
+    emit("practice_completed", skill=skill, correct=correct, total=total)
     return jsonify({"savedId": saved_id}), 200
 
 

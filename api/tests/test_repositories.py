@@ -91,7 +91,7 @@ def test_program_and_milestones():
 # ── Phase 2c/3b: attempt persistence (user-scoped) ───────────────────────────
 
 def _uid(repo):
-    return repo.create_account("u%d@e.com" % id(repo), "secret123").id
+    return repo.create_account("u%d@e.com" % id(repo), "correct horse battery staple").id
 
 
 def test_save_and_list_attempts():
@@ -132,11 +132,52 @@ def test_get_attempt_full_payload():
     assert repo.get_attempt(uid, 9999) is None
 
 
+def test_save_attempt_persists_scoring_metadata():
+    """WS02-03: the AI-scoring metadata envelope is persisted and returned."""
+    repo = make_repo()
+    uid = _uid(repo)
+    meta = {
+        "score_method": "llm_estimate",
+        "score_version": "1.0",
+        "model_provider": "openrouter",
+        "model_id": "test/model-1",
+        "prompt_version": "1.0",
+        "rubric_version": "1.0",
+        "calibration_version": "1.0",
+    }
+    aid = repo.save_attempt(
+        uid, type="writing", task="task2", prompt="P", body="Essay body.",
+        bands={"overall": 6.0}, criteria={}, cefr="B2", metrics={},
+        score_metadata=meta,
+    )
+    full = repo.get_attempt(uid, aid)
+    sm = full["scoreMetadata"]
+    assert sm["scoreMethod"] == "llm_estimate"
+    assert sm["scoreVersion"] == "1.0"
+    assert sm["modelProvider"] == "openrouter"
+    assert sm["modelId"] == "test/model-1"
+    assert sm["promptVersion"] == "1.0"
+    assert sm["rubricVersion"] == "1.0"
+    assert sm["calibrationVersion"] == "1.0"
+
+
+def test_save_attempt_without_metadata_is_backwards_compatible():
+    """Attempts saved without score_metadata keep working (nullable columns)."""
+    repo = make_repo()
+    uid = _uid(repo)
+    aid = repo.save_attempt(
+        uid, type="speaking", task="part2", prompt="P", body="T.",
+        bands={"overall": 5.0}, criteria={}, cefr="B1", metrics={},
+    )
+    full = repo.get_attempt(uid, aid)
+    assert full["scoreMetadata"]["scoreMethod"] is None
+
+
 def test_attempts_are_isolated_per_user():
     """Security: one user can never see or read another user's attempts."""
     repo = make_repo()
-    a = repo.create_account("a@e.com", "secret123").id
-    b = repo.create_account("b@e.com", "secret123").id
+    a = repo.create_account("a@e.com", "correct horse battery staple").id
+    b = repo.create_account("b@e.com", "correct horse battery staple").id
     aid = repo.save_attempt(a, type="writing", task="t", prompt="p", body="x",
                             bands={"overall": 6.0}, criteria={}, cefr="B2", metrics={})
     # B's listing is empty; B cannot fetch A's attempt by id
@@ -174,7 +215,7 @@ def test_save_and_get_lesson_upsert():
     repo.save_lesson(uid, 1, {"goal": "second"}, "listening")  # upsert
     assert repo.get_lesson(uid, 1)["lesson"]["goal"] == "second"
     # another user's day-1 is independent
-    other = repo.create_account("o@e.com", "secret123").id
+    other = repo.create_account("o@e.com", "correct horse battery staple").id
     assert repo.get_lesson(other, 1) is None
 
 
@@ -189,7 +230,7 @@ def test_save_and_list_mocks():
     rows = repo.list_mocks(uid)
     assert len(rows) == 2 and rows[0]["id"] == b  # newest first
     # isolated
-    other = repo.create_account("o2@e.com", "secret123").id
+    other = repo.create_account("o2@e.com", "correct horse battery staple").id
     assert repo.list_mocks(other) == []
 
 
@@ -210,7 +251,7 @@ def test_cards_add_list_stats_delete():
     assert repo.delete_card(uid, 999999) is False
     assert len(repo.list_cards(uid)) == 2
     # another user cannot delete this user's cards
-    other = repo.create_account("o3@e.com", "secret123").id
+    other = repo.create_account("o3@e.com", "correct horse battery staple").id
     remaining = repo.list_cards(uid)[0]["id"]
     assert repo.delete_card(other, remaining) is False
     assert repo.card_stats(other)["total"] == 0
@@ -227,5 +268,5 @@ def test_card_review_reschedules():
     assert all(c["id"] != cid for c in repo.due_cards(uid, now))
     assert repo.review_card(uid, 999999, quality=4, now=now) is None
     # another user cannot review this user's card
-    other = repo.create_account("o4@e.com", "secret123").id
+    other = repo.create_account("o4@e.com", "correct horse battery staple").id
     assert repo.review_card(other, cid, quality=4, now=now) is None

@@ -13,6 +13,7 @@ import { PasscodeGate } from "./components/auth/PasscodeGate";
 import { LoginScreen, RegisterScreen, ForgotScreen } from "./components/auth/AuthScreens";
 import { ResetPassword } from "./components/auth/ResetPassword";
 import { FeedbackGate } from "./components/gate/FeedbackGate";
+import { Button } from "./components/ui/Button";
 
 // Code-split: recharts lives only in Results, so lazy-loading it keeps the main chunk smaller
 const Results = lazy(() => import("./components/results/Results"));
@@ -90,19 +91,33 @@ function Journey() {
 }
 
 export default function App() {
-  // null = checking, true = may proceed, false = passcode required
-  const [unlocked, setUnlocked] = useState<boolean | null>(null);
+  // null = checking, true = may proceed, false = passcode required,
+  // "error" = the auth status could not be reached (WS03-09: never fail open —
+  // an auth outage must look locked, not unlocked).
+  const [unlocked, setUnlocked] = useState<boolean | "error" | null>(null);
   // Password reset via emailed ?reset_token=… link takes precedence over everything.
   const [resetToken, setResetToken] = useState<string | null>(() =>
     typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("reset_token") : null
   );
 
+  const [statusError, setStatusError] = useState(false);
   useEffect(() => {
     let active = true;
     api
       .authStatus()
-      .then((s) => active && setUnlocked(!s.authRequired || s.authenticated))
-      .catch(() => active && setUnlocked(true)); // fail open (e.g. status route unreachable)
+      .then((s) => {
+        if (!active) return;
+        setStatusError(false);
+        setUnlocked(!s.authRequired || s.authenticated);
+      })
+      .catch(() => {
+        // WS03-09: fail CLOSED — show an outage screen with retry instead of
+        // optimistically proceeding into a locked app.
+        if (active) {
+          setStatusError(true);
+          setUnlocked("error");
+        }
+      });
     return () => {
       active = false;
     };
@@ -132,6 +147,28 @@ export default function App() {
     return (
       <div className="flex min-h-screen items-center justify-center p-6">
         <p className="text-[var(--color-muted)]">Loading…</p>
+      </div>
+    );
+  }
+
+  if (unlocked === "error") {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
+        <p className="text-sm font-semibold text-[var(--color-text)]">
+          {statusError ? "Can't reach the server" : "Something went wrong"}
+        </p>
+        <p className="max-w-xs text-xs text-[var(--color-muted)]">
+          We can't confirm your sign-in status right now. Check your connection and try again.
+        </p>
+        <Button
+          variant="primary"
+          onClick={() => {
+            setUnlocked(null);
+            setStatusError(false);
+          }}
+        >
+          Retry
+        </Button>
       </div>
     );
   }

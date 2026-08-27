@@ -33,7 +33,7 @@ def test_forgot_always_200_even_unknown_email(monkeypatch):
 
 def test_forgot_then_reset(monkeypatch):
     client, repo = _ctx()
-    repo.create_account("u@x.com", "oldpass123")
+    repo.create_account("u@x.com", "old-password-fallback-42")
     captured = {}
     monkeypatch.setattr(mailer, "send_email",
                         lambda cfg, to, subj, body: captured.update(to=to, body=body) or True)
@@ -47,13 +47,13 @@ def test_forgot_then_reset(monkeypatch):
     token = m.group(1)
 
     # reset with the token
-    r = client.post("/api/account/reset", json={"token": token, "newPassword": "newpass123"})
+    r = client.post("/api/account/reset", json={"token": token, "newPassword": "new-password-fallback-42"})
     assert r.status_code == 200
     # old password fails, new one works
-    assert repo.verify_login("u@x.com", "oldpass123") is None
-    assert repo.verify_login("u@x.com", "newpass123") is not None
+    assert repo.verify_login("u@x.com", "old-password-fallback-42") is None
+    assert repo.verify_login("u@x.com", "new-password-fallback-42") is not None
 
 
 def test_reset_bad_token_400():
     client, _ = _ctx()
-    assert client.post("/api/account/reset", json={"token": "garbage", "newPassword": "newpass123"}).status_code == 400
+    assert client.post("/api/account/reset", json={"token": "garbage", "newPassword": "new-password-fallback-42"}).status_code == 400

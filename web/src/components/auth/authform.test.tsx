@@ -4,6 +4,7 @@ import { AuthForm } from "./AuthForm";
 import { api } from "../../lib/api/client";
 
 const USER = { id: 1, email: "a@b.com", name: "", goal: "other", targetBand: 6 };
+const PASS = "correct horse battery staple";
 
 beforeEach(() => {
   vi.restoreAllMocks();
@@ -19,7 +20,7 @@ describe("AuthForm", () => {
     const onSuccess = vi.fn();
     render(<AuthForm mode="login" onSuccess={onSuccess} />);
     fireEvent.change(screen.getByPlaceholderText(/you@example/i), { target: { value: "a@b.com" } });
-    fireEvent.change(screen.getByPlaceholderText(/6 characters/i), { target: { value: "secret123" } });
+    fireEvent.change(screen.getByPlaceholderText(/15 characters/i), { target: { value: PASS } });
     fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
     await waitFor(() => expect(onSuccess).toHaveBeenCalledWith(USER));
   });
@@ -29,7 +30,7 @@ describe("AuthForm", () => {
     const onSuccess = vi.fn();
     render(<AuthForm mode="register" onSuccess={onSuccess} />);
     fireEvent.change(screen.getByPlaceholderText(/you@example/i), { target: { value: "a@b.com" } });
-    fireEvent.change(screen.getByPlaceholderText(/6 characters/i), { target: { value: "secret123" } });
+    fireEvent.change(screen.getByPlaceholderText(/15 characters/i), { target: { value: PASS } });
     fireEvent.click(screen.getByRole("button", { name: /create account/i }));
     await waitFor(() => expect(api.accountRegister).toHaveBeenCalled());
   });
@@ -38,7 +39,7 @@ describe("AuthForm", () => {
     vi.spyOn(api, "accountLogin").mockRejectedValue(new Error("Incorrect email or password"));
     render(<AuthForm mode="login" onSuccess={vi.fn()} />);
     fireEvent.change(screen.getByPlaceholderText(/you@example/i), { target: { value: "a@b.com" } });
-    fireEvent.change(screen.getByPlaceholderText(/6 characters/i), { target: { value: "secret123" } });
+    fireEvent.change(screen.getByPlaceholderText(/15 characters/i), { target: { value: PASS } });
     fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
     await waitFor(() => expect(screen.getByRole("alert")).toBeTruthy());
   });

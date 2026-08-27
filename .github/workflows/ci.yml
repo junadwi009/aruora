@@ -23,6 +23,53 @@ jobs:
         working-directory: api
         run: python -m pytest -q
 
+  # WS08-05: SQLite-only tests are not sufficient evidence for PostgreSQL
+  # migration behaviour. This job proves: empty-DB upgrade to head, ORM
+  # metadata/Alembic-head parity (alembic check), chained upgrade from the
+  # prior revision, and that the app boots against the migrated schema.
+  migrations:
+    name: DB migrations (PostgreSQL 18)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: aruora_ci
+          POSTGRES_PASSWORD: aruora_ci
+          POSTGRES_DB: aruora_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U aruora_ci"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql+psycopg://aruora_ci:aruora_ci@localhost:5432/aruora_ci
+      TEST_MIGRATIONS_PG_URL: postgresql+psycopg://aruora_ci:aruora_ci@localhost:5432/aruora_ci
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r api/requirements.txt
+      - name: Upgrade empty database to head
+        working-directory: api
+        run: alembic upgrade head
+      - name: ORM metadata matches migrated schema (no divergence)
+        working-directory: api
+        run: alembic check
+      - name: Upgrade from prior revision succeeds (chained)
+        working-directory: api
+        run: |
+          alembic downgrade -1
+          alembic upgrade head
+      - name: Migration test suite (SQLite chain + PostgreSQL variants)
+        working-directory: api
+        run: python -m pytest tests/test_migrations.py -q
+
   web:
     name: Web (tsc + vitest + build)
     runs-on: ubuntu-latest

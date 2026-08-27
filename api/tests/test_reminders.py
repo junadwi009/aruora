@@ -29,7 +29,7 @@ def _ctx(token="cron-secret"):
 
 def test_due_reminders_uses_user_timezone():
     _, repo = _ctx()
-    u = repo.create_account("a@e.com", "secret123")
+    u = repo.create_account("a@e.com", "correct horse battery staple")
     repo.update_profile(u.id, {"reminderTime": "09:00", "reminderTz": "Asia/Jakarta"})
     # 02:00 UTC == 09:00 in Asia/Jakarta (UTC+7) → due, local date attached
     due = repo.due_reminders(datetime(2026, 6, 30, 2, 0, tzinfo=UTC), "UTC")
@@ -41,7 +41,7 @@ def test_due_reminders_uses_user_timezone():
 
 def test_due_reminders_falls_back_to_default_tz():
     _, repo = _ctx()
-    u = repo.create_account("b@e.com", "secret123")
+    u = repo.create_account("b@e.com", "correct horse battery staple")
     repo.update_profile(u.id, {"reminderTime": "09:00"})  # no per-user tz
     now = datetime(2026, 6, 30, 2, 0, tzinfo=UTC)
     # default Asia/Jakarta → local 09:00 → due
@@ -52,9 +52,9 @@ def test_due_reminders_falls_back_to_default_tz():
 
 def test_two_users_different_timezones():
     _, repo = _ctx()
-    ja = repo.create_account("ja@e.com", "secret123")
+    ja = repo.create_account("ja@e.com", "correct horse battery staple")
     repo.update_profile(ja.id, {"reminderTime": "09:00", "reminderTz": "Asia/Jakarta"})
-    ny = repo.create_account("ny@e.com", "secret123")
+    ny = repo.create_account("ny@e.com", "correct horse battery staple")
     repo.update_profile(ny.id, {"reminderTime": "09:00", "reminderTz": "America/New_York"})
     # 02:00 UTC = 09:00 Jakarta but ~22:00 (prev day) New York → only Jakarta due
     due = repo.due_reminders(datetime(2026, 6, 30, 2, 0, tzinfo=UTC), "UTC")
@@ -63,7 +63,7 @@ def test_two_users_different_timezones():
 
 def test_invalid_tz_falls_back_to_default():
     _, repo = _ctx()
-    u = repo.create_account("c@e.com", "secret123")
+    u = repo.create_account("c@e.com", "correct horse battery staple")
     repo.update_profile(u.id, {"reminderTime": "09:00", "reminderTz": "Not/AZone"})
     now = datetime(2026, 6, 30, 2, 0, tzinfo=UTC)
     assert any(d["email"] == "c@e.com" for d in repo.due_reminders(now, "Asia/Jakarta"))
@@ -79,7 +79,7 @@ def test_run_endpoint_requires_token():
 
 def test_run_sends_once_per_local_day(monkeypatch):
     client, repo = _ctx(token="cron-secret")
-    u = repo.create_account("a@e.com", "secret123")
+    u = repo.create_account("a@e.com", "correct horse battery staple")
     repo.update_profile(u.id, {"reminderTime": "09:00", "reminderTz": "Asia/Jakarta"})
     sent = []
     monkeypatch.setattr(mailer, "send_email", lambda cfg, to, s, b: sent.append(to) or True)

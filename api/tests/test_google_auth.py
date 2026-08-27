@@ -58,7 +58,7 @@ def test_google_link_existing_email_not_new(monkeypatch):
     """Linking to an existing email account is not a new sign-up."""
     _stub_verify(monkeypatch)
     c, repo = _client()
-    repo.create_account("g@user.com", "secret123")  # pre-existing password account
+    repo.create_account("g@user.com", "correct horse battery staple")  # pre-existing password account
     got = c.post("/api/account/google", json={"credential": "x"}).get_json()
     assert got["isNew"] is False
     assert got["hasPassword"] is True  # inherited the email account's password
@@ -69,11 +69,11 @@ def test_google_user_can_set_first_password(monkeypatch):
     _stub_verify(monkeypatch)
     c, _ = _client()
     c.post("/api/account/google", json={"credential": "x"})  # signs in, no password
-    r = c.post("/api/account/password", json={"newPassword": "brandnew123"})
+    r = c.post("/api/account/password", json={"newPassword": "brand-new-passphrase-42"})
     assert r.status_code == 200
     # Can now sign in with email + the new password.
     c.post("/api/account/logout")
-    login = c.post("/api/account/login", json={"email": "g@user.com", "password": "brandnew123"})
+    login = c.post("/api/account/login", json={"email": "g@user.com", "password": "brand-new-passphrase-42"})
     assert login.status_code == 200
 
 
@@ -81,9 +81,9 @@ def test_password_account_still_needs_current(monkeypatch):
     """An account that already has a password must prove the current one to change it."""
     _stub_verify(monkeypatch)
     c, repo = _client()
-    repo.create_account("g@user.com", "secret123")
+    repo.create_account("g@user.com", "correct horse battery staple")
     c.post("/api/account/google", json={"credential": "x"})  # signs into that account
-    bad = c.post("/api/account/password", json={"currentPassword": "wrong", "newPassword": "another123"})
+    bad = c.post("/api/account/password", json={"currentPassword": "wrong", "newPassword": "another-passphrase-42"})
     assert bad.status_code == 401
 
 
@@ -99,7 +99,7 @@ def test_google_login_is_idempotent_by_sub(monkeypatch):
 def test_google_links_to_existing_email_account(monkeypatch):
     _stub_verify(monkeypatch)
     c, repo = _client()
-    existing = repo.create_account("g@user.com", "secret123")  # password account, same email
+    existing = repo.create_account("g@user.com", "correct horse battery staple")  # password account, same email
     got = c.post("/api/account/google", json={"credential": "x"}).get_json()
     assert got["id"] == existing.id  # linked, not duplicated
 

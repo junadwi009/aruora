@@ -34,8 +34,10 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode, onSuccess, onSwitch, o
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || password.length < 6) {
-      setError(t("auth.badCreds"));
+    // WS03-04: new (registered) passwords follow the NIST-style policy the API
+    // enforces — 15+ characters. Login only needs a non-empty password.
+    if (!email.trim() || (isLogin ? password.length < 1 : password.length < 15)) {
+      setError(isLogin ? t("auth.badCreds") : t("auth.passwordTooShort"));
       return;
     }
     setBusy(true);

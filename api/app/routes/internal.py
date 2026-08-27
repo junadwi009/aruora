@@ -40,7 +40,7 @@ def run_reminders():
     # against that user's calendar day.
     for u in repo.due_reminders(now, cfg.REMINDER_DEFAULT_TZ):
         ok = mailer.send_email(
-            cfg, u["email"], "Your IELTS Coach study reminder",
+            cfg, u["email"], "Your ARUORA IELTS study reminder",
             f"Hi {u['name'] or 'there'}, time for today's practice. "
             f"Open {cfg.APP_BASE_URL} and keep your streak alive!",
         )
@@ -49,3 +49,22 @@ def run_reminders():
         sent += 1
         _ = ok
     return jsonify({"sent": sent}), 200
+
+
+@bp.post("/api/internal/maintenance/run")
+def run_maintenance():
+    """WS08-08 — manual/ops trigger for the data-lifecycle sweep (the same
+    sweep the worker-beat schedule runs hourly). Guarded by its own shared
+    secret; empty MAINTENANCE_TOKEN = endpoint disabled (fail closed)."""
+    import hmac as _hmac
+
+    from app.jobs.maintenance import run_maintenance as _sweep
+
+    cfg = _cfg()
+    token = cfg.MAINTENANCE_TOKEN
+    given = request.headers.get("X-Maintenance-Token") or ""
+    if not token or not _hmac.compare_digest(str(given), str(token)):
+        raise ApiError("UNAUTHORIZED", "Invalid maintenance token", 401)
+    counts = _sweep(_repo(), cfg)
+    # Counts only — no learner content, no identifiers.
+    return jsonify({"ok": True, "purged": counts}), 200

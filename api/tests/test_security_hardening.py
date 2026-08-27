@@ -2,8 +2,9 @@
 Security-hardening regression tests (audit remediation).
 
 Covers: SESSION_SECRET fail-closed guard, session-cookie flags, security
-response headers, auth required on the paid-LLM endpoints, the min-8 password
-policy, SVG-avatar rejection, and the in-process rate limiter unit.
+response headers, auth required on the paid-LLM endpoints, the NIST-style
+password policy (WS03-04), SVG-avatar rejection, and the rate-limit
+service unit (WS07-01/02 backend contract).
 """
 import pytest
 from sqlalchemy import create_engine
@@ -14,7 +15,8 @@ from app.config import Config
 from app.data.models import Base
 from app.data.repositories import Repository
 from app.data.seed import seed_all
-from app.ratelimit import RateLimiter, rule_for
+from app.ratelimit import InProcessBackend, RateLimitService, Rule, rule_for
+from app.security.passwords import validate_new_password
 from app.services.llm import LlmGateway
 
 
@@ -83,51 +85,78 @@ def test_llm_endpoints_require_auth(path, body):
 
 def test_llm_endpoint_ok_when_signed_in():
     c = _client()
-    c.post("/api/account/register", json={"email": "a@b.com", "password": "secret123"})
+    c.post("/api/account/register", json={"email": "a@b.com", "password": "correct horse battery staple"})
     assert c.post("/api/reading/generate", json={"band": "B2"}).status_code == 200
 
 
-# ── #10 password policy (min 8) ──────────────────────────────────────────────
+# ── #10 password policy (WS03-04: NIST-style length + local blocklist) ───────
 
 def test_short_password_rejected_on_register():
-    r = _client().post("/api/account/register", json={"email": "x@y.com", "password": "short7!"})
+    r = _client().post("/api/account/register", json={"email": "x@y.com", "password": "short7!pass"})
     assert r.status_code == 422
 
 
-def test_eight_char_password_accepted():
-    r = _client().post("/api/account/register", json={"email": "x@y.com", "password": "eightchr"})
+def test_fifteen_char_password_accepted():
+    r = _client().post("/api/account/register", json={"email": "x@y.com", "password": "eightchr-pass-15"})
     assert r.status_code == 200
+
+
+def test_password_policy_unit():
+    # spaces + unicode allowed, no composition rules
+    assert validate_new_password("correct horse battery staple") == []
+    assert validate_new_password("これはじゅうごもじのパスワード") == []
+    # length floor
+    assert any("15" in p for p in validate_new_password("short12chars!"))
+    # upper bound
+    assert any("128" in p for p in validate_new_password("x" * 129))
+    # local common-password blocklist (privacy-preserving, no external call)
+    assert validate_new_password("password123", min_chars=8) != []
+    # context: never the email name
+    assert any("email" in p for p in validate_new_password("arjuna-jogja-1234", context="arjuna@x.com"))
 
 
 # ── #11 SVG avatar rejected ──────────────────────────────────────────────────
 
 def test_svg_avatar_rejected():
     c = _client()
-    c.post("/api/account/register", json={"email": "a@b.com", "password": "secret123"})
+    c.post("/api/account/register", json={"email": "a@b.com", "password": "correct horse battery staple"})
     r = c.post("/api/account/avatar", json={"dataUrl": "data:image/svg+xml;base64,PHN2Zz48L3N2Zz4="})
     assert r.status_code == 422
     ok = c.post("/api/account/avatar", json={"dataUrl": "data:image/png;base64,aGVsbG8="})
     assert ok.status_code == 200
 
 
-# ── #6 rate limiter unit ─────────────────────────────────────────────────────
+# ── #6 rate-limit service unit (WS07-01/02 backend contract) ─────────────────
+
+_IP_RULE = Rule(3, 60, "ip")
+
 
 def test_rate_limiter_blocks_after_limit():
-    rl = RateLimiter()
-    t = 1000.0
-    # 3 allowed within the window, 4th blocked.
-    assert [rl.check("k", 3, 60, now=t + i * 0.1) for i in range(4)] == [True, True, True, False]
+    rl = InProcessBackend()
+    got = [rl.check("k", 3, 60_000, f"m{i}") for i in range(4)]
+    assert got == [True, True, True, False]
 
 
-def test_rate_limiter_window_slides():
-    rl = RateLimiter()
-    assert rl.check("k", 1, 60, now=1000.0) is True
-    assert rl.check("k", 1, 60, now=1030.0) is False   # still inside the 60s window
-    assert rl.check("k", 1, 60, now=1061.0) is True    # window has passed
+def test_rate_limit_service_denies_with_retry_after():
+    svc = RateLimitService(InProcessBackend())
+    verdicts = [svc.allow(_IP_RULE, ip="1.2.3.4") for _ in range(4)]
+    assert [v.allowed for v in verdicts] == [True, True, True, False]
+    assert verdicts[-1].retry_after >= 1
+
+
+def test_rate_limit_service_credential_dimensions_must_both_allow():
+    svc = RateLimitService(InProcessBackend())
+    # Same IP, different accounts: the IP dimension is the shared budget.
+    for i in range(3):
+        assert svc.allow(_IP_RULE, ip="1.2.3.4", email=f"u{i}@x.com").allowed
+    v = svc.allow(_IP_RULE, ip="1.2.3.4", email="other@x.com")
+    assert not v.allowed
 
 
 def test_rate_limit_rules_cover_credentials_and_llm():
-    assert rule_for("/api/account/login") == (10, 60)
-    assert rule_for("/api/writing/evaluate") == (20, 60)
-    assert rule_for("/api/pronounce/sentence") == (30, 60)
-    assert rule_for("/api/some/other") == (300, 60)     # global default
+    login = rule_for("/api/account/login")
+    assert (login.limit, login.window_sec, login.kind) == (10, 60, "credential")
+    writing = rule_for("/api/writing/evaluate")
+    assert (writing.limit, writing.kind) == (20, "user")
+    default = rule_for("/api/some/other")
+    assert (default.limit, default.window_sec) == (300, 60)

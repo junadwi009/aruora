@@ -13,4 +13,8 @@ ENV HF_HUB_OFFLINE=1
 COPY . .
 EXPOSE 5050
 # --timeout 120: live LLM scoring (strong model + long rubric) can exceed gunicorn's 30s default
-CMD ["sh", "-c", "alembic upgrade head && gunicorn -b 0.0.0.0:5050 --timeout 120 --workers 2 wsgi:app"]
+# WS08-02: migrations run as the DDL/owner credential (MIGRATION_DATABASE_URL,
+# falling back to DATABASE_URL when no role split is configured); the env
+# prefix applies to the alembic command only, so gunicorn keeps the runtime
+# (least-privilege) DATABASE_URL.
+CMD ["sh", "-c", "DATABASE_URL=\"${MIGRATION_DATABASE_URL:-$DATABASE_URL}\" alembic upgrade head && exec gunicorn -b 0.0.0.0:5050 --timeout 120 --workers 2 wsgi:app"]

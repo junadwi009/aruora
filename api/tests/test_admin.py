@@ -32,7 +32,7 @@ def _client(admin_emails=ADMIN):
     return create_app(overrides).test_client(), Repository(Session)
 
 
-def _register(c, email, password="secret123"):
+def _register(c, email, password="correct horse battery staple"):
     return c.post("/api/account/register", json={"email": email, "password": password})
 
 
@@ -102,6 +102,11 @@ def test_admin_deletes_user_but_not_self():
     c.post("/api/account/logout")
     me = _register(c, ADMIN).get_json()
 
+    # WS03-07: destructive actions require fresh reauthentication.
+    assert c.delete(f"/api/admin/users/{rid}").status_code == 403
+    assert c.post("/api/admin/reauth",
+                  json={"password": "correct horse battery staple"}).status_code == 200
+
     # delete another user → gone
     assert c.delete(f"/api/admin/users/{rid}").status_code == 200
     assert "victim@x.com" not in {u["email"] for u in c.get("/api/admin/users").get_json()}
@@ -110,12 +115,33 @@ def test_admin_deletes_user_but_not_self():
     assert c.delete(f"/api/admin/users/{me['id']}").status_code == 400
 
 
+def test_admin_actions_are_audited():
+    c, _ = _client()
+    rid = _register(c, "victim@x.com").get_json()["id"]
+    c.post("/api/account/logout")
+    _register(c, ADMIN)
+    c.post("/api/account/logout")
+    c.post("/api/account/login", json={"email": ADMIN, "password": "correct horse battery staple"})
+    c.post("/api/admin/reauth", json={"password": "correct horse battery staple"})
+    c.delete(f"/api/admin/users/{rid}")
+    actions = {a["action"] for a in c.get("/api/admin/audit").get_json()}
+    assert "delete_user" in actions and "admin.login" in actions
+
+
 def test_admin_triggers_password_reset():
     c, _ = _client()
     rid = _register(c, "alice@x.com").get_json()["id"]
     c.post("/api/account/logout")
     _register(c, ADMIN)
+    assert c.post("/api/admin/reauth",
+                  json={"password": "correct horse battery staple"}).status_code == 200
     assert c.post(f"/api/admin/users/{rid}/reset-password").status_code == 200
+
+
+def test_admin_reauth_rejects_wrong_password():
+    c, _ = _client()
+    _register(c, ADMIN)
+    assert c.post("/api/admin/reauth", json={"password": "wrong-password-here"}).status_code == 401
 
 
 def test_non_admin_cannot_delete():

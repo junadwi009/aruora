@@ -17,6 +17,12 @@ bp = Blueprint("placement", __name__)
 def placement_start():
     repo = _repo()
     out = serve_combo(repo)
+    # WS21 — funnel event (authenticated context when present).
+    try:
+        from app.routes._analytics import emit
+        emit("placement_started")
+    except Exception:  # noqa: BLE001 — analytics is fail-open
+        pass
     return jsonify(
         PlacementStartOut(
             comboId=out["comboId"],
@@ -76,4 +82,10 @@ def placement_submit():
     )
 
     # 7. Validate and return result through PlacementResultOut (wire JSON unchanged)
+    # WS21 — funnel completion events, server-authoritative.
+    from app.routes._analytics import emit
+    emit("placement_completed", user_id=user.id,
+         writing_assessed=writing_band is not None,
+         speaking_assessed=speaking_band is not None)
+    emit("result_viewed", user_id=user.id)
     return jsonify(PlacementResultOut.model_validate(result).model_dump(by_alias=True)), 200

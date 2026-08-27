@@ -1,9 +1,14 @@
 """
 Domain layer — CEFR leveling pure functions.
 No I/O, no DB. All values are fixed project-wide.
+
+CEFR mapping is APPROXIMATE. IELTS and CEFR serve different purposes and
+do not have one-to-one equivalence (per IELTS official guidance).
 """
 
 from __future__ import annotations
+
+from dataclasses import dataclass
 
 BANDS: list[str] = ["A1A2", "B1", "B2", "C1", "C2"]
 
@@ -66,6 +71,31 @@ _BAND_PARAMS: dict[str, dict[str, object]] = {
 }
 
 
+@dataclass(frozen=True)
+class CefrApprox:
+    """
+    Approximate CEFR alignment for an IELTS score.
+
+    Attributes
+    ----------
+    level : str
+        Primary CEFR level (e.g., "B2") or range (e.g., "B2/C1") for borderline.
+    ielts_range : tuple[float, float]
+        IELTS score range this CEFR level typically covers.
+    confidence : str
+        "firm" if well within the level, "borderline" if near a boundary.
+    borderline_with : str | None
+        Adjacent level if borderline, else None.
+    mapping_source : str
+        Source of the mapping (PRD §5.1 / IELTS.org public guidance).
+    """
+    level: str
+    ielts_range: tuple[float, float]
+    confidence: str
+    borderline_with: str | None
+    mapping_source: str = "PRD §5.1; IELTS.org public guidance"
+
+
 def next_band(band: str) -> str:
     """Return the next higher CEFR band, capped at 'C2'."""
     idx = BANDS.index(band)
@@ -73,11 +103,58 @@ def next_band(band: str) -> str:
 
 
 def ielts_to_cefr(score: float) -> str:
-    """Map an IELTS band score to the corresponding CEFR band."""
+    """
+    Map an IELTS band score to the corresponding CEFR band.
+
+    DEPRECATED: This returns a single CEFR level as if it were exact.
+    IELTS and CEFR do not have one-to-one equivalence.
+    Use `ielts_to_cefr_approx` for the approximate alignment with confidence.
+    """
     for threshold, label in _IELTS_THRESHOLDS:
         if score < threshold:
             return label
     return "C2"
+
+
+def ielts_to_cefr_approx(score: float) -> CefrApprox:
+    """
+    Map an IELTS band score to an approximate CEFR alignment with confidence.
+
+    Returns a CefrApprox object containing:
+    - level: primary CEFR level or range (e.g., "B2" or "B2/C1")
+    - ielts_range: the IELTS range for the primary level
+    - confidence: "firm" or "borderline"
+    - borderline_with: adjacent level if borderline, else None
+    - mapping_source: documented source for transparency
+
+    Borderline is defined as within 0.5 band of a CEFR threshold.
+    The level shown is always the lower/upper pair (e.g., "B2/C1").
+    """
+    # Check if score is near any threshold
+    for threshold, label in _IELTS_THRESHOLDS:
+        if abs(score - threshold) <= 0.5:
+            # Threshold sits between 'label' (below) and next level (above)
+            idx = BANDS.index(label)
+            lower = label
+            higher = BANDS[idx + 1] if idx + 1 < len(BANDS) else label
+            
+            low, high = _CEFR_RANGES[lower]
+            return CefrApprox(
+                level=f"{lower}/{higher}",
+                ielts_range=(low, high),
+                confidence="borderline",
+                borderline_with=higher,
+            )
+
+    # Not near any threshold — firm assignment
+    primary = ielts_to_cefr(score)
+    low, high = _CEFR_RANGES[primary]
+    return CefrApprox(
+        level=primary,
+        ielts_range=(low, high),
+        confidence="firm",
+        borderline_with=None,
+    )
 
 
 def cefr_to_ielts(band: str) -> tuple[float, float]:

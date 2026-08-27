@@ -23,8 +23,10 @@ import type {
   Flashcard,
   CardStats,
   AccountUser,
+  AccountSession,
   AdminUser,
   AdminStats,
+  AdminAuditEntry,
 } from "../types";
 
 const BASE = (import.meta as { env?: { VITE_API_BASE?: string } }).env?.VITE_API_BASE ?? "http://localhost:5050";
@@ -51,10 +53,34 @@ export class ApiError extends Error {
   }
 }
 
+// WS03-03 CSRF double-submit: the server sets a JS-readable `ar_csrf` cookie;
+// every unsafe request must echo it in the X-CSRF-Token header. Browsers only
+// let same-origin JS read the cookie, so a cross-site attacker cannot forge it.
+function csrfToken(): string {
+  try {
+    const match = document.cookie.match(/(?:^|;\s*)ar_csrf=([^;]*)/);
+    return match ? decodeURIComponent(match[1]) : "";
+  } catch {
+    return "";
+  }
+}
+
+function csrfHeaders(extra?: HeadersInit): Record<string, string> {
+  const token = csrfToken();
+  const headers: Record<string, string> = { "X-Lang": currentLang() };
+  if (token) headers["X-CSRF-Token"] = token;
+  if (extra) Object.assign(headers, extra);
+  return headers;
+}
+
 async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
+  const method = (opts.method ?? "GET").toUpperCase();
+  const unsafe = method !== "GET" && method !== "HEAD";
   const res = await fetch(BASE + path, {
-    credentials: "include", // send the passcode session cookie when set
-    headers: { "Content-Type": "application/json", "X-Lang": currentLang(), ...(opts.headers ?? {}) },
+    credentials: "include", // send the session cookies
+    headers: unsafe
+      ? csrfHeaders({ "Content-Type": "application/json", ...(opts.headers ?? {}) })
+      : { "Content-Type": "application/json", "X-Lang": currentLang(), ...(opts.headers ?? {}) },
     ...opts,
   });
   const text = await res.text();
@@ -84,7 +110,7 @@ export type GateStatus = {
 async function upload<T>(path: string, form: FormData): Promise<T> {
   const res = await fetch(BASE + path, {
     method: "POST", body: form, credentials: "include",
-    headers: { "X-Lang": currentLang() },
+    headers: csrfHeaders(),
   });
   const text = await res.text();
   const body = text ? (JSON.parse(text) as { error?: { code: string; message: string; details?: unknown } }) : null;
@@ -115,9 +141,19 @@ export const api = {
   accountForgot: (email: string) => post<{ ok: boolean }>("/api/account/forgot", { email }),
   accountReset: (b: { token: string; newPassword: string }) =>
     post<{ ok: boolean }>("/api/account/reset", b),
+  accountVerify: (token: string) => post<{ ok: boolean }>("/api/account/verify", { token }),
+  // WS03-09: session management (devices).
+  accountSessions: () => get<AccountSession[]>("/api/account/sessions"),
+  accountRevokeOtherSessions: () =>
+    request<{ revoked: number }>("/api/account/sessions/others", { method: "DELETE" }),
+  accountRevokeAllSessions: () =>
+    request<{ revoked: number }>("/api/account/sessions", { method: "DELETE" }),
   // Master-admin (only succeeds when the signed-in account is in ADMIN_EMAILS).
   adminUsers: () => get<AdminUser[]>("/api/admin/users"),
   adminStats: () => get<AdminStats>("/api/admin/stats"),
+  // WS03-07: destructive admin actions need a fresh password reauthentication.
+  adminReauth: (b: { password: string }) => post<{ ok: boolean }>("/api/admin/reauth", b),
+  adminAudit: () => get<AdminAuditEntry[]>("/api/admin/audit"),
   adminDeleteUser: (id: number) =>
     request<{ ok: boolean }>(`/api/admin/users/${id}`, { method: "DELETE" }),
   adminResetUser: (id: number) =>

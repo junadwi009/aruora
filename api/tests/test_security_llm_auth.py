@@ -47,7 +47,7 @@ def _app(overrides=None):
 
 def _authed(app):
     c = app.test_client()
-    c.post("/api/account/register", json={"email": "a@b.com", "password": "secret123"})
+    c.post("/api/account/register", json={"email": "a@b.com", "password": "correct horse battery staple"})
     return c
 
 
@@ -147,4 +147,5 @@ def test_transcribe_ok_within_cap(monkeypatch):
 
 def test_transcribe_rate_rule():
     from app.ratelimit import rule_for
-    assert rule_for("/api/speaking/transcribe") == (12, 60)
+    rule = rule_for("/api/speaking/transcribe")
+    assert (rule.limit, rule.window_sec) == (12, 60)

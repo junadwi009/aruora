@@ -12,7 +12,9 @@ from flask import Blueprint, jsonify, request
 from app.domain.lesson_plan import current_day, pick_focus
 from app.errors import ApiError
 from app.routes._deps import _cfg, _gateway, _lang, _repo, _uid, _require_uid
-from app.routes._gencap import cap_reached, note_generation, GEN_CAP_CODE
+from app.routes._gencap import cap_reached, note_generation, public_result, check_band, GEN_CAP_CODE
+from app.schemas import LessonGenerateIn
+from app.validation import parse_body
 
 bp = Blueprint("lesson", __name__)
 
@@ -51,15 +53,15 @@ def lesson_today():
 
 @bp.post("/api/lesson/generate")
 def lesson_generate():
-    body = request.get_json(force=True) or {}
+    body = parse_body(LessonGenerateIn)
     repo = _repo()
     uid = _require_uid()
 
     t_day, t_focus, t_band = _today_plan(uid)
-    day = int(body.get("day") or t_day)
-    focus = body.get("focus") or t_focus
-    band = body.get("band") or t_band
-    force = bool(body.get("force"))
+    day = body.day or t_day
+    focus = body.focus or t_focus
+    band = body.band or t_band
+    force = body.force
 
     cached = repo.get_lesson(uid, day)
     if cached and not force:
@@ -68,10 +70,15 @@ def lesson_generate():
 
     if cap_reached(uid, repo, _cfg()):
         raise ApiError(GEN_CAP_CODE, "Daily generation limit reached", 429)
-    lesson = _gateway().generate("lesson", skill=focus, band=band, lang=_lang(), day=day, focus=focus, tasks=focus)
+    lesson = _gateway().generate(
+        "lesson", skill=focus, band=check_band(band), lang=_lang(),
+        day=str(day), focus=str(focus)[:_cfg().MAX_LESSON_FIELD_CHARS],
+        tasks=str(focus)[:_cfg().MAX_LESSON_FIELD_CHARS],
+    )
     note_generation(uid, repo)
-    repo.save_lesson(uid, day, lesson, focus)
-    return jsonify({"day": day, "focus": focus, "skill": focus, "band": band, "lesson": lesson}), 200
+    clean = public_result(lesson)
+    repo.save_lesson(uid, day, clean, focus)
+    return jsonify({"day": day, "focus": focus, "skill": focus, "band": band, "lesson": clean}), 200
 
 
 @bp.get("/api/lesson/<int:day>")

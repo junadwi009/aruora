@@ -21,7 +21,7 @@ def _client(overrides=None):
     cfg.update(overrides or {})
     app = create_app(cfg)
     c = app.test_client()
-    c.post("/api/account/register", json={"email": "u@example.com", "password": "secret123"})
+    c.post("/api/account/register", json={"email": "u@example.com", "password": "correct horse battery staple"})
     return c
 
 
@@ -86,7 +86,7 @@ def test_unlock_is_idempotent_no_duplicate_feedback():
 
     # register a second, admin account (same client — cookie jar switches session)
     c.post("/api/account/logout")
-    c.post("/api/account/register", json={"email": "admin@example.com", "password": "secret123"})
+    c.post("/api/account/register", json={"email": "admin@example.com", "password": "correct horse battery staple"})
     rows = c.get("/api/admin/feedback").get_json()
     assert len([r for r in rows if r["stars"] == 4]) == 1
     assert not any(r["stars"] == 2 for r in rows)
@@ -101,7 +101,7 @@ def test_gate_state_is_per_user():
 
     # switch to a second account on the same client
     c.post("/api/account/logout")
-    c.post("/api/account/register", json={"email": "second@example.com", "password": "secret123"})
+    c.post("/api/account/register", json={"email": "second@example.com", "password": "correct horse battery staple"})
     j2 = c.get("/api/gate/status").get_json()
     assert j2["activeSeconds"] == 0
     assert j2["locked"] is False

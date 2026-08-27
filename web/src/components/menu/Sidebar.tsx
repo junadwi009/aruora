@@ -62,10 +62,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ levels }) => {
           <BookOpen size={16} className="text-white" />
         </div>
         <span
-          className="text-lg font-bold text-[var(--color-text)] tracking-tight"
+          className="aruora-wordmark text-base font-bold text-[var(--color-text)]"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          IELTS Coach
+          ARUORA
         </span>
       </div>
 

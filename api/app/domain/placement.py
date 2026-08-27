@@ -10,7 +10,7 @@ from __future__ import annotations
 import random
 import re
 
-from app.domain.leveling import BANDS, cefr_to_ielts, ielts_to_cefr
+from app.domain.leveling import BANDS, cefr_to_ielts, ielts_to_cefr, ielts_to_cefr_approx
 from app.domain.scoring import locator_band, overall_band
 
 
@@ -182,15 +182,36 @@ def grade_placement(
         "speaking": s_num,
     })
 
+    # Compute approximate CEFR for each skill (with confidence/borderline)
+    l_cefr_approx = ielts_to_cefr_approx(l_num)
+    r_cefr_approx = ielts_to_cefr_approx(r_num)
+    w_cefr_approx = ielts_to_cefr_approx(w_num) if writing_band is not None else None
+    s_cefr_approx = ielts_to_cefr_approx(s_num) if speaking_band is not None else None
+    overall_cefr_approx = ielts_to_cefr_approx(ob)
+
     per_skill: dict = {
         "listening": {
             "cefr": l_cefr,
+            "cefrApprox": {
+                "level": l_cefr_approx.level,
+                "confidence": l_cefr_approx.confidence,
+                "borderlineWith": l_cefr_approx.borderline_with,
+                "ieltsRange": l_cefr_approx.ielts_range,
+                "mappingSource": l_cefr_approx.mapping_source,
+            },
             "ieltsApprox": l_num,
             "raw": l_raw,
             "confidence": l_conf,
         },
         "reading": {
             "cefr": r_cefr,
+            "cefrApprox": {
+                "level": r_cefr_approx.level,
+                "confidence": r_cefr_approx.confidence,
+                "borderlineWith": r_cefr_approx.borderline_with,
+                "ieltsRange": r_cefr_approx.ielts_range,
+                "mappingSource": r_cefr_approx.mapping_source,
+            },
             "ieltsApprox": r_num,
             "raw": r_raw,
             "confidence": r_conf,
@@ -209,14 +230,35 @@ def grade_placement(
     if writing_band is None:
         per_skill["writing"]["assessed"] = False
         per_skill["writing"]["confidence"] = "low"
+        per_skill["writing"]["cefrApprox"] = {
+            "level": w_cefr_approx.level if w_cefr_approx else "unassessed",
+            "confidence": "low",
+            "borderlineWith": None,
+            "ieltsRange": [0, 0],
+            "mappingSource": "estimated from L/R",
+        }
     if speaking_band is None:
         per_skill["speaking"]["assessed"] = False
         per_skill["speaking"]["confidence"] = "low"
+        per_skill["speaking"]["cefrApprox"] = {
+            "level": s_cefr_approx.level if s_cefr_approx else "unassessed",
+            "confidence": "low",
+            "borderlineWith": None,
+            "ieltsRange": [0, 0],
+            "mappingSource": "estimated from L/R",
+        }
 
     return {
         "perSkill": per_skill,
         "overallBand": ob,
         "cefr": ielts_to_cefr(ob),
+        "cefrApprox": {
+            "level": overall_cefr_approx.level,
+            "confidence": overall_cefr_approx.confidence,
+            "borderlineWith": overall_cefr_approx.borderline_with,
+            "ieltsRange": overall_cefr_approx.ielts_range,
+            "mappingSource": overall_cefr_approx.mapping_source,
+        },
         "gapToTarget": round(target_band - ob, 2),
     }
 

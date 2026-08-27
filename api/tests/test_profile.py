@@ -37,20 +37,20 @@ def test_avatar_rejects_non_image(client_with_seed):
 def test_change_password(client_with_seed):
     # conftest registered tester@example.com / secret123
     bad = client_with_seed.post("/api/account/password",
-                                json={"currentPassword": "wrong", "newPassword": "newsecret1"})
+                                json={"currentPassword": "wrong", "newPassword": "brand-new-passphrase-43"})
     assert bad.status_code == 401
 
     short = client_with_seed.post("/api/account/password",
-                                  json={"currentPassword": "secret123", "newPassword": "abc"})
+                                  json={"currentPassword": "correct horse battery staple", "newPassword": "abc"})
     assert short.status_code == 422
 
     ok = client_with_seed.post("/api/account/password",
-                               json={"currentPassword": "secret123", "newPassword": "newsecret1"})
+                               json={"currentPassword": "correct horse battery staple", "newPassword": "brand-new-passphrase-43"})
     assert ok.status_code == 200
 
     # old password no longer works; new one does
     client_with_seed.post("/api/account/logout")
     assert client_with_seed.post("/api/account/login",
-                                 json={"email": "tester@example.com", "password": "secret123"}).status_code == 401
+                                 json={"email": "tester@example.com", "password": "correct horse battery staple"}).status_code == 401
     assert client_with_seed.post("/api/account/login",
-                                 json={"email": "tester@example.com", "password": "newsecret1"}).status_code == 200
+                                 json={"email": "tester@example.com", "password": "brand-new-passphrase-43"}).status_code == 200

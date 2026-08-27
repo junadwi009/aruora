@@ -23,6 +23,16 @@ def _cfg():
     return current_app.config["APP_CONFIG"]
 
 
+def _jobs():
+    """WS07 JobService (None on the bare health-test path)."""
+    return current_app.config.get("JOBS")
+
+
+def _concurrency():
+    """WS07 per-user heavy-op concurrency guard (None on the bare path)."""
+    return current_app.config.get("CONCURRENCY")
+
+
 def _lang() -> str:
     """UI language for this request, from the X-Lang header. 'id' or 'en'.
 

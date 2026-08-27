@@ -22,6 +22,25 @@ def test_onboarding_validation_422(client_with_seed):
     assert r.get_json()["error"]["code"] == "VALIDATION"
 
 
+def test_onboarding_exam_month_normalized(client_with_seed):
+    """WS23: optional exam month (YYYY-MM) is stored as a full ISO date."""
+    r = client_with_seed.post(
+        "/api/onboarding",
+        json={"name": "A", "goal": "work", "targetBand": 6.5, "examDate": "2027-03"},
+    )
+    assert r.status_code == 200
+    me = client_with_seed.get("/api/account/me").get_json()
+    assert me["examDate"] == "2027-03-01"
+
+
+def test_onboarding_exam_month_bad_format_422(client_with_seed):
+    r = client_with_seed.post(
+        "/api/onboarding",
+        json={"name": "A", "goal": "work", "targetBand": 6.5, "examDate": "March 2027"},
+    )
+    assert r.status_code == 422
+
+
 def test_submit_seeds_skill_levels(client_with_seed):
     client_with_seed.post("/api/onboarding", json={"name": "A", "goal": "work", "targetBand": 6.5})
     start = client_with_seed.post("/api/placement/start", json={}).get_json()
