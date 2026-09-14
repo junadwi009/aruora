@@ -4,7 +4,7 @@ pydantic==2.13.4
 sqlalchemy==2.0.52
 alembic==1.14.0
 psycopg[binary]==3.2.13
-flask-cors==5.0.0
+flask-cors==6.0.5
 # tz database for zoneinfo (per-user reminder timezone); slim Linux + Windows lack it
 # (2026.3: fakeredis/celery resolver requires >=2025.x)
 tzdata==2026.3
