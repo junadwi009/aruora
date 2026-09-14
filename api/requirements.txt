@@ -19,7 +19,7 @@ fakeredis==2.37.1
 google-auth==2.35.0
 # WS03-04: preferred password hashing backend (Argon2id)
 argon2-cffi==25.1.0
-pytest==8.3.3
+pytest==9.1.1
 openai==1.59.6
 # Phase 2b-1: deterministic essay-quality metrics
 # Note: textstat 0.7.4 requires pkg_resources (removed in setuptools 82+); use 0.7.13+
