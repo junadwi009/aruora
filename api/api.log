@@ -1,0 +1,160 @@
+ * Serving Flask app 'app'
+ * Debug mode: off
+2026-08-28 05:09:54,185 INFO werkzeug [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5050
+ * Running on http://192.168.42.76:5050
+2026-08-28 05:09:54,185 INFO werkzeug [33mPress CTRL+C to quit[0m
+2026-08-28 05:09:55,423 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:09:55] "GET /api/health HTTP/1.1" 200 -
+2026-08-28 05:11:24,573 INFO app.http http_request
+2026-08-28 05:11:24,574 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:11:24] "POST /api/account/login HTTP/1.1" 200 -
+2026-08-28 05:11:26,837 INFO app.http http_request
+2026-08-28 05:11:26,837 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:11:26] "GET /api/history/readiness HTTP/1.1" 200 -
+2026-08-28 05:11:29,033 INFO app.http http_request
+2026-08-28 05:11:29,034 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:11:29] "GET /api/stats/trends HTTP/1.1" 200 -
+2026-08-28 05:11:31,205 INFO app.http http_request
+2026-08-28 05:11:31,205 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:11:31] "GET /api/cards HTTP/1.1" 200 -
+2026-08-28 05:11:33,368 INFO app.http http_request
+2026-08-28 05:11:33,368 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:11:33] "GET /api/stats/activity HTTP/1.1" 200 -
+2026-08-28 05:11:35,523 INFO app.http http_request
+2026-08-28 05:11:35,524 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:11:35] "GET /api/mocks HTTP/1.1" 200 -
+2026-08-28 05:12:22,108 INFO app.http http_request
+2026-08-28 05:12:22,108 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:12:22] "OPTIONS /api/auth/status HTTP/1.1" 200 -
+2026-08-28 05:12:22,124 INFO app.http http_request
+2026-08-28 05:12:22,124 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:12:22] "OPTIONS /api/auth/status HTTP/1.1" 200 -
+2026-08-28 05:12:22,653 INFO app.http http_request
+2026-08-28 05:12:22,653 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:12:22] "GET /api/auth/status HTTP/1.1" 200 -
+2026-08-28 05:12:22,765 INFO app.http http_request
+2026-08-28 05:12:22,765 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:12:22] "GET /api/auth/status HTTP/1.1" 200 -
+2026-08-28 05:12:22,778 INFO app.http http_request
+2026-08-28 05:12:22,779 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:12:22] "OPTIONS /api/skill-levels HTTP/1.1" 200 -
+2026-08-28 05:12:23,089 INFO app.http http_request
+2026-08-28 05:12:23,090 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:12:23] "GET /api/skill-levels HTTP/1.1" 200 -
+2026-08-28 05:12:23,092 INFO app.http http_request
+2026-08-28 05:12:23,093 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:12:23] "OPTIONS /api/gate/status HTTP/1.1" 200 -
+2026-08-28 05:12:23,094 INFO app.http http_request
+2026-08-28 05:12:23,096 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:12:23] "OPTIONS /api/skill-levels HTTP/1.1" 200 -
+2026-08-28 05:12:23,099 INFO app.http http_request
+2026-08-28 05:12:23,102 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:12:23] "OPTIONS /api/gate/status HTTP/1.1" 200 -
+2026-08-28 05:12:23,299 INFO app.http http_request
+2026-08-28 05:12:23,299 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:12:23] "GET /api/gate/status HTTP/1.1" 200 -
+2026-08-28 05:12:23,533 INFO app.http http_request
+2026-08-28 05:12:23,533 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:12:23] "GET /api/skill-levels HTTP/1.1" 200 -
+2026-08-28 05:12:23,733 INFO app.http http_request
+2026-08-28 05:12:23,734 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:12:23] "GET /api/gate/status HTTP/1.1" 200 -
+2026-08-28 05:12:58,621 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:12:58] "GET /api/health HTTP/1.1" 200 -
+2026-08-28 05:12:58,866 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:12:58] "GET /api/health HTTP/1.1" 200 -
+2026-08-28 05:13:27,720 INFO app.http http_request
+2026-08-28 05:13:27,721 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:27] "OPTIONS /api/account/login HTTP/1.1" 200 -
+2026-08-28 05:13:28,099 INFO app.http http_request
+2026-08-28 05:13:28,099 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:28] "POST /api/account/login HTTP/1.1" 200 -
+2026-08-28 05:13:28,711 INFO app.http http_request
+2026-08-28 05:13:28,712 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:28] "GET /api/stats/activity HTTP/1.1" 200 -
+2026-08-28 05:13:28,812 INFO app.http http_request
+2026-08-28 05:13:28,813 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:28] "GET /api/program/milestones HTTP/1.1" 200 -
+2026-08-28 05:13:28,816 INFO app.http http_request
+2026-08-28 05:13:28,817 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:28] "GET /api/account/me HTTP/1.1" 200 -
+2026-08-28 05:13:28,911 INFO app.http http_request
+2026-08-28 05:13:28,912 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:28] "GET /api/stats/activity HTTP/1.1" 200 -
+2026-08-28 05:13:29,055 INFO app.http http_request
+2026-08-28 05:13:29,056 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:29] "GET /api/skill-levels HTTP/1.1" 200 -
+2026-08-28 05:13:29,160 INFO app.http http_request
+2026-08-28 05:13:29,160 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:29] "GET /api/program/milestones HTTP/1.1" 200 -
+2026-08-28 05:13:29,257 INFO app.http http_request
+2026-08-28 05:13:29,257 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:29] "GET /api/skill-levels HTTP/1.1" 200 -
+2026-08-28 05:13:29,334 INFO app.http http_request
+2026-08-28 05:13:29,335 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:29] "GET /api/account/me HTTP/1.1" 200 -
+2026-08-28 05:13:35,046 INFO app.http http_request
+2026-08-28 05:13:35,047 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:35] "GET /api/practice/set?skill=reading&band=B2 HTTP/1.1" 200 -
+2026-08-28 05:13:35,457 INFO app.http http_request
+2026-08-28 05:13:35,457 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:35] "GET /api/practice/set?skill=reading&band=B2 HTTP/1.1" 200 -
+2026-08-28 05:13:36,789 INFO app.http http_request
+2026-08-28 05:13:36,790 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:36] "GET /api/practice/set?skill=listening&band=B1 HTTP/1.1" 200 -
+2026-08-28 05:13:37,057 INFO app.http http_request
+2026-08-28 05:13:37,057 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:37] "GET /api/practice/set?skill=listening&band=B1 HTTP/1.1" 200 -
+2026-08-28 05:13:37,378 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:37] "GET /api/health HTTP/1.1" 200 -
+2026-08-28 05:13:37,779 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:37] "GET /api/health HTTP/1.1" 200 -
+2026-08-28 05:13:39,490 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:39] "GET /api/health HTTP/1.1" 200 -
+2026-08-28 05:13:39,767 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:39] "GET /api/health HTTP/1.1" 200 -
+2026-08-28 05:13:42,957 INFO app.http http_request
+2026-08-28 05:13:42,957 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:42] "GET /api/cards HTTP/1.1" 200 -
+2026-08-28 05:13:43,392 INFO app.http http_request
+2026-08-28 05:13:43,392 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:43] "GET /api/cards HTTP/1.1" 200 -
+2026-08-28 05:13:46,366 INFO app.http http_request
+2026-08-28 05:13:46,367 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:46] "GET /api/skill-levels HTTP/1.1" 200 -
+2026-08-28 05:13:46,446 INFO app.http http_request
+2026-08-28 05:13:46,446 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:46] "GET /api/account/me HTTP/1.1" 200 -
+2026-08-28 05:13:46,601 INFO app.http http_request
+2026-08-28 05:13:46,601 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:46] "GET /api/skill-levels HTTP/1.1" 200 -
+2026-08-28 05:13:46,845 INFO app.http http_request
+2026-08-28 05:13:46,845 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:46] "GET /api/account/me HTTP/1.1" 200 -
+2026-08-28 05:13:47,601 INFO app.http http_request
+2026-08-28 05:13:47,602 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:47] "GET /api/tips/reading HTTP/1.1" 200 -
+2026-08-28 05:13:49,279 INFO app.http http_request
+2026-08-28 05:13:49,279 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:49] "GET /api/stats/trends HTTP/1.1" 200 -
+2026-08-28 05:13:49,357 INFO app.http http_request
+2026-08-28 05:13:49,357 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:49] "GET /api/mocks HTTP/1.1" 200 -
+2026-08-28 05:13:49,436 INFO app.http http_request
+2026-08-28 05:13:49,436 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:49] "GET /api/history/attempts HTTP/1.1" 200 -
+2026-08-28 05:13:49,523 INFO app.http http_request
+2026-08-28 05:13:49,523 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:49] "GET /api/stats/trends HTTP/1.1" 200 -
+2026-08-28 05:13:49,679 INFO app.http http_request
+2026-08-28 05:13:49,679 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:49] "GET /api/mocks HTTP/1.1" 200 -
+2026-08-28 05:13:49,790 INFO app.http http_request
+2026-08-28 05:13:49,791 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:13:49] "GET /api/history/attempts HTTP/1.1" 200 -
+2026-08-28 05:14:07,045 INFO app.http http_request
+2026-08-28 05:14:07,045 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:14:07] "GET /api/skill-levels HTTP/1.1" 200 -
+2026-08-28 05:14:07,301 INFO app.http http_request
+2026-08-28 05:14:07,302 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:14:07] "GET /api/account/me HTTP/1.1" 200 -
+2026-08-28 05:14:07,423 INFO app.http http_request
+2026-08-28 05:14:07,423 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:14:07] "GET /api/skill-levels HTTP/1.1" 200 -
+2026-08-28 05:14:07,702 INFO app.http http_request
+2026-08-28 05:14:07,702 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:14:07] "GET /api/account/me HTTP/1.1" 200 -
+2026-08-28 05:14:13,967 INFO app.http http_request
+2026-08-28 05:14:13,967 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:14:13] "GET /api/tips/speaking HTTP/1.1" 200 -
+2026-08-28 05:14:14,189 INFO app.http http_request
+2026-08-28 05:14:14,190 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:14:14] "GET /api/tips/writing HTTP/1.1" 200 -
+2026-08-28 05:14:15,456 INFO app.http http_request
+2026-08-28 05:14:15,457 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:14:15] "GET /api/tips/listening HTTP/1.1" 200 -
+2026-08-28 05:14:16,700 INFO app.http http_request
+2026-08-28 05:14:16,700 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:14:16] "GET /api/tips/reading HTTP/1.1" 200 -
+2026-08-28 05:14:20,448 INFO app.http http_request
+2026-08-28 05:14:20,450 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:14:20] "GET /api/account/me HTTP/1.1" 200 -
+2026-08-28 05:14:20,692 INFO app.http http_request
+2026-08-28 05:14:20,692 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:14:20] "GET /api/program/milestones HTTP/1.1" 200 -
+2026-08-28 05:14:20,858 INFO app.http http_request
+2026-08-28 05:14:20,859 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:14:20] "GET /api/account/me HTTP/1.1" 200 -
+2026-08-28 05:14:21,182 INFO app.http http_request
+2026-08-28 05:14:21,183 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:14:21] "GET /api/program/milestones HTTP/1.1" 200 -
+2026-08-28 05:14:21,354 INFO app.http http_request
+2026-08-28 05:14:21,354 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:14:21] "GET /api/account/me HTTP/1.1" 200 -
+2026-08-28 05:14:21,868 INFO app.http http_request
+2026-08-28 05:14:21,869 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:14:21] "GET /api/account/me HTTP/1.1" 200 -
+2026-08-28 05:14:21,916 INFO app.http http_request
+2026-08-28 05:14:21,917 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:14:21] "OPTIONS /api/account/sessions HTTP/1.1" 200 -
+2026-08-28 05:14:22,239 INFO app.http http_request
+2026-08-28 05:14:22,240 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:14:22] "OPTIONS /api/account/sessions HTTP/1.1" 200 -
+2026-08-28 05:14:22,280 INFO app.http http_request
+2026-08-28 05:14:22,280 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:14:22] "GET /api/account/me HTTP/1.1" 200 -
+2026-08-28 05:14:22,358 INFO app.http http_request
+2026-08-28 05:14:22,358 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:14:22] "GET /api/account/sessions HTTP/1.1" 200 -
+2026-08-28 05:14:22,704 INFO app.http http_request
+2026-08-28 05:14:22,704 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:14:22] "GET /api/account/me HTTP/1.1" 200 -
+2026-08-28 05:14:22,768 INFO app.http http_request
+2026-08-28 05:14:22,768 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:14:22] "GET /api/account/sessions HTTP/1.1" 200 -
+2026-08-28 05:14:23,093 INFO app.http http_request
+2026-08-28 05:14:23,093 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:14:23] "GET /api/account/me HTTP/1.1" 200 -
+2026-08-28 05:14:23,503 INFO app.http http_request
+2026-08-28 05:14:23,503 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:14:23] "GET /api/account/me HTTP/1.1" 200 -
+2026-08-28 05:14:25,995 INFO app.http http_request
+2026-08-28 05:14:25,995 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:14:25] "GET /api/program/milestones HTTP/1.1" 200 -
+2026-08-28 05:14:26,092 INFO app.http http_request
+2026-08-28 05:14:26,092 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:14:26] "GET /api/account/me HTTP/1.1" 200 -
+2026-08-28 05:14:26,190 INFO app.http http_request
+2026-08-28 05:14:26,191 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:14:26] "GET /api/stats/activity HTTP/1.1" 200 -
+2026-08-28 05:14:26,294 INFO app.http http_request
+2026-08-28 05:14:26,294 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:14:26] "GET /api/program/milestones HTTP/1.1" 200 -
+2026-08-28 05:14:26,380 INFO app.http http_request
+2026-08-28 05:14:26,380 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:14:26] "GET /api/account/me HTTP/1.1" 200 -
+2026-08-28 05:14:26,536 INFO app.http http_request
+2026-08-28 05:14:26,536 INFO werkzeug 127.0.0.1 - - [28/Aug/2026 05:14:26] "GET /api/stats/activity HTTP/1.1" 200 -
