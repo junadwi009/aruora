@@ -204,13 +204,13 @@ def test_contracts_reject_invalid_shapes_before_llm_or_db():
                   json={"skill": "reading", "band": 7.0, "correct": 9, "total": 2}
                   ).status_code == 422
 
-    # mock scores must be IELTS half-bands in [0, 9]
+    # Legacy mock submission protocol is retired in v1.2.
     assert c.post("/api/mocks",
                   json={"listening": 6.0, "reading": 7.0, "overall": 7.3}
-                  ).status_code == 422
+                  ).status_code == 410
     assert c.post("/api/mocks",
                   json={"listening": 12.0, "reading": 7.0, "overall": 6.5}
-                  ).status_code == 422
+                  ).status_code == 410
 
     # vocab topic ceiling (LLM prompt input bound)
     assert c.post("/api/vocab", json={"topic": "x" * 300}).status_code == 422
@@ -292,6 +292,8 @@ def test_health_detail_is_admin_only():
     anon = c.get("/api/admin/health/detail")
     assert anon.status_code in (401, 403)
     c.post("/api/account/register", json={"email": "admin@x.com", "password": PW})
+    admin_id = c.get("/api/account/me").get_json()["id"]
+    c.application.config["REPO"].set_email_verified(admin_id, True)
     r = c.get("/api/admin/health/detail")
     assert r.status_code == 200
     body = r.get_json()

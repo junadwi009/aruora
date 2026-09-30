@@ -329,7 +329,7 @@ def upgrade() -> None:
     for table, col, referent, target, make_not_null in _CHILD_TABLES:
         if dialect == "postgresql":
             for name in _pg_fk_names(inspector, table, col):
-                op.drop_constraint(name, table, type_="foreign_key")
+                op.drop_constraint(name, table, type_="foreignkey")
             if make_not_null:
                 op.alter_column(table, col, existing_type=sa.Integer(), nullable=False)
             op.create_foreign_key(
@@ -364,7 +364,7 @@ def downgrade() -> None:
     for table, col, referent, _target, make_not_null in reversed(_CHILD_TABLES):
         if dialect == "postgresql":
             for name in _pg_fk_names(inspector, table, col):
-                op.drop_constraint(name, table, type_="foreign_key")
+                op.drop_constraint(name, table, type_="foreignkey")
             if make_not_null:
                 op.alter_column(table, col, existing_type=sa.Integer(), nullable=True)
             op.create_foreign_key(

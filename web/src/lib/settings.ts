@@ -1,67 +1,11 @@
-// Theme + accessible-font preferences, persisted in localStorage and applied to
-// <html> (the .dark class + --font-* overrides defined in app.css / fonts.css).
-
-export type Theme = "light" | "dark";
-export type Font = "default" | "dyslexic" | "hyperlegible";
-
-const THEME_KEY = "ielts.theme";
-const FONT_KEY = "ielts.font";
-
-// Each non-default font overrides BOTH the UI and reading stacks (all four
-// families are already bundled via fonts.css — nothing here is wasted).
-// Each non-default font overrides the UI, reading, AND display stacks so an
-// a11y font applies to headings too (accessibility wins over the brand face).
-const FONT_STACKS: Record<Exclude<Font, "default">, { ui: string; reading: string }> = {
-  dyslexic: {
-    ui: '"OpenDyslexic", "Atkinson Hyperlegible", system-ui, sans-serif',
-    reading: '"OpenDyslexic", "Atkinson Hyperlegible", system-ui, sans-serif',
-  },
-  hyperlegible: {
-    ui: '"Atkinson Hyperlegible", system-ui, sans-serif',
-    reading: '"Atkinson Hyperlegible", system-ui, sans-serif',
-  },
-};
-
-export function getTheme(): Theme {
-  return localStorage.getItem(THEME_KEY) === "dark" ? "dark" : "light";
-}
-
-export function getFont(): Font {
-  const f = localStorage.getItem(FONT_KEY);
-  return f === "dyslexic" || f === "hyperlegible" ? f : "default";
-}
-
-export function applyTheme(theme: Theme): void {
-  document.documentElement.classList.toggle("dark", theme === "dark");
-}
-
-export function applyFont(font: Font): void {
-  const root = document.documentElement.style;
-  if (font === "default") {
-    root.removeProperty("--font-ui");
-    root.removeProperty("--font-reading");
-    root.removeProperty("--font-display");
-    return;
-  }
-  const stack = FONT_STACKS[font];
-  root.setProperty("--font-ui", stack.ui);
-  root.setProperty("--font-reading", stack.reading);
-  // Headings/brand follow the a11y font too (falls back to the brand face when default).
-  root.setProperty("--font-display", stack.ui);
-}
-
-export function setTheme(theme: Theme): void {
-  localStorage.setItem(THEME_KEY, theme);
-  applyTheme(theme);
-}
-
-export function setFont(font: Font): void {
-  localStorage.setItem(FONT_KEY, font);
-  applyFont(font);
-}
-
-/** Apply persisted preferences — call once at app boot. */
-export function applySettings(): void {
-  applyTheme(getTheme());
-  applyFont(getFont());
-}
+export type Theme="light"|"dark";
+export type Font="default"|"dyslexic"|"hyperlegible";
+function read(key:string){try{return localStorage.getItem(key);}catch{return null;}}
+function save(key:string,value:string){try{localStorage.setItem(key,value);}catch{/* preferences still apply this session */}}
+export function getTheme():Theme{return read("ielts.theme")==="dark"?"dark":"light";}
+export function getFont():Font{const v=read("ielts.font");return v==="dyslexic"||v==="hyperlegible"?v:"default";}
+export function applyTheme(t:Theme){document.documentElement.classList.toggle("dark",t==="dark");}
+export function applyFont(f:Font){const s=document.documentElement.style;for(const k of ["--font-ui","--font-reading","--font-display"]){if(f==="default")s.removeProperty(k);else s.setProperty(k,f==="dyslexic"?'"OpenDyslexic", "Atkinson Hyperlegible", system-ui, sans-serif':'"Atkinson Hyperlegible", system-ui, sans-serif');}}
+export function setTheme(t:Theme){save("ielts.theme",t);applyTheme(t);}
+export function setFont(f:Font){save("ielts.font",f);applyFont(f);}
+export function applySettings(){applyTheme(getTheme());applyFont(getFont());}

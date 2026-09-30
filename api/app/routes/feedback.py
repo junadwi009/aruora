@@ -21,8 +21,10 @@ MIN_INSIGHT = 20
 
 
 def _is_admin_uid(uid) -> bool:
+    from app.security.audit_integrity import admin_session
+    from app.session import current_session
     u = _repo().get_user_by_id(uid) if uid else None
-    return bool(u and _is_admin_email(u.email))
+    return admin_session(u, current_session(), _cfg())
 
 
 def _locked(cfg, gate: dict, is_admin: bool) -> bool:

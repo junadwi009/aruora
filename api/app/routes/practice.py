@@ -1,71 +1,72 @@
-"""
-POST /api/practice/generate  — stub job submission (synchronous, seed sets).
-GET  /api/practice/status    — always done=True, progress=100 (stub).
-GET  /api/practice/set       — serve a generated set by skill + optional band.
-"""
+"""v1.2 practice session + answer submission; browser scores are rejected."""
 from flask import Blueprint, jsonify, request
-
 from app.errors import ApiError
-from app.schemas import GenerateJobOut, JobStatusOut, PracticeAttemptIn
-from app.routes._deps import _repo, _require_uid
-from app.validation import parse_body
+from app.routes._deps import _repo, _require_uid, _cfg, _jobs
+from app.services import practice_integrity as integrity
+from app.services.task_pool import serve_next
 
 bp = Blueprint("practice", __name__)
 
 
-@bp.post("/api/practice/generate")
-def practice_generate():
-    return jsonify(GenerateJobOut(jobId="stub-1").model_dump(by_alias=True)), 200
+def start_for(skill, band):
+    uid = _require_uid()
+    repo, cfg = _repo(), _cfg()
+    if skill not in integrity.SKILLS or band not in integrity.LEVELS:
+        raise ApiError("VALIDATION", "Unsupported practice skill or level", 422)
+    served = serve_next(skill, band, uid, repo, cfg)
+    if served is None:
+        # Replenishment remains system-budgeted/idempotent. No paid work inline.
+        jobs = _jobs()
+        if jobs is not None and getattr(jobs, "mode", "inline") == "queued":
+            from app.routes._gencap import today_utc
+            try:
+                jobs.enqueue("replenish_pool", queue="llm_generate",
+                             payload={"skill": skill, "band": band},
+                             idempotency_key=f"{skill}:{band}:{today_utc()}")
+            except ApiError:
+                pass
+        raise ApiError("POOL_EMPTY", "Practice content is being prepared; try again later", 503)
+    return integrity.start(repo.session_factory, uid, skill, served["servedFrom"]["band"],
+                           served["payload"], repeat=served["repeat"])
 
 
-@bp.get("/api/practice/status")
-def practice_status():
-    return jsonify(JobStatusOut(done=True, progress=100).model_dump(by_alias=True)), 200
+@bp.post("/api/practice/start")
+def practice_start():
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict) or not set(body) <= {"skill", "band"}:
+        raise ApiError("VALIDATION", "Invalid practice request", 422)
+    skill = body.get("skill")
+    return jsonify(start_for(skill, body.get("band") or "B1")), 200
 
 
 @bp.post("/api/practice/attempt")
 def practice_attempt():
-    """Persist a Reading/Listening practice score so it shows in Progress trends."""
-    b = parse_body(PracticeAttemptIn)
-    skill = b.skill
-    correct, total = b.correct, b.total
-    band = float(b.band)
-    saved_id = _repo().save_attempt(
-        _require_uid(),
-        type=skill,
-        task=f"{correct}/{total}",
-        prompt=b.title or "",
-        body="",
-        bands={"overall": band},
-        criteria={},
-        cefr="",
-        metrics={"correct": correct, "total": total},
-    )
-    # WS21 — WML qualifying event after the set is persisted server-side.
-    from app.routes._analytics import emit
-    emit("practice_completed", skill=skill, correct=correct, total=total)
-    return jsonify({"savedId": saved_id}), 200
+    uid = _require_uid()
+    result, created = integrity.submit(_repo().session_factory, uid, request.get_json(silent=True))
+    if created:
+        from app.routes._analytics import emit
+        emit("practice_completed", user_id=uid, skill=result["skill"],
+             correct=result["correct"], total=result["total"])
+    return jsonify(result), 200
+
+
+@bp.delete("/api/practice/session/<pid>")
+def practice_close(pid):
+    integrity.close(_repo().session_factory, _require_uid(), pid)
+    return jsonify({"ok": True}), 200
 
 
 @bp.get("/api/practice/set")
 def practice_set():
-    skill = request.args.get("skill")
-    band = request.args.get("band")
+    raise ApiError("PRACTICE_API_CHANGED", "Use POST /api/practice/start", 410)
 
-    if not skill:
-        raise ApiError("VALIDATION", "skill query param required", 400)
 
-    repo = _repo()
+@bp.post("/api/practice/generate")
+def practice_generate():
+    # Placement transition is not a generation job; no fabricated job progress.
+    raise ApiError("PRACTICE_API_CHANGED", "Use POST /api/practice/start", 410)
 
-    payload = None
-    if band:
-        payload = repo.serve_set(skill, band)
 
-    if payload is None:
-        payload = repo.serve_any_set(skill)
-
-    if payload is None:
-        raise ApiError("NOT_FOUND", f"no set for {skill}", 404)
-
-    # free-form generated set payload; shape validated client-side
-    return jsonify(payload), 200
+@bp.get("/api/practice/status")
+def practice_status():
+    raise ApiError("PRACTICE_API_CHANGED", "No generation job was created", 410)

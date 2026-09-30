@@ -78,9 +78,13 @@ class AuthSession(Base):
     """
 
     __tablename__ = "auth_session"
+    __table_args__ = (
+        Index("ix_auth_session_user", "user_id"),
+        Index("ix_auth_session_revoked", "revoked_at"),
+    )
     id: Mapped[str] = mapped_column(String(64), primary_key=True)  # sha256(token) hex
     user_id: Mapped[int | None] = mapped_column(
-        ForeignKey("user_profile.id", ondelete="CASCADE"), nullable=True, index=True
+        ForeignKey("user_profile.id", ondelete="CASCADE"), nullable=True
     )
     # Double-submit CSRF token for this session (also set as a JS-readable cookie).
     csrf_token: Mapped[str] = mapped_column(String(64))
@@ -94,7 +98,7 @@ class AuthSession(Base):
     last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     absolute_expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     revoked_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True, index=True
+        DateTime(timezone=True), nullable=True
     )
 
 
@@ -107,12 +111,16 @@ class AuthOneTimeToken(Base):
     """
 
     __tablename__ = "auth_one_time_token"
+    __table_args__ = (
+        Index("ix_ott_user", "user_id"),
+        Index("ix_ott_token_hash", "token_hash", unique=True),
+    )
     id: Mapped[int] = mapped_column(primary_key=True)
     kind: Mapped[str] = mapped_column(String(16))  # "reset" | "verify"
     user_id: Mapped[int] = mapped_column(
-        ForeignKey("user_profile.id", ondelete="CASCADE"), index=True
+        ForeignKey("user_profile.id", ondelete="CASCADE")
     )
-    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    token_hash: Mapped[str] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -526,7 +534,7 @@ class RagDocument(Base):
     __table_args__ = (Index("ix_rag_doc_source_ver", "source_id", "source_version"),)
     id: Mapped[int] = mapped_column(primary_key=True)
     source_id: Mapped[int] = mapped_column(
-        ForeignKey("rag_source.id", ondelete="CASCADE"), index=True
+        ForeignKey("rag_source.id", ondelete="CASCADE")
     )
     source_version: Mapped[int] = mapped_column(Integer, default=1)
     content_hash: Mapped[str] = mapped_column(String(64))
@@ -546,7 +554,7 @@ class RagChunk(Base):
     )
     id: Mapped[int] = mapped_column(primary_key=True)
     document_id: Mapped[int] = mapped_column(
-        ForeignKey("rag_document.id", ondelete="CASCADE"), index=True
+        ForeignKey("rag_document.id", ondelete="CASCADE")
     )
     chunk_index: Mapped[int] = mapped_column(Integer)
     heading_path: Mapped[str] = mapped_column(String(500), default="")
@@ -567,7 +575,7 @@ class RagIngestionRun(Base):
     __tablename__ = "rag_ingestion_run"
     id: Mapped[int] = mapped_column(primary_key=True)
     source_id: Mapped[int] = mapped_column(
-        ForeignKey("rag_source.id", ondelete="CASCADE"), index=True
+        ForeignKey("rag_source.id", ondelete="CASCADE")
     )
     trigger: Mapped[str] = mapped_column(String(20), default="manual")  # scheduled|manual|change_detected|reindex
     status: Mapped[str] = mapped_column(String(12), default="ok")  # ok|failed|skipped
@@ -600,3 +608,7 @@ class RagRetrievalEvent(Base):
     chunk_ids: Mapped[list] = mapped_column(JSON, default=list)
     latency_ms: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+# v1.2 owner-scoped practice receipts; registered once with the shared Base.
+from .practice_session import register_practice_model
+PracticeSession = register_practice_model(Base)

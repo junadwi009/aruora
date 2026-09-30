@@ -322,10 +322,6 @@ def create_app(overrides=None):
         u = repo.get_user_by_id(uid)
         if u is None or u.email_verified:
             return None
-        from app.routes.admin import _is_admin_email
-
-        if _is_admin_email(u.email):
-            return None
         return error_response(
             ApiError("EMAIL_UNVERIFIED",
                      "Verify your email address to use this feature", 403)

@@ -58,20 +58,57 @@ def test_stats_trends_shape(client_with_seed):
     r = client_with_seed.get("/api/stats/trends")
     assert r.status_code == 200
     tr = r.get_json()
-    assert "writing" in tr and "speaking" in tr
-    assert len(tr["writing"]) >= 1
-    assert "overall" in tr["writing"][0]
+    assert set(tr) >= {"writing", "speaking", "reading", "listening"}
+    assert tr["writing"] == []
 
 
-def test_practice_attempt_persists_and_appears_in_trends(client_with_seed):
+def test_practice_attempt_persists_with_server_accuracy_summary(client_with_seed):
+    start = client_with_seed.post(
+        "/api/practice/start",
+        json={"skill": "reading", "band": "B2"},
+    )
+    assert start.status_code == 200
+
+    packet = start.get_json()
+
+    assert packet["skill"] == "reading"
+    assert packet["scoringMethod"] == "practice-accuracy-v1"
+    assert isinstance(packet["practiceId"], str)
+    assert packet["practiceId"]
+    assert packet["questions"]
+
+    assert all(
+        "answer" not in q and "explanation" not in q
+        for q in packet["questions"]
+    )
+
+    answers = [q["options"][0] for q in packet["questions"]]
+
     r = client_with_seed.post(
         "/api/practice/attempt",
-        json={"skill": "reading", "band": 7.0, "correct": 9, "total": 10},
+        json={
+            "practiceId": packet["practiceId"],
+            "answers": answers,
+        },
     )
-    assert r.status_code == 200
-    assert isinstance(r.get_json()["savedId"], int)
 
-    tr = client_with_seed.get("/api/stats/trends").get_json()
-    assert "reading" in tr and "listening" in tr
-    assert len(tr["reading"]) == 1
-    assert tr["reading"][0]["overall"] == 7.0
+    assert r.status_code == 200
+
+    result = r.get_json()
+
+    assert isinstance(result["savedId"], int)
+    assert result["scoringMethod"] == "practice-accuracy-v1"
+    assert isinstance(result["accuracyPct"], (int, float))
+
+    rows = client_with_seed.get(
+        "/api/history/attempts?type=reading"
+    ).get_json()
+
+    row = next(
+        x for x in rows
+        if x["id"] == result["savedId"]
+    )
+
+    assert row["overall"] is None
+    assert row["scoreMethod"] == "server_accuracy"
+    assert row["accuracyPct"] == result["accuracyPct"]

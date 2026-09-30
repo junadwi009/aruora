@@ -24,6 +24,9 @@ def _client(overrides=None):
     c.post("/api/account/register", json={"email": "u@example.com", "password": "correct horse battery staple"})
     return c
 
+def _verify_current_user(c):
+    me = c.get("/api/account/me").get_json()
+    c.application.config["REPO"].set_email_verified(me["id"], True)
 
 def test_status_starts_unlocked_and_not_locked():
     c = _client()
@@ -76,26 +79,66 @@ def test_unlock_makes_status_permanently_unlocked():
 
 def test_admin_never_locked_and_can_list_feedback():
     c = _client(overrides={"ADMIN_EMAILS": "u@example.com"})
+
+    _verify_current_user(c)
+
     c.post("/api/gate/heartbeat", json={"seconds": 120})
     c.post("/api/gate/heartbeat", json={"seconds": 120})
+
     assert c.get("/api/gate/status").get_json()["locked"] is False
-    # a normal user's feedback should be listable by admin
-    c.post("/api/gate/unlock", json={"stars": 3, "insight": "Admin can read this insight row."})
+
+    c.post(
+        "/api/gate/unlock",
+        json={
+            "stars": 3,
+            "insight": "Admin can read this insight row.",
+        },
+    )
+
     rows = c.get("/api/admin/feedback").get_json()
     assert any(r["stars"] == 3 for r in rows)
 
 
 def test_unlock_is_idempotent_no_duplicate_feedback():
-    c = _client(overrides={"ADMIN_EMAILS": "admin@example.com"})
-    r1 = c.post("/api/gate/unlock", json={"stars": 4, "insight": "First unlock call with insight."})
-    assert r1.status_code == 200 and r1.get_json()["unlocked"] is True
-    r2 = c.post("/api/gate/unlock", json={"stars": 2, "insight": "Second unlock call, should be a no-op."})
-    assert r2.status_code == 200 and r2.get_json()["unlocked"] is True
+    c = _client(
+        overrides={"ADMIN_EMAILS": "admin@example.com"}
+    )
 
-    # register a second, admin account (same client — cookie jar switches session)
+    r1 = c.post(
+        "/api/gate/unlock",
+        json={
+            "stars": 4,
+            "insight": "First unlock call with insight.",
+        },
+    )
+    assert r1.status_code == 200
+    assert r1.get_json()["unlocked"] is True
+
+    r2 = c.post(
+        "/api/gate/unlock",
+        json={
+            "stars": 2,
+            "insight": "Second unlock call, should be a no-op.",
+        },
+    )
+    assert r2.status_code == 200
+    assert r2.get_json()["unlocked"] is True
+
     c.post("/api/account/logout")
-    c.post("/api/account/register", json={"email": "admin@example.com", "password": "correct horse battery staple"})
+
+    r = c.post(
+        "/api/account/register",
+        json={
+            "email": "admin@example.com",
+            "password": "correct horse battery staple",
+        },
+    )
+    assert r.status_code == 200
+
+    _verify_current_user(c)
+
     rows = c.get("/api/admin/feedback").get_json()
+
     assert len([r for r in rows if r["stars"] == 4]) == 1
     assert not any(r["stars"] == 2 for r in rows)
 

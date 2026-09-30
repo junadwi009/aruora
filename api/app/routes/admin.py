@@ -37,13 +37,17 @@ def _is_admin_email(email) -> bool:
 
 
 def _require_admin():
-    """Return the signed-in admin UserProfile, or raise 401/403."""
+    """Verified email + deployment allow-list + current-session MFA proof."""
+    from app.security.audit_integrity import admin_session, verified_admin
+    from app.session import current_session
     uid = current_uid()
     u = _repo().get_user_by_id(uid) if uid else None
     if u is None:
         raise ApiError("UNAUTHORIZED", "Not signed in", 401)
-    if not _is_admin_email(u.email):
+    if not verified_admin(u, _cfg()):
         raise ApiError("FORBIDDEN", "Admin access required", 403)
+    if not admin_session(u, current_session(), _cfg()):
+        raise ApiError("ADMIN_MFA_REQUIRED", "Sign in again with your admin verification code", 403)
     return u
 
 

@@ -117,12 +117,18 @@ def test_password_policy_unit():
 
 # ── #11 SVG avatar rejected ──────────────────────────────────────────────────
 
+VALID_PNG = (
+    "data:image/png;base64,"
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwC"
+    "AAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
+)
+
 def test_svg_avatar_rejected():
     c = _client()
     c.post("/api/account/register", json={"email": "a@b.com", "password": "correct horse battery staple"})
     r = c.post("/api/account/avatar", json={"dataUrl": "data:image/svg+xml;base64,PHN2Zz48L3N2Zz4="})
     assert r.status_code == 422
-    ok = c.post("/api/account/avatar", json={"dataUrl": "data:image/png;base64,aGVsbG8="})
+    ok = c.post("/api/account/avatar", json={"dataUrl": VALID_PNG})
     assert ok.status_code == 200
 
 

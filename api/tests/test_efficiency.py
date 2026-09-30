@@ -63,6 +63,7 @@ def test_pool_count_and_add():
 
 
 from app.config import Config
+from app.routes._gencap import serve_or_generate
 
 
 def test_efficiency_config_defaults():
@@ -108,42 +109,127 @@ def _seeded_client(overrides=None):
     c.post("/api/account/register", json={"email": "g@example.com", "password": "correct horse battery staple"})
     return c, repo, gw
 
+def _gencap_context(overrides=None):
+    """Exercise the retained pool/cap subsystem directly.
 
-def test_reading_generates_until_pool_target_then_serves():
-    c, repo, gw = _seeded_client()
-    # POOL_TARGET=2. Use band "A2": fixtures/seed_sets.json only seeds "B2"
-    # reading sets, so "A2" starts with an empty pool (unlike "B2", which
-    # ships with 5 seeded sets and would already be frozen at POOL_TARGET=2).
-    # first two calls generate + grow pool
-    c.post("/api/reading/generate", json={"band": "A2"})
-    c.post("/api/reading/generate", json={"band": "A2"})
+    ARUORA v1.2 Reading/Listening routes now start server-owned practice
+    sessions through practice.start_for(), so route calls are no longer a
+    valid proxy for _gencap behaviour.
+    """
+    repo = _repo()
+    user = repo.create_account(
+        "gencap@example.com",
+        "correct horse battery staple",
+    )
+
+    class FakeGW:
+        def __init__(self):
+            self.calls = 0
+
+        def generate(self, *args, **kwargs):
+            self.calls += 1
+            return {
+                "title": f"Generated {self.calls}",
+                "passage": f"generated {self.calls}",
+                "questions": [],
+            }
+
+    values = {
+        "POOL_TARGET": 2,
+        "DAILY_GEN_CAP": 3,
+        "GATE_ENABLED": "0",
+    }
+    values.update(overrides or {})
+
+    return repo, user.id, FakeGW(), Config(values)
+
+
+def test_gencap_generates_until_pool_target_then_serves():
+    repo, uid, gw, cfg = _gencap_context()
+
+    serve_or_generate(
+        "reading", "B2", uid, repo, cfg, gw,
+        {"band": "A2"},
+    )
+    serve_or_generate(
+        "reading", "B2", uid, repo, cfg, gw,
+        {"band": "A2"},
+    )
+
     assert repo.count_sets("reading", "A2") == 2
     assert gw.calls == 2
-    # third call: pool full -> serve from pool, no new generate
-    c.post("/api/reading/generate", json={"band": "A2"})
+
+    # Once the pool is full, serve existing content without another LLM call.
+    served = serve_or_generate(
+        "reading", "B2", uid, repo, cfg, gw,
+        {"band": "A2"},
+    )
+
     assert gw.calls == 2
     assert repo.count_sets("reading", "A2") == 2
+    assert served["title"] in {"Generated 1", "Generated 2"}
 
 
-def test_new_band_reenters_generation():
-    c, repo, gw = _seeded_client()
-    c.post("/api/reading/generate", json={"band": "B2"})
-    c.post("/api/reading/generate", json={"band": "B2"})  # B2 pool full (target 2)
-    before = gw.calls
-    c.post("/api/reading/generate", json={"band": "C1"})  # new band -> generates
-    assert gw.calls == before + 1
+def test_gencap_new_band_reenters_generation():
+    repo, uid, gw, cfg = _gencap_context()
+
+    # Explicitly fill B2 so this test only measures band isolation.
+    repo.add_set(
+        "reading",
+        "B2",
+        {"title": "Seed 1", "questions": []},
+    )
+    repo.add_set(
+        "reading",
+        "B2",
+        {"title": "Seed 2", "questions": []},
+    )
+
+    serve_or_generate(
+        "reading", "B2", uid, repo, cfg, gw,
+        {"band": "B2"},
+    )
+
+    assert gw.calls == 0
+
+    serve_or_generate(
+        "reading", "B2", uid, repo, cfg, gw,
+        {"band": "C1"},
+    )
+
+    assert gw.calls == 1
     assert repo.count_sets("reading", "C1") == 1
 
 
-def test_daily_cap_blocks_further_generation():
-    c, repo, gw = _seeded_client(overrides={"POOL_TARGET": 99, "DAILY_GEN_CAP": 2})
-    c.post("/api/listening/generate", json={"band": "B1"})
-    c.post("/api/listening/generate", json={"band": "B1"})
-    # cap=2 reached; pool has 2 sets -> fall back to serve, status 200, no generate
-    r = c.post("/api/listening/generate", json={"band": "B1"})
-    assert r.status_code == 200
-    assert gw.calls == 2
+def test_gencap_daily_cap_serves_existing_pool_without_extra_generation():
+    repo, uid, gw, cfg = _gencap_context(
+        {
+            "POOL_TARGET": 99,
+            "DAILY_GEN_CAP": 2,
+        }
+    )
 
+    serve_or_generate(
+        "listening", "B1", uid, repo, cfg, gw,
+        {"band": "B1"},
+    )
+    serve_or_generate(
+        "listening", "B1", uid, repo, cfg, gw,
+        {"band": "B1"},
+    )
+
+    assert gw.calls == 2
+    assert repo.count_sets("listening", "B1") == 2
+
+    # Daily entitlement is exhausted, but existing pool content remains usable.
+    served = serve_or_generate(
+        "listening", "B1", uid, repo, cfg, gw,
+        {"band": "B1"},
+    )
+
+    assert gw.calls == 2
+    assert repo.count_sets("listening", "B1") == 2
+    assert served["title"] in {"Generated 1", "Generated 2"}
 
 def test_vocab_capped_returns_429():
     c, repo, gw = _seeded_client(overrides={"DAILY_GEN_CAP": 1})

@@ -10,16 +10,16 @@ describe("PasscodeGate", () => {
     vi.spyOn(api, "authLogin").mockResolvedValue({ ok: true });
     const onUnlock = vi.fn();
     render(<PasscodeGate onUnlock={onUnlock} />);
-    fireEvent.change(screen.getByLabelText("Passcode"), { target: { value: "1234" } });
-    fireEvent.click(screen.getByRole("button", { name: /unlock/i }));
+    fireEvent.change(screen.getByLabelText("Access code"), { target: { value: "1234" } });
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     await waitFor(() => expect(onUnlock).toHaveBeenCalled());
   });
 
   it("shows an error on a failed login", async () => {
     vi.spyOn(api, "authLogin").mockRejectedValue(new Error("nope"));
     render(<PasscodeGate onUnlock={vi.fn()} />);
-    fireEvent.change(screen.getByLabelText("Passcode"), { target: { value: "bad" } });
-    fireEvent.click(screen.getByRole("button", { name: /unlock/i }));
+    fireEvent.change(screen.getByLabelText("Access code"), { target: { value: "bad" } });
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     await waitFor(() => expect(screen.getByRole("alert")).toBeTruthy());
   });
 });

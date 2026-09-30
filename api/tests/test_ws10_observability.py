@@ -155,6 +155,8 @@ def test_metrics_endpoint_admin_only_and_prometheus_shaped():
     anon = app.test_client()
     admin = app.test_client()
     _register(admin, "boss@example.com")
+    admin_id = admin.get("/api/account/me").get_json()["id"]
+    repo.set_email_verified(admin_id, True)
     _register(anon, "pleb@example.com")
     assert anon.get("/api/admin/metrics").status_code == 403
 
@@ -180,6 +182,8 @@ def test_pool_and_job_gauges_render():
                     "llm_generate", {"skill": "reading", "band": "B2"}, "h")
     admin = app.test_client()
     _register(admin, "boss@example.com")
+    admin_id = admin.get("/api/account/me").get_json()["id"]
+    repo.set_email_verified(admin_id, True)
     body = admin.get("/api/admin/metrics").get_data(as_text=True)
     assert 'pool_tasks{skill="reading",band="B2",status="active"} 1' in body
     assert 'job_backlog{queue="llm_generate",status="queued"} 1' in body

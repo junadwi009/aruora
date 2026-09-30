@@ -399,8 +399,17 @@ def test_totp_unit_and_admin_login():
     assert not totp.totp_verify(secret, "000000", at=1700000000) or code == "000000"
     assert not totp.totp_verify(secret, "abcdef", at=1700000000)
 
-    c, _, _ = _client(ADMIN_TOTP_SECRET=secret, ADMIN_EMAILS="boss@x.com")
-    _register(c, "boss@x.com")
+    c, _, repo = _client(
+        ADMIN_TOTP_SECRET=secret,
+        ADMIN_EMAILS="boss@x.com",
+    )
+
+    r = _register(c, "boss@x.com")
+    uid = r.get_json()["id"]
+
+    # Admin privilege only becomes eligible after verified ownership.
+    repo.set_email_verified(uid, True)
+
     c.post("/api/account/logout")
     # Without the code: rejected.
     r = c.post("/api/account/login",
@@ -410,9 +419,21 @@ def test_totp_unit_and_admin_login():
     import time
 
     current = totp._code_at(secret, int(time.time() // 30))
-    r = c.post("/api/account/login",
-               json={"email": "boss@x.com", "password": STRONG, "totp": current})
+
+    r = c.post(
+        "/api/account/login",
+        json={
+            "email": "boss@x.com",
+            "password": STRONG,
+            "totp": current,
+        },
+    )
+
     assert r.status_code == 200
+    assert r.get_json()["isAdmin"] is True
+
+    # Proves MFA proof is bound to the resulting session.
+    assert c.get("/api/admin/users").status_code == 200
 
 
 # ── WS03-09: session-management UX ───────────────────────────────────────────

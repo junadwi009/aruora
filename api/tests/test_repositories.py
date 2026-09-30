@@ -113,7 +113,9 @@ def test_save_and_list_attempts():
     assert len(all_rows) == 2
     assert all_rows[0]["id"] == sid  # newest first
     assert all_rows[0]["type"] == "speaking"
-    assert all_rows[0]["overall"] == 5.0
+    assert all_rows[0]["overall"] is None
+    assert all_rows[0]["scoreMethod"] is None
+    assert all_rows[0]["modelProvider"] is None
 
     writing_only = repo.list_attempts(uid, type="writing")
     assert len(writing_only) == 1 and writing_only[0]["id"] == wid
@@ -160,6 +162,37 @@ def test_save_attempt_persists_scoring_metadata():
     assert sm["rubricVersion"] == "1.0"
     assert sm["calibrationVersion"] == "1.0"
 
+def test_list_attempts_exposes_overall_for_trusted_non_stub_estimate():
+    repo = make_repo()
+    uid = _uid(repo)
+
+    aid = repo.save_attempt(
+        uid,
+        type="speaking",
+        task="part2",
+        prompt="P",
+        body="Transcript.",
+        bands={"overall": 5.0},
+        criteria={},
+        cefr="B1",
+        metrics={},
+        score_metadata={
+            "score_method": "llm_estimate",
+            "score_version": "test-v1",
+            "model_provider": "test-provider",
+            "model_id": "test-model",
+            "prompt_version": "test-prompt",
+            "rubric_version": "test-rubric",
+            "calibration_version": "test-calibration",
+        },
+    )
+
+    row = repo.list_attempts(uid)[0]
+
+    assert row["id"] == aid
+    assert row["overall"] == 5.0
+    assert row["scoreMethod"] == "llm_estimate"
+    assert row["modelProvider"] == "test-provider"
 
 def test_save_attempt_without_metadata_is_backwards_compatible():
     """Attempts saved without score_metadata keep working (nullable columns)."""

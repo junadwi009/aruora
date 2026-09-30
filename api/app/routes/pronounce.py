@@ -35,18 +35,23 @@ def pronounce_sentence():
 
 @bp.post("/api/pronounce/feedback")
 def pronounce_feedback():
-    _require_uid()  # authenticated only — this calls the paid LLM
-    b = parse_body(PronounceFeedbackIn)
-    cfg = _cfg()
-    if len(b.transcript) > cfg.MAX_TRANSCRIPT_CHARS:
-        raise ApiError("VALIDATION",
-                       f"Transcript is too long (max {cfg.MAX_TRANSCRIPT_CHARS})", 422)
-    out = _gateway().score(
-        "pronounce",
-        lang=_lang(),
-        target=b.target,
-        transcript=b.transcript,
-        accuracy=b.accuracy,
-        missed=", ".join(b.missed)[:400] or "none",
-    )
+    from flask import request
+    from app.security.input_contracts import read_aloud_fields, word_evidence
+    from app.costguard import ensure_ai_available, record_llm_usage
+    uid = _require_uid()
+    target, transcript = read_aloud_fields(request.get_json(silent=True))
+    evidence = word_evidence(target, transcript)
+    ensure_ai_available(_cfg(), _repo())
+    try:
+        out = _gateway().score("pronounce", lang=_lang(), target=target,
+            transcript=transcript, accuracy=evidence["accuracy"],
+            missed=", ".join(evidence["missed"])[:400] or "none")
+    except ApiError as error:
+        record_llm_usage(_repo(), cost_center="learner_scoring", op="score",
+            meta=None, user_id=uid, skill="speaking", status="failed", error_code=error.code)
+        raise
+    record_llm_usage(_repo(), cost_center="learner_scoring", op="score",
+        meta=out.pop("_meta_llm", None), user_id=uid, skill="speaking")
+    out["assessmentScope"] = "text_word_matching_only"
+    out["wordEvidence"] = evidence
     return jsonify(out), 200

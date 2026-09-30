@@ -10,17 +10,9 @@ bp = Blueprint("mocks", __name__)
 
 @bp.post("/api/mocks")
 def save_mock():
-    b = parse_body(MockSaveIn)
-    mid = _repo().save_mock(
-        _require_uid(),
-        float(b.listening),
-        float(b.reading),
-        float(b.overall),
-    )
-    # WS21 — WML qualifying event after persistence.
-    from app.routes._analytics import emit
-    emit("mock_completed")
-    return jsonify({"id": mid}), 200
+    from app.errors import ApiError
+    _require_uid()
+    raise ApiError("MOCK_API_CHANGED", "Client-provided mock bands are not accepted. Submit each practice session to /api/practice/attempt.", 410)
 
 
 @bp.get("/api/mocks")

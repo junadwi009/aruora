@@ -132,10 +132,34 @@ describe("api client", () => {
   });
 
   it("throws ApiError with code on non-2xx", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-      ok: false, status: 422, statusText: "Unprocessable",
-      text: async () => JSON.stringify({ error: { code: "VALIDATION", message: "bad" } }),
-    }));
-    await expect(api.onboarding({ name: "", goal: "work", targetBand: 6.5 } as never)).rejects.toMatchObject({ code: "VALIDATION" });
-  });
+	  vi.stubGlobal(
+		"fetch",
+		vi.fn().mockResolvedValue(
+		  new Response(
+			JSON.stringify({
+			  error: {
+				code: "VALIDATION",
+				message: "bad",
+			  },
+			}),
+			{
+			  status: 422,
+			  headers: {
+				"Content-Type": "application/json",
+			  },
+			},
+		  ),
+		),
+	  );
+
+	  await expect(
+		api.onboarding({
+		  name: "",
+		  goal: "work",
+		  targetBand: 6.5,
+		} as never),
+	  ).rejects.toMatchObject({
+		code: "VALIDATION",
+	  });
+	});
 });

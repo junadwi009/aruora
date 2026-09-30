@@ -1,102 +1,34 @@
-import React, { useEffect, useState } from "react";
-import { api } from "../../lib/api/client";
-import type { CefrBand } from "../ui/LevelChip";
-import { ViewProvider, useView, type View } from "./viewContext";
-import { Sidebar } from "./Sidebar";
-import { BottomTabs } from "./BottomTabs";
-import { Home } from "./Home";
-import { Reading } from "../reading/Reading";
-import { Listening } from "../listening/Listening";
-import { Writing } from "../writing/Writing";
-import { Speaking } from "../speaking/Speaking";
-import { Tips } from "../tips/Tips";
-import { Progress } from "../progress/Progress";
-import { Session } from "../session/Session";
-import { MockTest } from "../test/MockTest";
-import { Pronounce } from "../pronounce/Pronounce";
-import { Roleplay } from "../speaking/Roleplay";
-import { Vocab } from "../vocab/Vocab";
-import { Settings } from "../settings/Settings";
+import React, {useEffect, useState} from "react";
+import {api} from "../../lib/api/client";
+import {useT} from "../../lib/i18n";
+import {pushUrl} from "../../lib/urlSync";
+import type {AccountUser} from "../../lib/types";
+import {ViewProvider,useView} from "./viewContext";
+import {WorkspaceFrame, DashboardView, JourneyView, PracticeView} from "../../experience/views";
+import {useWorkspaceData} from "../../experience/controllers";
+import {LearningWorkspace} from "../../experience/learning/LearningWorkspace";
+import "../../experience/experience.css";
 
-// ---------------------------------------------------------------------------
-// View registry — every view maps to a real screen.
-// ---------------------------------------------------------------------------
-type ViewRegistry = {
-  [V in View]: (levels: Record<string, CefrBand>) => React.ReactNode;
-};
-
-const viewRegistry: ViewRegistry = {
-  home: (levels) => <Home levels={levels} />,
-  reading: (levels) => <Reading band={levels.reading ?? "B2"} />,
-  listening: (levels) => <Listening band={levels.listening ?? "B1"} />,
-  speaking: () => <Speaking />,
-  writing: () => <Writing />,
-  test: () => <MockTest />,
-  tips: () => <Tips />,
-  progress: () => <Progress />,
-  session: () => <Session />,
-  pronounce: () => <Pronounce />,
-  roleplay: () => <Roleplay />,
-  vocab: () => <Vocab />,
-  settings: () => <Settings />,
-};
-
-// ---------------------------------------------------------------------------
-// Inner shell — consumes view context
-// ---------------------------------------------------------------------------
-function ShellInner({ levels }: { levels: Record<string, CefrBand> }) {
-  const { view } = useView();
-  const content = viewRegistry[view](levels);
-
-  return (
-    <div className="flex h-screen bg-[var(--color-bg)]">
-      {/* Sidebar — desktop only */}
-      <div className="hidden md:flex">
-        <Sidebar levels={levels} />
-      </div>
-
-      {/* Content area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {content}
-      </div>
-
-      {/* Bottom tabs — mobile only */}
-      <div className="md:hidden">
-        <BottomTabs />
-      </div>
-    </div>
-  );
+interface Props { user?:AccountUser; onLogout?:()=>Promise<void>; onProfile?:(u:AccountUser)=>void }
+function ShellInner({user,onLogout,onProfile}:Props&{user:AccountUser}) {
+  const {view,goWithPrefill,consumePrefill}=useView(),{lang,setLang}=useT();
+  const [query,setQuery]=useState(""),[logoutError,setLogoutError]=useState("");
+  const {data,retry}=useWorkspaceData(user,view==="home"?"home":"other");
+  // Returning from profile edits refreshes the authoritative profile; no profile in localStorage.
+  useEffect(()=>{let active=true;if(view==="home")api.accountMe().then(u=>{if(active)onProfile?.(u);}).catch(()=>{});return()=>{active=false;};},[view,user.id]);
+  useEffect(()=>{document.getElementById("aruora-content")?.focus({preventScroll:true});},[view]);
+  async function logout(){setLogoutError("");try{if(onLogout)await onLogout();else {await api.accountLogout();pushUrl("/");}}catch{setLogoutError(lang==="id"?"Keluar belum berhasil. Coba lagi; sesi belum dianggap berakhir.":"Sign-out did not complete. Try again; your session is not assumed to be ended.");}}
+  let content:React.ReactNode;
+  switch(view){
+    case "home":content=<DashboardView data={data} lang={lang} nav={pushUrl} onRetry={retry}/>;break;
+    case "journey":content=<JourneyView data={data} lang={lang} nav={pushUrl} onRetry={retry}/>;break;
+    case "practice":content=<PracticeView lang={lang} nav={pushUrl} query={query} onQuery={setQuery}/>;break;
+    default:content=<LearningWorkspace key={view} page={view} lang={lang} nav={pushUrl} onProduce={goWithPrefill} consumePrefill={consumePrefill}/>;break;
+  }
+  return <WorkspaceFrame lang={lang} page={view} name={user.name} nav={pushUrl} onLanguage={setLang} onLogout={()=>void logout()}>{logoutError&&<p className="aru-form-error" role="alert">{logoutError}</p>}{view==="settings"&&<div className="aru-mobile-account-actions"><button className="aru-text-button" onClick={()=>void logout()}>{lang==="id"?"Keluar dari akun":"Log out of your account"}</button></div>}{content}</WorkspaceFrame>;
 }
-
-// ---------------------------------------------------------------------------
-// AppShell — loads skill levels, provides view context
-// ---------------------------------------------------------------------------
-export function AppShell() {
-  const [levels, setLevels] = useState<Record<string, CefrBand>>({});
-
-  useEffect(() => {
-    let active = true;
-    api
-      .skillLevels()
-      .then((data) => {
-        if (!active) return;
-        const map: Record<string, CefrBand> = {};
-        for (const { skill, band } of data) {
-          map[skill] = band as CefrBand;
-        }
-        setLevels(map);
-      })
-      .catch(() => {
-        /* tolerate empty — show shell without chips */
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  return (
-    <ViewProvider>
-      <ShellInner levels={levels} />
-    </ViewProvider>
-  );
+/** Parent authentication boundary supplies the account. No fake preview identity in production. */
+export function AppShell(props:Props){
+  if(!props.user)return <main role="status" className="aru-state-page">Account verification required.</main>;
+  return <ViewProvider><ShellInner {...props} user={props.user}/></ViewProvider>;
 }

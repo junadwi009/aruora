@@ -74,10 +74,10 @@ def test_readiness_route_contract(client_with_seed):
     body = res.get_json()
     assert body["method"] == "readiness-v0"
     assert body["targetBand"] == 6.5
-    assert body["perSkill"]["writing"]["assessed"] is True
+    assert body["perSkill"]["writing"]["assessed"] is False
     assert body["perSkill"]["listening"]["assessed"] is False
     assert body["evidenceCoverage"]["complete"] is False
-    assert body["prioritySkill"] == "writing"
+    assert body["prioritySkill"] is None
     assert "%" not in str(body)
 
 

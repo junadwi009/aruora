@@ -255,7 +255,11 @@ def test_maintenance_endpoint_runs_with_token(maint_app):
     body = resp.get_json()
     assert body["ok"] is True
     assert set(body["purged"]) == {
-        "sessions", "one_time_tokens", "jobs", "analytics_events",
+    "sessions",
+    "one_time_tokens",
+    "jobs",
+    "analytics_events",
+    "practice_sessions",
     }
 
 

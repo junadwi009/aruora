@@ -177,7 +177,9 @@ def test_admin_budget_endpoints():
     admin = app.test_client()
     anon = app.test_client()
     admin.post("/api/account/register",
-               json={"email": "boss@example.com", "password": STAFF_PW})
+               json={"email": "boss@example.com", "password": STAFF_PW},)
+    admin_id = admin.get("/api/account/me").get_json()["id"]
+    repo.set_email_verified(admin_id, True)
     anon.post("/api/account/register",
               json={"email": "pleb@example.com", "password": STAFF_PW})
 

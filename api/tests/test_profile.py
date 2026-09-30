@@ -15,11 +15,12 @@ def test_update_profile_and_me(client_with_seed):
 
 def test_update_targets(client_with_seed):
     r = client_with_seed.patch("/api/account/profile",
-                               json={"targetBand": 7.0, "skillTargets": {"writing": "C1", "speaking": "B2"}})
+                               json={"targetBand": 7.0, "skillTargets": {"writing": 7.0,"speaking": 6.5,},})
     assert r.status_code == 200
     me = client_with_seed.get("/api/account/me").get_json()
     assert me["targetBand"] == 7.0
-    assert me["skillTargets"]["writing"] == "C1"
+    assert me["skillTargets"]["writing"] == 7.0
+    assert me["skillTargets"]["speaking"] == 6.5
 
 
 def test_avatar_upload(client_with_seed):

@@ -1,6 +1,8 @@
 """
-POST /api/listening/generate — serve a listening set. Efficiency policy is the
-shared app.routes._gencap.serve_or_generate (see reading.py).
+POST /api/listening/generate
+
+Compatibility entry point for starting a server-owned Listening practice session.
+The returned payload is backed by the v1.2 practice-session protocol.
 """
 from flask import Blueprint, jsonify
 
@@ -14,9 +16,6 @@ bp = Blueprint("listening", __name__)
 
 @bp.post("/api/listening/generate")
 def listening_generate():
-    uid = _require_uid()
+    from app.routes.practice import start_for
     body = parse_body(BandGenerateIn)
-    out = serve_or_generate("listening", "B1", uid, _repo(), _cfg(), _gateway(),
-                            {"band": body.band} if body.band is not None else {},
-                            jobs=_jobs())
-    return jsonify(out), 200
+    return jsonify(start_for("listening", body.band or "B1")), 200

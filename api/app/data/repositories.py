@@ -129,7 +129,9 @@ class Repository:
                     select(UserProfile).where(UserProfile.email == email)
                 ).scalars().first()
                 if row is not None:
-                    row.google_sub = sub  # link Google to the existing email account
+                    from app.security.input_contracts import authorize_google_link
+                    authorize_google_link(row, sub)
+                    row.google_sub = sub  # only an already-verified local account may auto-link
             if row is None:
                 row = UserProfile(
                     name=name or "", goal="other", target_band=6.0, skill_targets={},
@@ -230,28 +232,9 @@ class Repository:
         return raw
 
     def consume_one_time_token(self, kind: str, raw: str) -> int | None:
-        """Atomically mark the token used; return its user_id, or None when the
-        token is unknown/expired/already used (single-use, time-bound)."""
-        import hashlib
+        from app.security.audit_integrity import consume_token
         from .models import AuthOneTimeToken
-        if not raw:
-            return None
-        token_hash = hashlib.sha256(raw.encode()).hexdigest()
-        now_utc = datetime.now(timezone.utc)
-        with self._sf() as s:
-            row = s.execute(
-                select(AuthOneTimeToken).where(
-                    AuthOneTimeToken.token_hash == token_hash,
-                    AuthOneTimeToken.kind == kind,
-                    AuthOneTimeToken.used_at.is_(None),
-                    AuthOneTimeToken.expires_at > now_utc,
-                )
-            ).scalars().first()
-            if row is None:
-                return None
-            row.used_at = now_utc
-            s.commit()
-            return row.user_id
+        return consume_token(self._sf, AuthOneTimeToken, kind, raw)
 
     def invalidate_one_time_tokens(self, user_id: int, kinds: tuple[str, ...]) -> None:
         """Mark every outstanding token of `kinds` for the user as used."""
@@ -291,6 +274,32 @@ class Repository:
                 "targetUserId": r.target_user_id, "detail": r.detail or {},
                 "createdAt": r.created_at.isoformat() if r.created_at else None,
             } for r in rows]
+
+    def complete_onboarding(self, user_id: int, *, name: str, goal: str,
+                            target_band: float, skill_targets: dict | None = None,
+                            exam_date: str | None = None) -> UserProfile | None:
+        """Update the session owner's learning fields without replacing identity.
+
+        No credential/auth fields are writable through this method. An absent
+        optional field is preserved, not silently reset to an empty value.
+        """
+        with self._sf() as s:
+            user = s.execute(
+                select(UserProfile).where(UserProfile.id == user_id)
+            ).scalars().first()
+            if user is None:
+                return None
+            user.name = name
+            user.goal = goal
+            user.target_band = target_band
+            if skill_targets is not None:
+                user.skill_targets = skill_targets
+            if exam_date is not None:
+                user.exam_date = exam_date
+            s.commit()
+            s.refresh(user)
+            s.expunge(user)
+            return user
 
     def update_profile(self, user_id, fields: dict) -> None:
         with self._sf() as s:
@@ -386,6 +395,7 @@ class Repository:
                 milestones += dump(Milestone, program_id=p["id"])
             return {
                 "profile": profile,
+                "practiceSessions": __import__("app.services.practice_integrity", fromlist=["export_sessions"]).export_sessions(s, user_id),
                 "skillLevels": dump(SkillLevel, user_id=user_id),
                 "attempts": dump(Attempt, user_id=user_id),
                 "mocks": dump(Mock, user_id=user_id),
@@ -1073,7 +1083,10 @@ class Repository:
                     "type": r.type,
                     "task": r.task,
                     "cefr": r.cefr,
-                    "overall": (r.bands or {}).get("overall"),
+                    "overall": (r.bands or {}).get("overall") if r.type not in ("reading", "listening") and r.model_provider not in (None, "stub") else None,
+                    "scoreMethod": r.score_method,
+                    "modelProvider": r.model_provider,
+                    "accuracyPct": (r.metrics or {}).get("accuracyPct") if r.score_method == "server_accuracy" else None,
                     "createdAt": r.created_at.isoformat() if r.created_at else None,
                 }
                 for r in rows
@@ -1130,7 +1143,9 @@ class Repository:
                 select(Attempt.type, Attempt.bands)
                 .where(
                     Attempt.user_id == user_id,
-                    Attempt.type.in_(skills),
+                    Attempt.type.in_(("writing", "speaking")),
+                    Attempt.model_provider.is_not(None),
+                    Attempt.model_provider != "stub",
                 )
                 .order_by(Attempt.id.desc())
             ).all()
@@ -1184,7 +1199,7 @@ class Repository:
             ).scalars().all()
             out: dict[str, list] = {"writing": [], "speaking": [], "reading": [], "listening": []}
             for r in rows:
-                bucket = out.get(r.type)
+                bucket = out.get(r.type) if r.type not in ("reading", "listening") and r.model_provider != "stub" else None
                 if bucket is None:
                     continue
                 bands = r.bands or {}

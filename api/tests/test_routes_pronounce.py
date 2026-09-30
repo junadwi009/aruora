@@ -11,7 +11,7 @@ def test_pronounce_sentence_stub(client_with_seed):
 def test_pronounce_feedback_stub(client_with_seed):
     r = client_with_seed.post(
         "/api/pronounce/feedback",
-        json={"target": "The cat sat", "transcript": "the cat sat", "accuracy": 100, "missed": []},
+        json={"target": "The cat sat", "transcript": "the cat sat"},
     )
     assert r.status_code == 200
     b = r.get_json()

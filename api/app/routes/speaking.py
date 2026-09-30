@@ -6,6 +6,8 @@ Speaking routes:
   or the completed transcript directly when the eager dispatcher finished
   in-request (offline dev topology).
 """
+import re
+import unicodedata
 from flask import Blueprint, current_app, jsonify, request
 
 from app.domain.scoring import normalize_speaking_estimate
@@ -26,8 +28,12 @@ _JOB_ERROR_STATUS = {
     "INTERNAL_JOB_ERROR": 502,
 }
 
+def _normalize_transcript_for_match(value: str) -> str:
+    """Normalize harmless ASR/text differences without hiding lexical changes."""
+    normalized = unicodedata.normalize("NFKC", value).casefold()
+    return " ".join(re.findall(r"[^\W_]+", normalized, flags=re.UNICODE))
 
-def _trusted_audio_features(job_id: str | None, uid: int) -> dict | None:
+def _trusted_audio_features(job_id: str | None, uid: int, transcript: str) -> dict | None:
     """WS06-06: attach DETERMINISTIC audio evidence to an attempt, taken only
     from the user's own completed ASR job (never from client-supplied values —
     job results are computed server-side)."""
@@ -39,7 +45,17 @@ def _trusted_audio_features(job_id: str | None, uid: int) -> dict | None:
     st = jobs.get_status(job_id, uid)  # owner-scoped: other users' jobs → None
     if not st or st.get("status") != "succeeded" or st.get("type") != "transcribe":
         return None
-    return (st.get("result") or {}).get("features")
+    result = st.get("result") or {}
+
+    trusted_transcript = _normalize_transcript_for_match(
+        result.get("transcript") or ""
+    )
+    submitted_transcript = _normalize_transcript_for_match(transcript)
+
+    if not trusted_transcript or trusted_transcript != submitted_transcript:
+        return None
+
+    return result.get("features")
 
 
 @bp.post("/api/speaking/evaluate")
@@ -69,14 +85,16 @@ def speaking_evaluate():
 
     metrics = dict(out.get("metrics") or {})
     llm_meta = out.pop("_meta_llm", None)
+
     if llm_meta:
         metrics["llm"] = llm_meta
-        out["metrics"] = metrics
+
+    out["metrics"] = metrics
 
     # WS06-06: acoustic evidence from the user's own ASR job (server-computed,
     # owner-scoped). Stored under metrics.audioFeatures — always distinct from
     # the LLM judgment block (metrics.llm).
-    audio_features = _trusted_audio_features(body.asrJobId, uid)
+    audio_features = _trusted_audio_features(body.asrJobId, uid, transcript)
     if audio_features:
         out["metrics"]["audioFeatures"] = audio_features
 

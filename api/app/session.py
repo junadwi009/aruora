@@ -202,7 +202,8 @@ def login_session(uid: int, remember: bool = False) -> None:
     store = current_app.config["SESSIONS"]
     cfg = current_app.config["APP_CONFIG"]
     old = current_session()
-    old_flags = dict(old.flags) if old is not None and old.flags else {}
+    from app.security.audit_integrity import inherited_flags
+    old_flags = inherited_flags(old.flags if old is not None else None)
     if old is not None:
         store.revoke(getattr(g, "sid_raw", "") or "")
     idle_min = cfg.REMEMBER_DAYS * 24 * 60 if remember else cfg.SESSION_TIMEOUT_MIN
@@ -215,6 +216,7 @@ def login_session(uid: int, remember: bool = False) -> None:
     )
     g.session_row = row
     g.sid_raw = raw
+    g.uid = uid
     max_age = cfg.REMEMBER_DAYS * 24 * 3600 if remember else None
     _set_pending_cookies(raw, row.csrf_token, remember=remember, max_age=max_age)
 
@@ -271,17 +273,9 @@ def stamp_admin_reauth() -> None:
 
 
 def reauth_age_seconds() -> float | None:
+    from app.security.audit_integrity import reauth_age
     row = current_session()
-    if row is None:
-        return None
-    iso = (row.flags or {}).get("reauth_at")
-    if not iso:
-        return None
-    try:
-        then = datetime.fromisoformat(iso)
-    except (TypeError, ValueError):
-        return None
-    return (_now() - then).total_seconds()
+    return reauth_age(row.flags, _now()) if row is not None else None
 
 
 # ── App wiring ───────────────────────────────────────────────────────────────
@@ -453,3 +447,17 @@ class CsrfAwareClient(_WerkzeugClient):
                 headers[CSRF_HEADER] = token
                 kwargs["headers"] = headers
         return super().open(*args, **kwargs)
+
+
+def mark_admin_mfa(uid: int) -> None:
+    """Call only after successful password/Google AND configured TOTP verification."""
+    from flask import current_app
+    from app.security.audit_integrity import mfa_proof
+    row = current_session()
+    cfg = current_app.config["APP_CONFIG"]
+    if row is None or row.user_id != uid or not cfg.ADMIN_TOTP_SECRET:
+        return
+    flags = dict(row.flags or {})
+    flags.update(mfa_proof(uid, cfg.ADMIN_TOTP_SECRET))
+    current_app.config["SESSIONS"].set_flags(row.id, flags)
+    row.flags = flags

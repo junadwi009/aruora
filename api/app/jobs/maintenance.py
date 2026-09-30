@@ -75,7 +75,9 @@ def run_maintenance(repo, cfg, now: datetime | None = None) -> dict:
     """Execute every purge and return per-target row counts (ops telemetry;
     contains no learner content)."""
     now = now or datetime.now(timezone.utc)
+    from app.services.practice_integrity import purge
     return {
+        "practice_sessions": purge(repo.session_factory, now),
         "sessions": _purge_dead_sessions(
             repo, now - timedelta(hours=cfg.SESSION_RETENTION_HOURS)
         ),

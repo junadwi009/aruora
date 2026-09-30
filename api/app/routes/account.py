@@ -36,7 +36,8 @@ _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 # ── WS03-08: shared-store abuse throttles ────────────────────────────────────
 
 def _client_ip() -> str:
-    return request.headers.get("X-Real-IP") or request.remote_addr or "unknown"
+    # ProxyFix applies only for the configured trusted-hop topology.
+    return request.remote_addr or "unknown"
 
 
 def throttle_or_429(kind: str, acct: str | None, *, limit: int, window: int) -> None:
@@ -99,7 +100,7 @@ def _public(u) -> dict:
             "hasPassword": bool(u.password_hash),
             # WS03-05: email ownership state for UI nudges.
             "emailVerified": bool(getattr(u, "email_verified", False)),
-            "isAdmin": _is_admin(u.email)}
+            "isAdmin": _admin_active(u)}
 
 
 def _send_verify_email(u) -> None:
@@ -171,18 +172,21 @@ def login():
             _register_failure("login", email)
         raise ApiError("UNAUTHORIZED", "Incorrect email or password", 401)
     # WS03-07: optional mandatory MFA for admin accounts.
-    if _is_admin(u.email) and cfg.ADMIN_TOTP_SECRET:
+    if _is_admin(u.email) and u.email_verified and cfg.ADMIN_TOTP_SECRET:
         from app.security import totp
 
         if not totp.totp_verify(cfg.ADMIN_TOTP_SECRET, (b.get("totp") or "")):
-            raise ApiError("UNAUTHORIZED", "Valid admin TOTP code required", 401)
+            raise ApiError("ADMIN_MFA_REQUIRED", "Valid admin TOTP code required", 401)
     # WS03-04: transparent rehash — legacy hashes migrate on successful login.
     if u.password_hash and passwords.needs_rehash(u.password_hash):
         repo.set_password(u.id, b.get("password") or "")
-    if _is_admin(u.email):
+    if _is_admin(u.email) and u.email_verified:
         repo.add_audit("admin.login", actor_user_id=u.id, actor_email=u.email,
                        ip_hash=hash_ip(_client_ip()))
     login_session(u.id, remember=bool(b.get("remember")))
+    if _is_admin(u.email) and u.email_verified and cfg.ADMIN_TOTP_SECRET:
+        from app.session import mark_admin_mfa
+        mark_admin_mfa(u.id)
     return jsonify(_public(u)), 200
 
 
@@ -226,15 +230,18 @@ def google_login():
     u, is_new = _repo().upsert_google_user(claims["sub"], email,
                                            claims.get("name") or "",
                                            email_verified=verified)
-    if _is_admin(u.email) and cfg.ADMIN_TOTP_SECRET:
+    if _is_admin(u.email) and u.email_verified and cfg.ADMIN_TOTP_SECRET:
         from app.security import totp
 
         if not totp.totp_verify(cfg.ADMIN_TOTP_SECRET, ((request.get_json(force=True) or {}).get("totp") or "")):
-            raise ApiError("UNAUTHORIZED", "Valid admin TOTP code required", 401)
-    if _is_admin(u.email):
+            raise ApiError("ADMIN_MFA_REQUIRED", "Valid admin TOTP code required", 401)
+    if _is_admin(u.email) and u.email_verified:
         _repo().add_audit("admin.login", actor_user_id=u.id, actor_email=u.email,
                           ip_hash=hash_ip(_client_ip()), detail={"via": "google"})
     login_session(u.id)
+    if _is_admin(u.email) and u.email_verified and cfg.ADMIN_TOTP_SECRET:
+        from app.session import mark_admin_mfa
+        mark_admin_mfa(u.id)
     # WS21: Google sign-in that created a new account counts as signup.
     if is_new:
         from app.routes._analytics import emit
@@ -326,8 +333,9 @@ def _uid_or_401() -> int:
 
 @bp.patch("/api/account/profile")
 def update_profile():
-    b = request.get_json(force=True) or {}
-    _repo().update_profile(_uid_or_401(), b)
+    from app.security.input_contracts import profile_fields
+    fields = profile_fields(request.get_json(silent=True))
+    _repo().update_profile(_uid_or_401(), fields)
     return jsonify(_public(_repo().get_user_by_id(current_uid()))), 200
 
 
@@ -336,17 +344,10 @@ _MAX_AVATAR = 3_000_000  # ~2 MB image as a base64 data URL
 
 @bp.post("/api/account/avatar")
 def set_avatar():
-    b = request.get_json(force=True) or {}
-    data_url = b.get("dataUrl", "")
-    if not isinstance(data_url, str) or not data_url.startswith("data:image/"):
-        raise ApiError("VALIDATION", "Avatar must be an image data URL", 422)
-    # Reject SVG: it can embed <script>/onload and would execute if the data URL
-    # is ever rendered outside an <img> (e.g. as a background or opened directly).
-    if data_url[:20].lower().startswith("data:image/svg"):
-        raise ApiError("VALIDATION", "SVG avatars are not allowed", 422)
-    if len(data_url) > _MAX_AVATAR:
-        raise ApiError("VALIDATION", "Image is too large (max ~2 MB)", 422)
-    _repo().set_avatar(_uid_or_401(), data_url)
+    from app.security.input_contracts import avatar_data
+    uid = _uid_or_401()
+    data = avatar_data(request.get_json(silent=True))
+    _repo().set_avatar(uid, data)
     return jsonify({"ok": True}), 200
 
 
@@ -443,3 +444,9 @@ def revoke_all_sessions():
     n = current_app.config["SESSIONS"].revoke_all_for_user(uid)
     clear_session()
     return jsonify({"revoked": n}), 200
+
+
+def _admin_active(u) -> bool:
+    from app.security.audit_integrity import admin_session
+    from app.session import current_session
+    return admin_session(u, current_session(), _cfg())

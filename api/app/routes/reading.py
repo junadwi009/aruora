@@ -1,15 +1,12 @@
 """
-POST /api/reading/generate — serve a reading set.
+POST /api/reading/generate
 
-Efficiency (Feature B) is in app.routes._gencap.serve_or_generate: once
-POOL_TARGET sets exist for (reading, band) the pool is frozen and a random
-stored set is served (no LLM); below target and under the daily cap we
-generate + grow the pool; when capped we fall back to the pool or 429.
+Compatibility entry point for starting a server-owned Reading practice session.
+The returned payload contains a practiceId and public question snapshot without
+answer keys. Scoring is performed server-side through the v1.2 practice protocol.
 """
 from flask import Blueprint, jsonify
 
-from app.routes._deps import _cfg, _gateway, _jobs, _repo, _require_uid
-from app.routes._gencap import serve_or_generate
 from app.schemas import BandGenerateIn
 from app.validation import parse_body
 
@@ -18,9 +15,6 @@ bp = Blueprint("reading", __name__)
 
 @bp.post("/api/reading/generate")
 def reading_generate():
-    uid = _require_uid()
+    from app.routes.practice import start_for
     body = parse_body(BandGenerateIn)
-    out = serve_or_generate("reading", "B2", uid, _repo(), _cfg(), _gateway(),
-                            {"band": body.band} if body.band is not None else {},
-                            jobs=_jobs())
-    return jsonify(out), 200
+    return jsonify(start_for("reading", body.band or "B1")), 200

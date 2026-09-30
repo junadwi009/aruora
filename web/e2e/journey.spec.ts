@@ -1,63 +1,120 @@
-import { test, expect, Page } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
+import { randomBytes } from "node:crypto";
 
-// Runs against the live stack (docker compose up). With multi-user accounts the
-// app shell sits behind a real account + completed placement, so the e2e focuses
-// on the journey *entry points* (load, login, onboarding). The in-app features
-// are covered by the unit suite.
-
-async function freshWelcome(page: Page) {
-  await page.context().clearCookies();
-  await page.goto("/");
-  // Wait for Welcome (a returning logged-in session would skip it, but a fresh
-  // context has no cookie).
-  await page.getByRole("button", { name: /get started/i }).waitFor({ timeout: 15_000 });
+// Runs against the REAL running local application. No mocked routes or fake
+// login. The write test refuses non-loopback hosts and deletes only its own
+// randomly created test account. No email-verification or CSRF guard is disabled.
+const loopback=new Set(["localhost","127.0.0.1","[::1]"]);
+function requireLocal(url:string){if(!loopback.has(new URL(url).hostname))throw new Error("Data-writing E2E is restricted to an isolated localhost stack.");}
+async function csrf(page:Page,apiOrigin:string){
+  const cookies=await page.context().cookies(apiOrigin);
+  return cookies.find(c=>c.name==="ar_csrf")?.value??"";
+}
+async function localAccountCleanup(page:Page,apiOrigin:string,email:string,password:string,userId:number){
+  requireLocal(apiOrigin);
+  const origin=new URL(page.url()).origin;
+  const login=await page.request.post(apiOrigin+"/api/account/login",{
+    headers:{Origin:origin,"X-CSRF-Token":await csrf(page,apiOrigin)},data:{email,password},
+  });
+  expect(login.status(),"Restore our own test session for cleanup").toBe(200);
+  const own=await (await page.request.get(apiOrigin+"/api/account/me")).json();
+  expect(own.id,"Never delete a different account").toBe(userId);
+  expect(own.email).toBe(email);
+  const deleted=await page.request.delete(apiOrigin+"/api/account",{
+    headers:{Origin:origin,"X-CSRF-Token":await csrf(page,apiOrigin)},
+  });
+  expect(deleted.status(),"Own test-account cleanup").toBe(200);
 }
 
-test("loads and shows the IELTS Coach app", async ({ page }) => {
-  const errors: string[] = [];
-  page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
+test("public landing is independent of account state",async({page})=>{
+  const errors:string[]=[];page.on("pageerror",e=>errors.push(e.message));
   await page.goto("/");
-  await expect(page.getByText(/IELTS Coach|Dashboard/).first()).toBeVisible({ timeout: 15_000 });
-  expect(errors.join("\n")).not.toMatch(/Uncaught|is not a function/);
+  await expect(page.getByRole("heading",{level:1})).toContainText("Your next chapter");
+  await expect(page.getByRole("link",{name:"Start your journey",exact:true})).toBeVisible();
+  expect(errors).toEqual([]);
 });
-
-test("i18n: Indonesian translates the Welcome screen", async ({ page }) => {
+test("Indonesian translates the public landing",async({page})=>{
   await page.goto("/");
-  await page.evaluate(() => localStorage.setItem("ielts.lang", "id"));
-  await page.reload();
-  // "Get started" → "Mulai" in Indonesian
-  await expect(page.getByRole("button", { name: /^mulai$/i })).toBeVisible({ timeout: 15_000 });
-  await page.evaluate(() => localStorage.removeItem("ielts.lang"));
+  await page.getByLabel("Interface language").selectOption("id");
+  await expect(page.getByRole("heading",{level:1})).toContainText("Babak barumu");
+  await expect(page.getByRole("link",{name:"Mulai perjalananmu",exact:true})).toBeVisible();
 });
-
-test("Welcome → sign-in screen", async ({ page }) => {
-  await freshWelcome(page);
-  await page.getByRole("button", { name: /already have an account/i }).click();
-  await expect(page.getByRole("heading", { name: /welcome back/i })).toBeVisible();
-  await expect(page.getByRole("button", { name: /^sign in$/i })).toBeVisible();
+test("landing login link opens the real sign-in screen",async({page})=>{
+  await page.goto("/");
+  await page.getByRole("link",{name:"Log in",exact:true}).first().click();
+  await expect(page).toHaveURL(/\/login$/);
+  await expect(page.getByRole("button",{name:"Log in to my workspace"})).toBeVisible();
 });
-
-test("Welcome → Get started → onboarding", async ({ page }) => {
-  await freshWelcome(page);
-  await page.getByRole("button", { name: /get started/i }).click();
-  // Onboarding step 1 asks for a name.
-  await expect(page.getByLabel(/name/i)).toBeVisible();
+test("Get started opens registration before protected setup",async({page})=>{
+  await page.goto("/");
+  await page.getByRole("link",{name:"Start your journey",exact:true}).click();
+  await expect(page).toHaveURL(/\/register$/);
+  await expect(page.getByRole("button",{name:"Create my account"})).toBeVisible();
+  await expect(page.locator(".aru-workspace")).toHaveCount(0);
 });
-
-test("a registered account can sign in", async ({ page, request }) => {
-  // Seed an account via the API, then sign in through the UI.
-  const email = "e2e@example.com";
-  await request.post("http://localhost:5050/api/account/register", {
-    data: { email, password: "secret123" },
+test("account -> setup -> actual learning routes -> logout -> login",async({page,baseURL})=>{
+  test.setTimeout(180_000);
+  requireLocal(baseURL??"http://localhost:5173");
+  const email=`aruora-e2e-${randomBytes(8).toString("hex")}@example.invalid`;
+  const password=`Local test ${randomBytes(18).toString("hex")}`;
+  const errors:string[]=[];page.on("pageerror",e=>errors.push(e.message));
+  let ownId:number|null=null,apiOrigin="";
+  try{
+    await page.goto("/register");
+    await page.getByLabel("Email",{exact:true}).fill(email);
+    await page.locator('input[autocomplete="new-password"]').fill(password);
+    const registered=page.waitForResponse(r=>new URL(r.url()).pathname==="/api/account/register"&&r.request().method()==="POST");
+    await page.getByRole("button",{name:"Create my account"}).click();
+    const response=await registered;
+    expect(response.status()).toBe(200);
+    apiOrigin=new URL(response.url()).origin;requireLocal(apiOrigin);
+    ownId=(await response.json()).id;
+    expect(Number.isInteger(ownId)).toBe(true);
+    await expect(page).toHaveURL(/\/app$/);
+    await page.goto("/onboarding");
+    await page.getByLabel("What should we call you?",{exact:true}).fill("Local test learner");
+    await page.getByRole("radio",{name:/Study & scholarships/}).check();
+    const setup=page.waitForResponse(r=>new URL(r.url()).pathname==="/api/onboarding"&&r.request().method()==="POST");
+    await page.getByRole("button",{name:"Continue to placement"}).click();
+    const saved=await setup;expect(saved.status()).toBe(200);
+    expect((await saved.json()).id).toBe(ownId);
+    const account=await (await page.request.get(apiOrigin+"/api/account/me")).json();
+    expect(account.id).toBe(ownId);expect(account.email).toBe(email);
+    for(const view of ["journey","practice","writing","speaking","reading","listening","vocab","pronounce","roleplay","test","tips","progress","settings"]){
+      await page.goto(`/app/${view}`);
+      await expect(page.locator(".aru-workspace")).toBeVisible();
+      await expect(page.locator("#aruora-content main").first()).toBeVisible();
+      await expect(page.locator(".aru-demo-banner")).toHaveCount(0);
+    }
+    await page.setViewportSize({width:1440,height:900});
+    await page.getByRole("button",{name:"Log out",exact:true}).click();
+    await expect(page).toHaveURL(/\/$/);
+    await page.goto("/login");
+    await page.getByLabel("Email",{exact:true}).fill(email);
+    await page.locator('input[autocomplete="current-password"]').fill(password);
+    await page.getByRole("button",{name:"Log in to my workspace"}).click();
+    await expect(page).toHaveURL(/\/app$/);
+    await expect(page.locator(".aru-workspace")).toBeVisible();
+    expect(errors).toEqual([]);
+  }finally{
+    if(ownId!==null&&apiOrigin)await localAccountCleanup(page,apiOrigin,email,password,ownId);
+  }
+});
+for(const width of [360,390,768,1024,1440]){
+  test(`responsive brand and spacing at ${width}px`,async({page})=>{
+    await page.setViewportSize({width,height:900});await page.goto("/");
+    const logo=page.locator(".aru-site-header .aru-logo");
+    const metrics=await logo.evaluate(e=>{
+      const a=e as HTMLElement,img=a.querySelector("img")!,s=getComputedStyle(a),b=a.getBoundingClientRect();
+      return {actual:img.getBoundingClientRect().width,base:parseFloat(s.getPropertyValue("--ar-logo-base-width")),scale:parseFloat(s.getPropertyValue("--ar-logo-scale")),hitWidth:b.width,hitHeight:b.height};
+    });
+    expect(metrics.scale).toBe(0.6);expect(Math.abs(metrics.actual-metrics.base*0.6)).toBeLessThan(0.1);
+    expect(metrics.hitWidth).toBeGreaterThanOrEqual(44);expect(metrics.hitHeight).toBeGreaterThanOrEqual(44);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1)).toBe(true);
+    const gap=width<=767?48:width<=1199?64:72;
+    for(const id of ["practice","why-aruora","faq"]){
+      const p=await page.locator(`#${id}`).evaluate(e=>{const s=getComputedStyle(e);return parseFloat(s.paddingTop)+parseFloat(s.paddingBottom);});
+      expect(p).toBe(gap);
+    }
   });
-  await request.post("http://localhost:5050/api/account/logout");
-
-  await freshWelcome(page);
-  await page.getByRole("button", { name: /already have an account/i }).click();
-  await page.getByPlaceholder(/you@example/i).fill(email);
-  await page.getByPlaceholder(/6 characters/i).fill("secret123");
-  await page.getByRole("button", { name: /^sign in$/i }).click();
-  // A signed-in account with no placement yet lands back on Welcome (no skill
-  // levels) — the key assertion is that login succeeded without an error alert.
-  await expect(page.getByRole("alert")).toHaveCount(0);
-});
+}
