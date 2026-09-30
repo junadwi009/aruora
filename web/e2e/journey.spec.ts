@@ -83,7 +83,16 @@ test("account -> setup -> actual learning routes -> logout -> login",async({page
     for(const view of ["journey","practice","writing","speaking","reading","listening","vocab","pronounce","roleplay","test","tips","progress","settings"]){
       await page.goto(`/app/${view}`);
       await expect(page.locator(".aru-workspace")).toBeVisible();
-      await expect(page.locator("#aruora-content main").first()).toBeVisible();
+
+      const content = page.locator("#aruora-content");
+      await expect(content).toBeVisible();
+
+      if(["journey","practice"].includes(view)){
+        await expect(content).not.toHaveAttribute("role","main");
+      }else{
+        await expect(content).toHaveAttribute("role","main");
+      }
+
       await expect(page.locator(".aru-demo-banner")).toHaveCount(0);
     }
     await page.setViewportSize({width:1440,height:900});
