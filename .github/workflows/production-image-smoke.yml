@@ -50,6 +50,13 @@ jobs:
           docker run --rm --network none -v "$PWD/ops/ci/offline_image_probe.py:/probe.py:ro" "aruora-api:$ARUORA_IMAGE_TAG" python /probe.py > evidence/offline-models.json
       - name: Start the exact production topology with disposable TLS edge
         run: docker compose -f docker-compose.prod.yml -f ops/ci/image-compose.yml up --no-build -d --wait --wait-timeout 240
+      - name: Require first-start completion without a PostgreSQL restart
+        run: |
+          db=$(docker compose -f docker-compose.prod.yml -f ops/ci/image-compose.yml ps -q db)
+          test -n "$db"
+          test "$(docker inspect --format '{{.RestartCount}}' "$db")" = 0
+          test "$(docker inspect --format '{{.State.Health.Status}}' "$db")" = healthy
+          printf '{"postgresColdStart":true,"restartCount":0,"tcpReady":true}\n' > evidence/cold-start.json
       - name: Exercise real HTTPS, account isolation, scoring, persistence and restart
         run: python ops/ci/image_smoke.py
       - name: Exercise desktop and mobile browsers against the actual stack
@@ -76,7 +83,9 @@ jobs:
         if: always()
         run: |
           docker compose -f docker-compose.prod.yml -f ops/ci/image-compose.yml ps --all --format json > evidence/compose-status.json
-          docker compose -f docker-compose.prod.yml -f ops/ci/image-compose.yml logs --no-color --tail 80 api worker-llm worker-asr worker-maintenance > evidence/runtime.log
+          docker compose -f docker-compose.prod.yml -f ops/ci/image-compose.yml logs --no-color --tail 80 db redis migrate api worker-llm worker-asr worker-maintenance > evidence/runtime.log
+          db=$(docker compose -f docker-compose.prod.yml -f ops/ci/image-compose.yml ps --all -q db)
+          if [ -n "$db" ]; then docker inspect --format '{{json .State.Health}}' "$db" > evidence/db-health.json; fi
           python - <<'PY'
           from pathlib import Path
           p=Path('evidence/runtime.log')

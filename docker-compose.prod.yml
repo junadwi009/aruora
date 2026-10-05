@@ -39,10 +39,13 @@ services:
       - ielts_pgdata:/var/lib/postgresql
       - ./ops/db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ielts} -d ${POSTGRES_DB:-ielts}"]
+      # The temporary initialization server is socket-only. Wait for the final
+      # TCP server so a half-finished initialization cannot admit migrations.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${POSTGRES_USER:-ielts} -d ${POSTGRES_DB:-ielts}"]
       interval: 5s
       timeout: 3s
       retries: 10
+      start_period: 30s
     restart: unless-stopped
 
   redis:

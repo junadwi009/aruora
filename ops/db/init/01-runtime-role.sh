@@ -1,28 +1,26 @@
 #!/bin/bash
 # WS08-02 — least-privilege runtime role provisioning.
+# Runs once during FIRST initialization of an empty PostgreSQL data volume.
+# Runtime roles receive DML, never superuser/role-creation privileges.
+# The migration owner retains DDL and grants access to future objects.
+# Both runtime variables absent retains the documented single-owner profile.
+# A partially configured role must fail rather than silently use the owner.
 #
-# Runs once, on FIRST initialization of an empty data volume
-# (/docker-entrypoint-initdb.d semantics). Creates a non-superuser runtime
-# role for the application/workers and grants it DML-only rights on the
-# public schema (including future objects created by the DDL/owner role that
-# runs Alembic migrations). The runtime role can never DDL, create roles, or
-# bypass RLS-style protections.
-#
-# Activation (docker-compose.prod.yml env):
-#   POSTGRES_RUNTIME_USER=aruora_app
-#   POSTGRES_RUNTIME_PASSWORD=<strong random>
-#   DATABASE_URL=postgresql+psycopg://aruora_app:<same>@db:5432/<db>
-#   MIGRATION_DATABASE_URL=postgresql+psycopg://<owner>:<owner>@db:5432/<db>
-#
-# If the runtime variables are absent the script is a no-op and the stack
-# keeps the documented single-owner self-host profile (app still refuses to
-# boot with default credentials in production — WS08-04B).
+# The official PostgreSQL entrypoint SOURCES non-executable .sh init files.
+# Isolate shell options and early exit from that parent in both invocation modes.
+(
 set -euo pipefail
 
 : "${POSTGRES_DB:?POSTGRES_DB must be set}"
 : "${POSTGRES_USER:?POSTGRES_USER must be set}"
 
-if [ -z "${POSTGRES_RUNTIME_USER:-}" ] || [ -z "${POSTGRES_RUNTIME_PASSWORD:-}" ]; then
+if { [ -n "${POSTGRES_RUNTIME_USER:-}" ] && [ -z "${POSTGRES_RUNTIME_PASSWORD:-}" ]; } ||
+   { [ -z "${POSTGRES_RUNTIME_USER:-}" ] && [ -n "${POSTGRES_RUNTIME_PASSWORD:-}" ]; }; then
+  echo "[ws08-init] both runtime-role variables must be configured together." >&2
+  exit 1
+fi
+
+if [ -z "${POSTGRES_RUNTIME_USER:-}" ]; then
   echo "[ws08-init] POSTGRES_RUNTIME_USER/PASSWORD not set - keeping single-owner profile (dev/self-host convenience)."
   exit 0
 fi
@@ -36,7 +34,6 @@ psql -v ON_ERROR_STOP=1 \
      -v rt_pass="$POSTGRES_RUNTIME_PASSWORD" \
      -v owner="$POSTGRES_USER" \
      -v pgdb="$POSTGRES_DB" <<-'EOSQL'
-  -- Idempotent role creation (volume may be re-initialised into a snapshot).
   SELECT format(
       'CREATE ROLE %I LOGIN PASSWORD %L NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT',
       :'rt_user', :'rt_pass')
@@ -47,8 +44,6 @@ psql -v ON_ERROR_STOP=1 \
   GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO :"rt_user";
   GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO :"rt_user";
 
-  -- Future objects created by the migration/DDL owner (alembic upgrade head
-  -- runs as the owner in the api container) get runtime grants automatically.
   ALTER DEFAULT PRIVILEGES FOR ROLE :"owner" IN SCHEMA public
       GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO :"rt_user";
   ALTER DEFAULT PRIVILEGES FOR ROLE :"owner" IN SCHEMA public
@@ -56,3 +51,4 @@ psql -v ON_ERROR_STOP=1 \
 EOSQL
 
 echo "[ws08-init] runtime role ready (DML only; DDL stays with '${POSTGRES_USER}')"
+)
