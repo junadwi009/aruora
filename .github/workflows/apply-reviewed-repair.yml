@@ -22,7 +22,7 @@ jobs:
           run-id: 37278450637
           name: repair-evidence
           path: ${{ runner.temp }}/reviewed-lock
-      - name: Verify and apply the exact reviewed patch
+      - name: Verify and apply reviewed application files (no workflow writes)
         env:
           EXPECTED_HEAD: ${{ github.sha }}
           LOCK_DIR: ${{ runner.temp }}/reviewed-lock
@@ -81,21 +81,21 @@ jobs:
                   assert a.startswith('a/') and b == 'b/' + a[2:]
                   paths.add(a[2:])
           assert paths == allowed, 'Unexpected patch paths'
+          excluded = '.github/workflows/jobs-integration.yml'
           with tempfile.NamedTemporaryFile(suffix='.patch') as f:
               f.write(patch); f.flush()
-              subprocess.run(['git', 'apply', '--check', '--unidiff-zero', f.name], check=True)
-              subprocess.run(['git', 'apply', '--unidiff-zero', f.name], check=True)
+              subprocess.run(['git', 'apply', '--check', '--unidiff-zero', '--exclude=' + excluded, f.name], check=True)
+              subprocess.run(['git', 'apply', '--unidiff-zero', '--exclude=' + excluded, f.name], check=True)
+          allowed.remove(excluded)
           lock = pathlib.Path(os.environ['LOCK_DIR']) / 'package-lock.json'
           assert hashlib.sha256(lock.read_bytes()).hexdigest() == '7115428eb19bea3d2d39f41265269eb7cf53ec5be1ea2cee8fd9fa1fdd99cd09'
           shutil.copyfile(lock, 'web/package-lock.json')
           allowed.add('web/package-lock.json')
-          removals = {'.github/workflows/apply-reviewed-repair.yml', '.github/workflows/repair-evidence.yml'}
-          for p in removals:
-              pathlib.Path(p).unlink()
           shutil.rmtree('.repair')
-          subprocess.run(['git', 'add', '--all', '--', *sorted(allowed | removals), '.repair'], check=True)
+          subprocess.run(['git', 'add', '--all', '--', *sorted(allowed), '.repair'], check=True)
           changed = set(git('diff', '--cached', '--name-only').splitlines())
-          assert changed == allowed | removals | {f'.repair/{i:02d}.txt' for i in range(10)}
+          assert changed == allowed | {f'.repair/{i:02d}.txt' for i in range(10)}
+          assert not any(p.startswith('.github/') for p in changed)
           subprocess.run(['git', 'diff', '--cached', '--check'], check=True)
           subprocess.run(['git', 'config', 'user.name', 'github-actions[bot]'], check=True)
           subprocess.run(['git', 'config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com'], check=True)
