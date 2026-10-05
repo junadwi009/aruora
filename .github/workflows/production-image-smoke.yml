@@ -1,0 +1,103 @@
+name: Production image smoke
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  complete-images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      ARUORA_IMAGE_TAG: ${{ github.sha }}
+      COMPOSE_PROJECT_NAME: aruora-image-${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Prepare isolated configuration and localhost TLS
+        run: |
+          mkdir -p .ci/tls evidence
+          python - <<'PY'
+          import pathlib,secrets
+          values={
+            'SESSION_SECRET':secrets.token_urlsafe(48),'POSTGRES_USER':'aruora_image',
+            'POSTGRES_PASSWORD':secrets.token_urlsafe(32),'POSTGRES_DB':'aruora_image',
+            'APP_BASE_URL':'https://localhost:8443','TRUSTED_HOSTS':'localhost',
+            'TRUSTED_PROXIES':'2','TRUSTED_PROXY_PROTO':'0','LLM_MODE':'stub',
+            'ASR_ENABLED':'1','GATE_ENABLED':'0','EMAIL_VERIFICATION_REQUIRED':'0',
+            'FAIL_CLOSED_ON_MAIL':'0','SMTP_HOST':'','ADMIN_EMAILS':'',
+            'WEB_BIND':'127.0.0.1','WEB_PORT':'8080'}
+          p=pathlib.Path('.env');p.write_text(''.join(f'{k}={v}\n' for k,v in values.items()));p.chmod(0o600)
+          PY
+          openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj '/CN=localhost' -addext 'subjectAltName=DNS:localhost' -keyout .ci/tls/key.pem -out .ci/tls/cert.pem 2>/dev/null
+          docker compose -f docker-compose.prod.yml -f ops/ci/image-compose.yml config --quiet
+      - name: Build the complete API image including syntax and Whisper models
+        run: |
+          if ! docker build --label org.opencontainers.image.revision="$GITHUB_SHA" --progress=plain -t "aruora-api:$ARUORA_IMAGE_TAG" -f api/Dockerfile api > evidence/api-build.log 2>&1; then tail -100 evidence/api-build.log; exit 1; fi
+      - name: Build the real production frontend image
+        run: |
+          if ! docker build --label org.opencontainers.image.revision="$GITHUB_SHA" --progress=plain -t "aruora-web:$ARUORA_IMAGE_TAG" -f web/Dockerfile.prod web > evidence/web-build.log 2>&1; then tail -100 evidence/web-build.log; exit 1; fi
+          docker image inspect --format '{{.Id}} {{.Size}}' "aruora-api:$ARUORA_IMAGE_TAG" "aruora-web:$ARUORA_IMAGE_TAG" > evidence/image-identities.txt
+      - name: Prove frozen metrics and baked models work with networking disabled
+        run: |
+          docker run --rm --network none -v "$PWD/ops/ci/offline_image_probe.py:/probe.py:ro" "aruora-api:$ARUORA_IMAGE_TAG" python /probe.py > evidence/offline-models.json
+      - name: Start the exact production topology with disposable TLS edge
+        run: docker compose -f docker-compose.prod.yml -f ops/ci/image-compose.yml up --no-build -d --wait --wait-timeout 240
+      - name: Exercise real HTTPS, account isolation, scoring, persistence and restart
+        run: python ops/ci/image_smoke.py
+      - name: Exercise desktop and mobile browsers against the actual stack
+        working-directory: web
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+          npx playwright test --config=playwright.image.config.ts
+      - name: Restore the synthetic database into a separate database and verify rows
+        run: |
+          set -euo pipefail
+          dc=(docker compose -f docker-compose.prod.yml -f ops/ci/image-compose.yml)
+          [[ "$COMPOSE_PROJECT_NAME" == aruora-image-* ]]
+          before=$("${dc[@]}" exec -T db psql -U aruora_image -d aruora_image -Atc 'SELECT count(*) FROM attempts;')
+          "${dc[@]}" exec -T db pg_dump -U aruora_image -d aruora_image -Fc > "$RUNNER_TEMP/aruora-synthetic.dump"
+          "${dc[@]}" exec -T db createdb -U aruora_image aruora_image_restore
+          "${dc[@]}" exec -T db pg_restore -U aruora_image -d aruora_image_restore --no-owner --exit-on-error < "$RUNNER_TEMP/aruora-synthetic.dump"
+          after=$("${dc[@]}" exec -T db psql -U aruora_image -d aruora_image_restore -Atc 'SELECT count(*) FROM attempts;')
+          test "$before" = "$after"
+          test "$after" -ge 4
+          printf '{"syntheticRestoreVerified":true,"attemptCount":%s}\n' "$after" > evidence/restore-check.json
+          rm "$RUNNER_TEMP/aruora-synthetic.dump"
+      - name: Capture non-secret topology evidence
+        if: always()
+        run: |
+          docker compose -f docker-compose.prod.yml -f ops/ci/image-compose.yml ps --all --format json > evidence/compose-status.json
+          docker compose -f docker-compose.prod.yml -f ops/ci/image-compose.yml logs --no-color --tail 80 api worker-llm worker-asr worker-maintenance > evidence/runtime.log
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('evidence/runtime.log')
+          text=p.read_text()
+          for line in Path('.env').read_text().splitlines():
+              key,_,value=line.partition('=')
+              if value and ('PASSWORD' in key or 'SECRET' in key): text=text.replace(value,'[REDACTED]')
+          p.write_text(text)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: production-image-smoke
+          path: |
+            evidence/
+            web/image-playwright-report/
+            web/image-test-results/
+          retention-days: 14
+      - name: Remove only this disposable CI project
+        if: always()
+        run: |
+          [[ "$COMPOSE_PROJECT_NAME" == aruora-image-* ]]
+          docker compose -f docker-compose.prod.yml -f ops/ci/image-compose.yml down --volumes --remove-orphans
+          rm -f .env
