@@ -1,0 +1,59 @@
+name: Jobs integration
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  broker-canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: aruora_ci
+          POSTGRES_PASSWORD: synthetic_ci_password
+          POSTGRES_DB: aruora_jobs
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U aruora_ci -d aruora_jobs"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      DATABASE_URL: postgresql+psycopg://aruora_ci:synthetic_ci_password@localhost:5432/aruora_jobs
+      TEST_JOBS_PG_URL: postgresql+psycopg://aruora_ci:synthetic_ci_password@localhost:5432/aruora_jobs
+      TEST_JOBS_REDIS_URL: redis://localhost:6379/0
+      LLM_MODE: stub
+      ASR_ENABLED: '0'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+          cache: pip
+      - run: pip install -r api/requirements.txt
+      - name: Migrate a fresh PostgreSQL database
+        working-directory: api
+        run: alembic upgrade head
+      - name: Exercise the real broker and worker with synthetic scoring
+        working-directory: api
+        run: python -m pytest tests/test_jobs_broker_canary.py -q --junitxml=../jobs-canary.xml
+      - name: Validate production Compose topology (no deployment)
+        run: |
+          touch .env
+          SESSION_SECRET=synthetic_validation_secret POSTGRES_PASSWORD=synthetic_validation_password TRUSTED_HOSTS=uat.example.invalid APP_BASE_URL=https://uat.example.invalid docker compose -f docker-compose.prod.yml config --quiet
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jobs-canary-evidence
+          path: jobs-canary.xml
+          retention-days: 7
