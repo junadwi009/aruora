@@ -15,18 +15,16 @@ jobs:
         with:
           python-version: "3.13"
           cache: pip
-      - name: Install dependencies
-        run: pip install -r api/requirements.txt
+      - name: Install dependencies and frozen metric data
+        run: |
+          pip install -r api/requirements.txt
+          python api/app/services/metric_resources.py --prepare
       - name: Download spaCy model (essay metrics)
         run: python -m spacy download en_core_web_sm
       - name: Run tests
         working-directory: api
         run: python -m pytest -q
 
-  # WS08-05: SQLite-only tests are not sufficient evidence for PostgreSQL
-  # migration behaviour. This job proves: empty-DB upgrade to head, ORM
-  # metadata/Alembic-head parity (alembic check), chained upgrade from the
-  # prior revision, and that the app boots against the migrated schema.
   migrations:
     name: DB migrations (PostgreSQL 18)
     runs-on: ubuntu-latest
@@ -53,8 +51,10 @@ jobs:
         with:
           python-version: "3.13"
           cache: pip
-      - name: Install dependencies
-        run: pip install -r api/requirements.txt
+      - name: Install dependencies and frozen metric data
+        run: |
+          pip install -r api/requirements.txt
+          python api/app/services/metric_resources.py --prepare
       - name: Upgrade empty database to head
         working-directory: api
         run: alembic upgrade head
@@ -94,13 +94,8 @@ jobs:
         run: npm run build
       - name: Secret scan (no API key in bundle)
         run: bash tests/secret_scan.sh
-      # WS11 brand check: the shipped bundle carries ARUORA naming and the
-      # legacy product name is gone (claim-integrity + rename regression).
       - name: Brand check (ARUORA naming, no legacy name)
         working-directory: web
         run: |
           grep -q "ARUORA" dist/assets/*.js
           if grep -Rq "IELTS Coach" dist/; then echo "legacy product name found in bundle" && exit 1; fi
-
-# NOTE: Playwright e2e (web/e2e) needs the full docker-compose stack + browsers,
-# so it is run locally (`npm run e2e`), not in this workflow.

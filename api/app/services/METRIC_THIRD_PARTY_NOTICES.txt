@@ -1,0 +1,43 @@
+ARUORA English metric compatibility subset
+
+metric_compat.py adapts only the functions used by this application from:
+- textstat 0.7.13 (MIT), https://github.com/textstat/textstat/tree/0.7.13
+  Copyright (c) 2016 Shivam Bansal (shivam5992@gmail.com)
+- LexicalRichness 0.5.1 (MIT), https://github.com/LSYS/LexicalRichness/tree/v0.5.1
+  Copyright (c) 2018, Shen Yan Shun (Lucas)
+
+The following MIT license applies to both adapted portions and the textstat
+English easy-word data distributed with this image:
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+The Carnegie Mellon Pronouncing Dictionary (0.6)
+Copyright 1998 Carnegie Mellon University.
+Source: the checksum-pinned CMU data archive distributed by nltk/nltk_data.
+This is dictionary DATA, not NLTK library code or executable model state.
+The original archive (including its notices) is retained in the image.
+The upstream data index states:
+"Use of this dictionary, for any research or commercial purpose, is completely
+unrestricted. If you use or redistribute this material, we would appreciate
+acknowlegement of its origin."
+
+Pyphen and its dictionaries remain a separate, version-pinned dependency;
+their upstream license notices are retained by the installed distribution.
+No NLTK, TextBlob, textstat or LexicalRichness distribution is installed in
+the production runtime by this replacement.

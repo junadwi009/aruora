@@ -3,3 +3,6 @@ __pycache__
 *.pyc
 *.pyo
 .pytest_cache
+app/services/_metric_data
+.env
+.env.*

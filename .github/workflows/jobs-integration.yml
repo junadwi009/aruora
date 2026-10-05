@@ -40,7 +40,10 @@ jobs:
         with:
           python-version: '3.13'
           cache: pip
-      - run: pip install -r api/requirements.txt
+      - name: Install dependencies and frozen metric data
+        run: |
+          pip install -r api/requirements.txt
+          python api/app/services/metric_resources.py --prepare
       - name: Migrate a fresh PostgreSQL database
         working-directory: api
         run: alembic upgrade head
