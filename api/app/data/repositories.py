@@ -398,6 +398,16 @@ class Repository:
                 "practiceSessions": __import__("app.services.practice_integrity", fromlist=["export_sessions"]).export_sessions(s, user_id),
                 "skillLevels": dump(SkillLevel, user_id=user_id),
                 "attempts": dump(Attempt, user_id=user_id),
+                # Authored inputs awaiting evaluation are owned content too.
+                # No dispatch credentials, provider internals or idempotency keys.
+                "pendingEvaluations": [
+                    {"id": j.id, "type": j.type, "status": j.status,
+                     "input": (j.payload or {}).get("input", {}),
+                     "createdAt": j.created_at.isoformat() if j.created_at else None}
+                    for j in s.scalars(select(Job).where(
+                        Job.user_id == user_id, Job.type.in_(("score_writing", "score_speaking")),
+                        Job.status.in_(("queued", "running"))))
+                ],
                 "mocks": dump(Mock, user_id=user_id),
                 "cards": dump(Card, user_id=user_id),
                 "lessons": dump(Lesson, user_id=user_id),
@@ -1409,8 +1419,17 @@ class Repository:
         user_id: int | None = None,
         idempotency_key: str | None = None,
         expires_at=None,
+        max_pending: int = 0,
     ) -> dict:
         with self._sf() as s:
+            if max_pending and user_id is not None:
+                from sqlalchemy import func
+                s.execute(select(UserProfile).where(UserProfile.id == user_id).with_for_update()).scalar_one()
+                pending = s.scalar(select(func.count()).select_from(Job).where(
+                    Job.user_id == user_id, Job.queue == queue, Job.status.in_(("queued", "running"))))
+                if pending >= max_pending:
+                    from app.errors import ApiError
+                    raise ApiError("CONCURRENCY_LIMIT", "You already have evaluations in progress", 429)
             j = Job(
                 id=job_id,
                 user_id=user_id,
@@ -1423,6 +1442,9 @@ class Repository:
                 expires_at=self._utc_naive(expires_at) if expires_at else None,
             )
             s.add(j)
+            s.flush()
+            from app.data.models import JobDispatch
+            s.add(JobDispatch(job_id=j.id, not_before=now(), attempts=0))
             s.commit()
             s.refresh(j)
             return self._job_dict(j)
@@ -1438,6 +1460,7 @@ class Repository:
             if j is None:
                 return None
             out = self._job_dict(j)
+            out["userId"] = j.user_id
             out["payloadHash"] = j.payload_hash
             out["payload"] = j.payload
             out["provider"] = j.provider
@@ -1458,14 +1481,10 @@ class Repository:
             out["payloadHash"] = j.payload_hash
             return out
 
-    def job_set_running(self, job_id: str) -> None:
-        with self._sf() as s:
-            j = s.get(Job, job_id)
-            if j is not None and j.status == "queued":
-                j.status = "running"
-                j.started_at = now()
-                j.attempts = (j.attempts or 0) + 1
-                s.commit()
+    def job_set_running(self, job_id: str) -> bool:
+        """Compare-and-set claim: only one delivery may enter the handler."""
+        from app.jobs.delivery import claim_job
+        return claim_job(self, job_id)
 
     def job_set_succeeded(
         self,
@@ -1476,11 +1495,14 @@ class Repository:
         model_used: str | None = None,
     ) -> None:
         with self._sf() as s:
-            j = s.get(Job, job_id)
-            if j is not None:
+            j = s.scalar(select(Job).where(Job.id == job_id).with_for_update())
+            if j is not None and j.status in ("queued", "running"):
                 j.status = "succeeded"
                 j.result = result
                 j.completed_at = now()
+                j.payload = {}
+                from app.data.models import JobDispatch
+                s.query(JobDispatch).filter_by(job_id=job_id).delete(synchronize_session=False)
                 if provider:
                     j.provider = provider
                 if model_requested:
@@ -1499,12 +1521,15 @@ class Repository:
         model_used: str | None = None,
     ) -> None:
         with self._sf() as s:
-            j = s.get(Job, job_id)
-            if j is not None:
+            j = s.scalar(select(Job).where(Job.id == job_id).with_for_update())
+            if j is not None and j.status in ("queued", "running"):
                 j.status = "failed"
                 j.error_code = code[:40]
                 j.error_message = message[:200]
                 j.completed_at = now()
+                j.payload = {}
+                from app.data.models import JobDispatch
+                s.query(JobDispatch).filter_by(job_id=job_id).delete(synchronize_session=False)
                 if provider:
                     j.provider = provider
                 if model_requested:
@@ -1515,12 +1540,15 @@ class Repository:
 
     def job_cancel(self, job_id: str, code: str, message: str) -> None:
         with self._sf() as s:
-            j = s.get(Job, job_id)
-            if j is not None:
+            j = s.scalar(select(Job).where(Job.id == job_id).with_for_update())
+            if j is not None and j.status in ("queued", "running"):
                 j.status = "cancelled"
                 j.error_code = code[:40]
                 j.error_message = message[:200]
                 j.completed_at = now()
+                j.payload = {}
+                from app.data.models import JobDispatch
+                s.query(JobDispatch).filter_by(job_id=job_id).delete(synchronize_session=False)
                 s.commit()
 
     def jobs_purge_expired(self, before) -> int:

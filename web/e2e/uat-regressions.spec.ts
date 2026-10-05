@@ -72,3 +72,27 @@ test("session bootstrap failure remains fail closed with retry",async({page})=>{
   await expect(page.getByRole("button",{name:"Try again"})).toBeVisible();
   await expect(page.locator(".aru-workspace")).toHaveCount(0);
 });
+
+test("queued scoring survives a reload without submitting the essay again",async({page})=>{
+  await fixtureApi(page,true);
+  let posts=0;let complete=false;
+  await page.route("**/api/writing/evaluate",async route=>{
+    posts++;
+    expect(route.request().headers()["idempotency-key"]).toBeTruthy();
+    await route.fulfill({status:202,contentType:"application/json",body:JSON.stringify({queued:true,jobId:"synthetic-job-1"})});
+  });
+  await page.route("**/api/jobs/synthetic-job-1",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({id:"synthetic-job-1",status:complete?"succeeded":"queued",result:complete?{savedId:42,bands:{overall:6},cefr:"B2",stub:true}:undefined})}));
+  await page.goto("/app/writing");
+  await page.locator(".learn-editor").fill("This synthetic essay contains more than ten words so we can test one submitted request.");
+  await page.getByRole("button",{name:"Get practice feedback"}).click();
+  await expect.poll(()=>posts).toBe(1);
+  await expect.poll(()=>page.evaluate(()=>sessionStorage.getItem("aruora.evaluation:1001:writing"))).toContain("synthetic-job-1");
+  page.once("dialog",dialog=>dialog.accept());
+  await page.reload();
+  await expect(page.getByRole("button",{name:"Check existing evaluation"})).toBeVisible();
+  await expect(page.locator(".learn-editor")).toHaveValue("");
+  complete=true;
+  await page.getByRole("button",{name:"Check existing evaluation"}).click();
+  await expect(page.getByText("Your response and feedback have been saved.")).toBeVisible();
+  expect(posts).toBe(1);
+});

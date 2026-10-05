@@ -77,7 +77,7 @@ def test_publisher_preserves_broker_and_cache_isolation():
     assert two.conf.broker_url == "redis://unit-test-two:6379/1"
     assert one is make_celery("redis://unit-test-one:6379/0")
     assert one is not two
-    assert set(q.name for q in one.conf.task_queues) == {"asr", "mail", "llm_score", "llm_generate"}
+    assert set(q.name for q in one.conf.task_queues) == {"asr", "mail", "llm_score", "llm_generate", "maintenance"}
     with pytest.raises(ValueError):
         make_celery("")
 

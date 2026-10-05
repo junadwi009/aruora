@@ -110,6 +110,8 @@ def replenish_pool(payload: dict, ctx: dict) -> tuple[dict, dict | None]:
     from app.costguard import record_llm_usage
     from app.services import task_pool
 
+    from app.costguard import ensure_ai_available
+    ensure_ai_available(cfg, repo)  # Rechecked for every execution/retry.
     out = gateway.generate("generate", skill=skill, band=band)
     meta = out.pop("_meta_llm", None)
     cleaned = public_result(out)
@@ -238,7 +240,11 @@ def transcribe_audio(payload: dict, ctx: dict) -> tuple[dict, dict | None]:
     }, None
 
 
+from app.services.evaluation import score_job
+
 HANDLERS = {
+    "score_writing": score_job,
+    "score_speaking": score_job,
     "replenish_pool": replenish_pool,
     "transcribe": transcribe_audio,
 }
@@ -263,7 +269,9 @@ def execute_job(job_id: str, ctx: dict, sleep=_backoff_sleep) -> None:
 
     from app.observability import log_op, metrics
     started = time.monotonic()
-    repo.job_set_running(job_id)
+    if not repo.job_set_running(job_id):
+        return
+    ctx = {**ctx, "job": job}
     attempts = int(job.get("attempts") or 0) + 1
     log_op("app.jobs", logging.INFO, "job_started",
            jobId=job_id, jobType=job_type, queue=job["queue"], attempt=attempts)
@@ -319,6 +327,8 @@ def execute_job(job_id: str, ctx: dict, sleep=_backoff_sleep) -> None:
 
 def _record_failed(repo, ctx, job, code: str) -> None:
     """Ledger row for a failed AI operation (never fabricates a result)."""
+    if job["type"] in ("score_writing", "score_speaking"):
+        return
     center = JOB_COST_CENTERS.get(job["type"])
     if center is None:
         return

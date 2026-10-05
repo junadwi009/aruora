@@ -10,8 +10,9 @@ safe error surface) plus a dispatch into a queue. Two dispatch modes:
 
 Idempotency (WS07-05): a client-supplied (or system-generated) key binds a
 job to (user, job type, canonical payload hash). A duplicate submission with
-the SAME payload returns the existing job — the provider is called at most
-once. The same key with a DIFFERENT payload is rejected (409), so a reused
+the SAME payload returns the existing job. Atomic claims prevent concurrent
+redelivery from executing it twice; uncertain crashes are not auto-replayed.
+This does not promise exactly-once billing by an external provider. The same key with a DIFFERENT payload is rejected (409), so a reused
 key can never silently trigger unrelated work. Keys are bounded by the job
 retention window (``JOB_RETENTION_HOURS``).
 """
@@ -65,7 +66,8 @@ class JobService:
 
     # ── context handed to handlers ────────────────────────────────────────
     def _ctx(self) -> dict:
-        return {"repo": self._repo, "cfg": self._cfg, "gateway": self._gateway}
+        return {"repo": self._repo, "cfg": self._cfg, "gateway": self._gateway,
+                "jobs": self}
 
     def _inline_dispatch(self, job_id, queue, payload) -> None:
         _dispatch_inline(job_id, queue, payload, self._ctx())
@@ -121,7 +123,11 @@ class JobService:
         scoped_key = None
         if idempotency_key:
             owner = f"u:{user_id}" if user_id is not None else "sys"
-            scoped_key = f"{job_type}:{owner}:{str(idempotency_key)[:90]}"
+            if not isinstance(idempotency_key, str) or len(idempotency_key) > 90:
+                raise ApiError("VALIDATION", "Idempotency key is too long", 422)
+            scoped_key = f"{job_type}:{owner}:{idempotency_key}"
+            if len(scoped_key) > 120:
+                raise ApiError("VALIDATION", "Idempotency key is too long", 422)
 
         if scoped_key:
             existing = self._repo.job_by_idempotency(user_id, scoped_key)
@@ -132,8 +138,13 @@ class JobService:
                         "This idempotency key was already used with a different payload",
                         409,
                     )
+                if self.mode == "queued":
+                    from app.jobs.delivery import dispatch_one
+                    dispatch_one(self._repo, existing["id"], self._dispatch)
                 return existing, False
 
+        if queue not in QUEUES:
+            raise ApiError("VALIDATION", "Unknown job queue", 422)
         self._check_backpressure(queue)
 
         job_id = str(uuid.uuid4())
@@ -150,12 +161,13 @@ class JobService:
                 user_id=user_id,
                 idempotency_key=scoped_key,
                 expires_at=expires_at,
+                max_pending=max(1, int(self._cfg.AI_CONCURRENCY_PER_USER)) if queue == "llm_score" else 0,
             )
         except Exception as e:
             # Concurrent enqueue racing the same idempotency key: the UNIQUE
             # (user_id, idempotency_key) index arbitrates — return the winner.
             # Any other DB failure is a real error.
-            if scoped_key and not isinstance(e, ApiError):
+            if scoped_key:
                 existing = self._repo.job_by_idempotency(user_id, scoped_key)
                 if existing is not None:
                     if existing["payloadHash"] != payload_hash:
@@ -167,7 +179,11 @@ class JobService:
                     return existing, False
             raise
 
-        self._dispatch(job_id, queue, payload)
+        if self.mode == "queued":
+            from app.jobs.delivery import dispatch_one
+            dispatch_one(self._repo, job_id, self._dispatch)
+        else:
+            self._dispatch(job_id, queue, payload)
         return job, True
 
     # ── user-scoped status lookup (WS07-03) ────────────────────────────────
@@ -178,7 +194,7 @@ class JobService:
         job = self._repo.job_get(job_id, user_id)
         if job is None:
             return None
-        out = {k: v for k, v in job.items() if k not in ("payload", "payloadHash")}
+        out = {k: v for k, v in job.items() if k not in ("payload", "payloadHash", "userId")}
         expires = job.get("expiresAt")
         if expires:
             try:

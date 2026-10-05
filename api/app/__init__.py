@@ -13,7 +13,7 @@ def create_app(overrides=None):
     # ── Fail-closed: never boot a real deployment with the built-in dev secret ──
     # The secret_key signs cookies; a known value would let an attacker forge
     # sessions. Tests pass TESTING=True and are exempt.
-    if not cfg.TESTING and cfg.SESSION_SECRET == "dev-secret-change-me":
+    if not cfg.TESTING and (not cfg.SESSION_SECRET.strip() or cfg.SESSION_SECRET == "dev-secret-change-me"):
         raise RuntimeError(
             "SESSION_SECRET is unset (using the insecure default). Set a strong, "
             "random SESSION_SECRET (e.g. `python -c \"import secrets;print(secrets.token_urlsafe(48))\"`) "
@@ -52,6 +52,14 @@ def create_app(overrides=None):
                 "WS08-04B: production requires PostgreSQL via DATABASE_URL "
                 "(postgresql://...); refusing to start on this backend."
             )
+
+    if not cfg.TESTING and cfg.APP_ENV == "production":
+        from urllib.parse import urlparse
+        origin = urlparse(cfg.APP_BASE_URL)
+        if (not cfg.COOKIE_SECURE or not cfg.TRUSTED_HOSTS or
+                origin.scheme != "https" or not origin.hostname or
+                origin.hostname.lower() not in cfg.TRUSTED_HOSTS or not cfg.REDIS_URL):
+            raise RuntimeError("Production requires secure cookies, an allowlisted HTTPS APP_BASE_URL and Redis")
 
     # ── WS09-02: a TLS (COOKIE_SECURE) deployment must pin its Host allow-list,
     # otherwise host-header injection stays open. Fail the boot instead.
@@ -100,7 +108,7 @@ def create_app(overrides=None):
             app,
             origins=list(cfg.CORS_ORIGINS),
             supports_credentials=True,
-            allow_headers=["Content-Type", "X-CSRF-Token", "X-Lang", "X-Request-ID"],
+            allow_headers=["Content-Type", "X-CSRF-Token", "X-Lang", "X-Request-ID", "Idempotency-Key"],
             methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
             max_age=600,
         )
@@ -159,6 +167,10 @@ def create_app(overrides=None):
         session_factory = None
     # else: no DATABASE_URL and no injected deps → health-test path; REPO/GATEWAY
     # remain unset. Routes that need them will KeyError, but health doesn't.
+
+    if "GATEWAY" in app.config and "REPO" in app.config:
+        from .services.guarded_gateway import GuardedGateway
+        app.config["GATEWAY"] = GuardedGateway(app.config["GATEWAY"], cfg, app.config["REPO"])
 
     # ── WS07: job service + AI concurrency guard ─────────────────────────────
     # Job records/dispatch: Celery+Redis when REDIS_URL is set (public
@@ -302,7 +314,7 @@ def create_app(overrides=None):
     _EXPENSIVE_PREFIXES = (
         "/api/writing/evaluate", "/api/speaking/evaluate", "/api/speaking/roleplay",
         "/api/speaking/transcribe", "/api/reading/generate", "/api/listening/generate",
-        "/api/lesson/generate", "/api/vocab", "/api/pronounce/",
+        "/api/lesson/generate", "/api/vocab", "/api/pronounce/", "/api/placement/submit",
     )
 
     @app.before_request

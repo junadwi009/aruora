@@ -67,6 +67,7 @@ _RULES: tuple[tuple[str, Rule], ...] = (
     ("/api/auth/login", Rule(10, 60, "credential")),
     # Paid-LLM surfaces — cap cost-abuse, keyed by ACCOUNT when signed in.
     ("/api/writing/evaluate", Rule(20, 60, "user")),
+    ("/api/placement/submit", Rule(10, 60, "user")),
     ("/api/speaking/evaluate", Rule(20, 60, "user")),
     ("/api/speaking/roleplay", Rule(30, 60, "user")),
     ("/api/speaking/transcribe", Rule(12, 60, "user")),  # ASR is CPU-heavy — tighter

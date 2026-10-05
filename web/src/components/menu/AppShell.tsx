@@ -23,7 +23,7 @@ function ShellInner({user,onLogout,onProfile}:Props&{user:AccountUser}) {
     case "home":content=<DashboardView data={data} lang={lang} nav={pushUrl} onRetry={retry}/>;break;
     case "journey":content=<JourneyView data={data} lang={lang} nav={pushUrl} onRetry={retry}/>;break;
     case "practice":content=<PracticeView lang={lang} nav={pushUrl} query={query} onQuery={setQuery}/>;break;
-    default:content=<LearningWorkspace key={view} page={view} lang={lang} nav={pushUrl} onProduce={goWithPrefill} consumePrefill={consumePrefill}/>;break;
+    default:content=<LearningWorkspace userId={user.id} key={view} page={view} lang={lang} nav={pushUrl} onProduce={goWithPrefill} consumePrefill={consumePrefill}/>;break;
   }
   return <WorkspaceFrame lang={lang} page={view} name={user.name} nav={pushUrl} onLanguage={setLang} onLogout={()=>void logout()}>{logoutError&&<p className="aru-form-error" role="alert">{logoutError}</p>}{view==="settings"&&<div className="aru-mobile-account-actions"><button className="aru-text-button" onClick={()=>void logout()}>{lang==="id"?"Keluar dari akun":"Log out of your account"}</button></div>}{content}</WorkspaceFrame>;
 }

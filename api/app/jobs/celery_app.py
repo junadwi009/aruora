@@ -7,6 +7,7 @@ Job results remain in PostgreSQL; only job IDs cross the Redis broker.
 from __future__ import annotations
 
 import os
+from functools import lru_cache
 from celery import Celery
 from kombu import Queue
 
@@ -15,6 +16,7 @@ QUEUE_CONCURRENCY_HINTS = {
     "llm_score": 2,
     "llm_generate": 1,
     "mail": 2,
+    "maintenance": 1,
 }
 
 
@@ -23,7 +25,9 @@ def _settings() -> dict:
     return {
         "result_backend": None,
         "task_queues": [Queue(name) for name in QUEUE_CONCURRENCY_HINTS],
-        "task_routes": {"app.jobs.run_job": {"queue": "llm_generate"}},
+        "task_routes": {"app.jobs.run_job": {"queue": "llm_generate"},
+                        "app.jobs.run_maintenance": {"queue": "maintenance"},
+                        "app.jobs.recover_delivery": {"queue": "maintenance"}},
         "task_default_queue": "llm_generate",
         "task_acks_late": True,
         "task_reject_on_worker_lost": True,
@@ -33,11 +37,16 @@ def _settings() -> dict:
         "accept_content": ["json"],
         "broker_connection_retry_on_startup": True,
         "broker_connection_timeout": 5,
+        "broker_transport_options": {"socket_connect_timeout": 3, "socket_timeout": 3,
+                                     "retry_on_timeout": False},
         "task_publish_retry_policy": {
             "max_retries": 2, "interval_start": 0,
             "interval_step": 0.5, "interval_max": 1,
         },
         "beat_schedule": {
+            "recover-job-delivery": {
+                "task": "app.jobs.recover_delivery", "schedule": 30.0,
+            },
             "ws08-data-lifecycle-maintenance": {
                 "task": "app.jobs.run_maintenance",
                 "schedule": float(os.getenv("MAINTENANCE_INTERVAL_S", "3600")),
@@ -86,7 +95,13 @@ def run_maintenance() -> None:  # pragma: no cover - worker process
     _sweep(ctx["repo"], ctx["cfg"])
 
 
-def _worker_context() -> dict:  # pragma: no cover - worker process
+def _worker_context() -> dict:
+    # A context belongs to one worker process, not a inherited pre-fork pool.
+    return _context_for_pid(os.getpid())
+
+
+@lru_cache(maxsize=1)
+def _context_for_pid(pid: int) -> dict:  # pragma: no cover - worker process
     from app.config import Config
     from app.data.db import init_engine
     from app.data.repositories import Repository
@@ -96,30 +111,25 @@ def _worker_context() -> dict:  # pragma: no cover - worker process
     cfg = Config({})
     engine = init_engine(cfg.DATABASE_URL)
     Session = sessionmaker(bind=engine)
-    return {"repo": Repository(Session), "cfg": cfg,
-            "gateway": LlmGateway(cfg)}
+    from app.services.guarded_gateway import GuardedGateway
+    from app.jobs.service import JobService
+    repo = Repository(Session)
+    gateway = GuardedGateway(LlmGateway(cfg), cfg, repo)
+    return {"repo": repo, "cfg": cfg, "gateway": gateway,
+            "jobs": JobService(repo, cfg, gateway=gateway)}
+
+
+@celery.task(name="app.jobs.recover_delivery", ignore_result=True)
+def recover_delivery() -> None:
+    from app.jobs.delivery import recover_pending, fail_uncertain_running
+    from app.jobs.service import JobService
+    ctx = _worker_context()
+    jobs = JobService(ctx["repo"], ctx["cfg"], gateway=ctx["gateway"])
+    recover_pending(ctx["repo"], jobs._celery_dispatch)
+    fail_uncertain_running(ctx["repo"])
 
 
 def requeue_stale_jobs(repo, older_than_sec: int = 900) -> int:
-    """Mark stale running rows queued. Delivery recovery remains a separate
-    operation; this function alone does not republish a broker message."""
-    from app.data.models import Job
-    from datetime import datetime, timedelta, timezone
-
-    cutoff = datetime.now(timezone.utc) - timedelta(seconds=older_than_sec)
-    with repo.session_factory() as s:
-        rows = s.query(Job).filter(
-            Job.status == "running", Job.started_at.isnot(None),
-        ).all()
-        n = 0
-        for j in rows:
-            started = j.started_at
-            if started is None:
-                continue
-            if started.tzinfo is None:
-                started = started.replace(tzinfo=timezone.utc)
-            if started < cutoff:
-                j.status = "queued"
-                n += 1
-        s.commit()
-        return n
+    """Compatibility name: uncertain execution now fails closed, never replays."""
+    from app.jobs.delivery import fail_uncertain_running
+    return fail_uncertain_running(repo, older_than_sec=older_than_sec)
