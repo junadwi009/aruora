@@ -1,33 +1,23 @@
-flask==3.1.1
+# Security remediation verified against upstream release notes (2026-10-05).
+flask==3.1.3
 gunicorn==23.0.0
 pydantic==2.13.4
 sqlalchemy==2.0.52
 alembic==1.14.0
 psycopg[binary]==3.2.13
-flask-cors==5.0.0
-# tz database for zoneinfo (per-user reminder timezone); slim Linux + Windows lack it
-# (2026.3: fakeredis/celery resolver requires >=2025.x)
+flask-cors==6.0.5
+# Time-zone database for slim Linux and Windows.
 tzdata==2026.3
-# WS03-08 / WS07: shared Redis store — distributed rate limits, cross-process
-# abuse counters, Celery broker for the job queues.
 redis==8.1.0
-# WS07-04: queue split (asr / llm_score / llm_generate / mail) + worker runtime
 celery==5.6.3
-# WS07: test double for the Redis-backed limits/queues (offline test suite)
 fakeredis==2.37.1
-# Google Sign-In: verify OAuth ID tokens server-side
 google-auth==2.35.0
-# WS03-04: preferred password hashing backend (Argon2id)
 argon2-cffi==25.1.0
-pytest==8.3.3
+pytest==9.0.3
 openai==1.59.6
-# Phase 2b-1: deterministic essay-quality metrics
-# Note: textstat 0.7.4 requires pkg_resources (removed in setuptools 82+); use 0.7.13+
-textstat==0.7.13
-lexicalrichness==0.5.1
-# Note: spacy 3.8.2 requires numpy from source on Python 3.13; use 3.8.14 (latest 3.8.x)
+# The used English textstat/LexicalRichness subset is frozen in metric_compat.
+# NLTK, TextBlob and their model-file APIs are not runtime dependencies.
+pyphen==0.18.1
 spacy==3.8.13
 textdescriptives==2.8.2
-# Phase 2b-2: local Speaking ASR. faster-whisper pulls ctranslate2 + PyAV
-# (bundles ffmpeg, so no system ffmpeg needed) + the tokenizers/onnxruntime stack.
 faster-whisper==1.1.1

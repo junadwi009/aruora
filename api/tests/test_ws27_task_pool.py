@@ -294,12 +294,14 @@ def test_pool_endpoints_cannot_dump_inventory(queued_app):
 def test_client_cannot_spoof_usage_metadata(queued_app):
     c, repo, gw, app = queued_app
     app.config["GATEWAY"] = LlmGateway(Config({"LLM_MODE": "stub"}))
+    app.config["JOBS"]._gateway = app.config["GATEWAY"]
     r = c.post("/api/writing/evaluate", json={
         "taskType": "task2", "prompt": "p", "essay": "learner text.",
         "promptTokens": 1, "completionTokens": 1, "costUsd": 0.0,
         "_meta_llm": {"provider": "fake", "costUsd": 999},
-    })
-    assert r.status_code == 200
+    }, headers={"Idempotency-Key":"spoof-metadata-regression"})
+    assert r.status_code == 202
+    assert c.get("/api/jobs/" + r.json["jobId"]).json["status"] == "succeeded"
     with repo.session_factory() as s:
         rows = s.query(AiUsageLedger).filter_by(cost_center="learner_scoring").all()
     assert len(rows) == 1

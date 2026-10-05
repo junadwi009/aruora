@@ -418,6 +418,20 @@ class Job(Base):
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
+class JobDispatch(Base):
+    """Durable delivery intent, owned by its job and cascaded on deletion.
+
+    Only an opaque job ID is published. A delivery lease bounds duplicate
+    publishers; the atomic job claim is the final execution arbiter.
+    """
+    __tablename__ = "job_dispatch"
+    __table_args__ = (Index("ix_job_dispatch_due", "not_before"),)
+    job_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("jobs.id", ondelete="CASCADE"), primary_key=True)
+    not_before: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+
+
 class AiUsageLedger(Base):
     """Append-only provider-usage/cost ledger (WS07-08; WS27 extends this).
 

@@ -1,0 +1,40 @@
+name: UAT browser regressions
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+jobs:
+  browser-contracts:
+    name: Login and scrolling (synthetic API fixtures)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install dependencies
+        working-directory: web
+        run: npm ci
+      - name: Install browser
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+      - name: Run browser contracts (not full-stack UAT)
+        working-directory: web
+        run: npx playwright test --config=playwright.uat.config.ts
+      - name: Keep browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: uat-browser-evidence
+          path: |
+            web/playwright-report/
+            web/test-results/
+          retention-days: 7

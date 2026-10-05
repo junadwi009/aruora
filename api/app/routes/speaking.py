@@ -60,73 +60,17 @@ def _trusted_audio_features(job_id: str | None, uid: int, transcript: str) -> di
 
 @bp.post("/api/speaking/evaluate")
 def speaking_evaluate():
-    uid = _require_uid()  # gate BEFORE any paid LLM work
+    from app.routes._evaluation import maybe_enqueue, evaluation_context
+    from app.services.evaluation import evaluate, validate_size
+    uid = _require_uid()
     body = parse_body(SpeakingEvaluateIn)
-
-    # WS05-05: untrusted transcript ceiling before any paid call.
-    max_transcript = _cfg().MAX_TRANSCRIPT_CHARS
-    transcript = body.transcript
-    if len(transcript) > max_transcript:
-        raise ApiError("VALIDATION",
-                       f"Transcript is too long (max {max_transcript} characters)", 422)
-
-    gateway = _gateway()
-    out = gateway.score(
-        "speaking",
-        lang=_lang(),
-        part=body.part,
-        question=body.question,
-        transcript=transcript,
-    )
-
-    # WS02-04: fail closed — no pronunciation number may be presented from
-    # transcript-only evidence; overall excludes the unassessable criterion.
-    out = normalize_speaking_estimate(out)
-
-    metrics = dict(out.get("metrics") or {})
-    llm_meta = out.pop("_meta_llm", None)
-
-    if llm_meta:
-        metrics["llm"] = llm_meta
-
-    out["metrics"] = metrics
-
-    # WS06-06: acoustic evidence from the user's own ASR job (server-computed,
-    # owner-scoped). Stored under metrics.audioFeatures — always distinct from
-    # the LLM judgment block (metrics.llm).
-    audio_features = _trusted_audio_features(body.asrJobId, uid, transcript)
-    if audio_features:
-        out["metrics"]["audioFeatures"] = audio_features
-
-    # Label the estimate scope explicitly (WS06-01): this result is derived
-    # from TEXT evidence; pronunciation is unassessed, not scored.
-    out["estimateScope"] = "speaking_text_estimate"
-
-    criteria_payload = {
-        k: v for k, v in out.items()
-        if k not in ("bands", "cefr", "metrics", "stub", "savedId", "score_metadata", "_meta_llm")
-    }
-
-    # Persist the attempt for the Progress tab (history + trends).
-    out["savedId"] = _repo().save_attempt(
-        uid,
-        type="speaking",
-        task=body.part or "",
-        prompt=body.question or "",
-        body=transcript,
-        bands=out.get("bands", {}),
-        cefr=out.get("cefr", ""),
-        metrics=out.get("metrics", {}),
-        criteria=criteria_payload,
-        score_metadata=out.get("score_metadata"),
-    )
-
-    # WS21 — WML qualifying event, emitted only after persistence succeeded.
-    from app.routes._analytics import emit
-    emit("speaking_submitted", user_id=uid, part=body.part or "unknown")
-
-    # gateway-defined shape; passthrough dict — shape validated client-side
-    return jsonify(out), 200
+    validate_size("speaking", body, _cfg())
+    receipt = maybe_enqueue("speaking", body, uid)
+    if receipt is not None:
+        return receipt
+    context = evaluation_context()
+    context["gateway"] = _gateway()
+    return jsonify(evaluate("speaking", body, context, uid, lang=_lang())), 200
 
 
 @bp.post("/api/speaking/roleplay")

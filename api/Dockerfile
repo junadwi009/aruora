@@ -2,19 +2,15 @@ FROM python:3.13-slim
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-# Bake the spaCy model into the image so inference is fully offline
-# Image size impact: ~+15 MB for en_core_web_sm
+# Immutable data only: no NLTK library and no request-time corpus download.
+COPY app/services/metric_resources.py app/services/metric_resources.py
+RUN python app/services/metric_resources.py --prepare
+# Keep the established syntax model and local ASR model in the full image.
 RUN python -m spacy download en_core_web_sm
-# Bake the faster-whisper "base" model into the image (HF cache) so Speaking
-# transcription runs fully offline at runtime. Image size impact: ~+145 MB.
 RUN python -c "from faster_whisper import WhisperModel; WhisperModel('base', device='cpu', compute_type='int8')"
-# No surprise network at runtime: the baked model is served from the local cache.
 ENV HF_HUB_OFFLINE=1
 COPY . .
+RUN python app/services/metric_resources.py --check
 EXPOSE 5050
-# --timeout 120: live LLM scoring (strong model + long rubric) can exceed gunicorn's 30s default
-# WS08-02: migrations run as the DDL/owner credential (MIGRATION_DATABASE_URL,
-# falling back to DATABASE_URL when no role split is configured); the env
-# prefix applies to the alembic command only, so gunicorn keeps the runtime
-# (least-privilege) DATABASE_URL.
+# Production Compose uses its separate migrate service; this retains local use.
 CMD ["sh", "-c", "DATABASE_URL=\"${MIGRATION_DATABASE_URL:-$DATABASE_URL}\" alembic upgrade head && exec gunicorn -b 0.0.0.0:5050 --timeout 120 --workers 2 wsgi:app"]

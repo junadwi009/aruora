@@ -1,3 +1,4 @@
+import {legacyScore} from "./scoring";
 import {ApiError} from "../../lib/api/client";
 import {transport} from "../../lib/transport";
 const BASE=(import.meta as {env?:{VITE_API_BASE?:string}}).env?.VITE_API_BASE??"";
@@ -14,8 +15,8 @@ export const api12={
  start:(skill:Skill,band="B1",signal?:AbortSignal)=>request<Practice>("/api/practice/start",{skill,band},"POST",signal),
  submit:(practiceId:string,answers:string[])=>request<PracticeResult>("/api/practice/attempt",{practiceId,answers}),
  close:(id:string)=>request<{ok:boolean}>(`/api/practice/session/${encodeURIComponent(id)}`,undefined,"DELETE"),
- writing:(essay:string,prompt:string)=>request<Evaluation>("/api/writing/evaluate",{taskType:"task2",essay,prompt}),
- speaking:(transcript:string,question:string,asrJobId?:string)=>request<Evaluation>("/api/speaking/evaluate",{part:"part2",transcript,question,asrJobId}),
+ writing:(essay:string,prompt:string)=>legacyScore("writing",{taskType:"task2",essay,prompt}),
+ speaking:(transcript:string,question:string,asrJobId?:string)=>legacyScore("speaking",{part:"part2",transcript,question,asrJobId}),
  history:()=>request<HistoryItem[]>("/api/history/attempts"),
  detail:async(id:number)=>{const r=await request<Evaluation&{practiceResult?:PracticeResult;body?:string;scoreMetadata?:{modelProvider?:string}}>(`/api/history/attempt/${id}`);return {...r,stub:r.stub||r.scoreMetadata?.modelProvider==="stub"};},
  roleplay:(scenario:string,history:{role:string;text:string}[],userText:string)=>request<{reply:string}>("/api/speaking/roleplay",{scenario,history,userText}),

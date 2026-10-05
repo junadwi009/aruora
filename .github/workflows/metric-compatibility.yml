@@ -1,0 +1,50 @@
+name: Metric compatibility
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  exact-reference:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+          cache: pip
+      - name: Install production dependencies and prepare immutable data
+        run: |
+          pip install -r api/requirements.txt
+          python api/app/services/metric_resources.py --prepare
+          python -m spacy download en_core_web_sm
+      - name: Verify scorer policy and prompt code have not changed in this remediation
+        run: |
+          git diff --exit-code e392189d67096d0cf90a78e3405ede9e4f307ebc -- api/app/services/evaluation.py api/app/services/llm.py api/app/services/prompts.py api/app/domain/scoring.py
+          git show e392189d67096d0cf90a78e3405ede9e4f307ebc:api/app/services/essay_metrics.py > "$RUNNER_TEMP/baseline_metrics.py"
+      - name: Compare with isolated test-only reference libraries
+        run: |
+          pip install textstat==0.7.13 lexicalrichness==0.5.1 nltk==3.10.3 pyphen==0.18.1
+          python api/tests/compatibility/compare_metrics.py --baseline "$RUNNER_TEMP/baseline_metrics.py" --report metric-compatibility.json
+      - name: Remove reference-only libraries and verify the actual runtime graph
+        run: |
+          pip uninstall -y nltk textstat lexicalrichness textblob
+          pip check
+          python - <<'PY'
+          import importlib.util
+          for package in ('nltk', 'textstat', 'lexicalrichness', 'textblob'):
+              assert importlib.util.find_spec(package) is None, package
+          PY
+          cd api
+          python -m pytest tests/test_essay_metrics.py tests/test_metric_compat.py -q
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: metric-compatibility
+          path: metric-compatibility.json
+          retention-days: 14
