@@ -1,8 +1,8 @@
 name: Repair evidence
 on:
-  pull_request:
-    paths:
-      - '.github/workflows/repair-evidence.yml'
+  push:
+    branches: ['fix/uat-login-runtime-20261005']
+    paths: ['.github/workflows/repair-evidence.yml']
 permissions:
   contents: read
 jobs:
@@ -16,18 +16,15 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: '22'
-      - name: Snapshot tracked source for reproducible investigation
-        run: |
-          mkdir -p evidence
-          git rev-parse HEAD > evidence/source-sha.txt
-          git archive --format=tar HEAD | gzip > evidence/source.tar.gz
-      - name: Resolve a candidate lockfile without forced upgrades
+      - name: Resolve candidate (no forced upgrades, no audit suppressions)
         working-directory: web
         run: |
-          npm install --package-lock-only --ignore-scripts --save-dev --save-exact vitest@4.1.11
-          npm audit fix --package-lock-only --ignore-scripts
+          mkdir -p ../evidence
+          node -e 'const fs=require("fs");const p=JSON.parse(fs.readFileSync("package.json"));p.devDependencies.vitest="4.1.11";fs.writeFileSync("package.json",JSON.stringify(p,null,2)+"\n")'
+          rm package-lock.json
+          npm install --ignore-scripts
           cp package.json package-lock.json ../evidence/
-      - name: Verify the candidate frontend
+      - name: Verify candidate frontend
         working-directory: web
         run: |
           npm ci
