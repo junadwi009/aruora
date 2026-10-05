@@ -4,7 +4,8 @@ import {test,expect,type Page} from "@playwright/test";
 // SMTP, Google login or paid inference is used by these browser regressions.
 async function fixtureApi(page:Page,signedIn:boolean){
   await page.addInitScript(()=>localStorage.setItem("ielts.lang","en"));
-  await page.route("**/api/**",async route=>{
+  // Match only API endpoints, never Vite modules such as /src/lib/api/client.ts.
+  await page.route(url=>url.pathname.startsWith("/api/"),async route=>{
     const path=new URL(route.request().url()).pathname;
     let body:unknown;let status=200;
     if(path==="/api/auth/status")body={authRequired:false,authenticated:true};
