@@ -1,19 +1,16 @@
 name: Security
 
-# WS11-05: dependency vulnerability scanning. CodeQL runs separately
-# (codeql.yml). Container/image scanning + SBOM provenance are staging-gate
-# items (WS15) — they need a built image and are deferred from every PR.
-#
-# NOTE (WS11-06): third-party actions must be pinned to full commit SHAs
-# before production release; this workflow deliberately uses only first-party
-# tooling (pip-audit, npm audit) to avoid unpinned third-party actions.
-
+# Security scanners fail the workflow on findings or scanner failures.
+# No continue-on-error / shell success masking is permitted on audit steps.
 on:
   push:
     branches: [master, main]
   pull_request:
   schedule:
-    - cron: "0 3 * * 1" # weekly, Monday 03:00 UTC
+    - cron: "0 3 * * 1"
+
+permissions:
+  contents: read
 
 jobs:
   python-deps:
@@ -28,7 +25,7 @@ jobs:
         run: pip install pip-audit
       - name: Audit API requirements
         working-directory: api
-        run: pip-audit -r requirements.txt --strict || true # triage gate: promote to failing once baseline triaged
+        run: pip-audit -r requirements.txt --strict
 
   node-deps:
     name: Node dependency audit (npm audit)

@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import "./fonts.css";
 import "./app.css";
 import App from "./App";
+import "./experience/layout-fixes.css";
 import { applySettings } from "./lib/settings";
 import { I18nProvider } from "./lib/i18n";
 

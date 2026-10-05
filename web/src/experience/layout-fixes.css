@@ -1,0 +1,38 @@
+/* One scroll owner for the v1.2 learning routes. Marketing/dashboard retain
+   their existing scroll models. New learning roots are divs, not mains. */
+.aru-content-region[data-learning-view="true"] {
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+  scroll-padding-block: 20px;
+}
+.aru-content-region[data-learning-view="true"] > .learn-page {
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+  margin-inline: auto;
+}
+.aru-content-region[data-learning-view="true"] > .aru-mobile-account-actions {
+  flex: 0 0 auto;
+}
+/* Login is a document that may scroll, never a viewport-clipped card. */
+.aru-auth-layout { min-height: 100dvh; }
+.aru-auth-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.aru-auth-form-area, .aru-auth-form { min-width: 0; }
+.aru-auth-layout > header { gap: 16px; flex-wrap: wrap; }
+.aru-auth-form .aru-form-error { overflow-wrap: anywhere; }
+@media (max-width: 767px) {
+  .aru-content-region[data-learning-view="true"] {
+    scroll-padding-bottom: calc(100px + env(safe-area-inset-bottom));
+  }
+  .aru-content-region[data-learning-view="true"] > .learn-page {
+    padding-bottom: calc(110px + env(safe-area-inset-bottom));
+  }
+  .aru-auth-layout > header { padding-block: 12px; }
+}
+/* A short laptop/landscape viewport must not vertically center the form
+   below the beginning of the viewport. Decorative art never owns scrolling. */
+@media (min-width: 768px) and (max-height: 760px) {
+  .aru-auth-grid { align-items: start; }
+}
