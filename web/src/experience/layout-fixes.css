@@ -16,6 +16,13 @@
 .aru-content-region[data-learning-view="true"] > .aru-mobile-account-actions {
   flex: 0 0 auto;
 }
+/* Public/auth documents may exceed one screen. Their root must contribute its
+   intrinsic height, or index.html's legal footer overlays the overflowing form.
+   Do not change the viewport-bound workspace's separate scrolling contract. */
+#root:has(.aru-auth-layout), #root:has(.aru-site) {
+  height: auto;
+  min-height: 100%;
+}
 /* Login is a document that may scroll, never a viewport-clipped card. */
 .aru-auth-layout { min-height: 100dvh; }
 .aru-auth-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }

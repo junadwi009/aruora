@@ -18,6 +18,13 @@ for(const viewport of [{width:1440,height:700},{width:390,height:844}]){
     expect(logout.status()).toBe(200);
     await page.goto("/login?next=/app/writing");
     await expect(page.getByLabel("Email",{exact:true})).toBeVisible();
+    const layoutBox=await page.locator(".aru-auth-layout").boundingBox();
+    const legal=page.locator("body > footer");
+    await expect(legal.getByRole("link",{name:"Privacy",exact:true})).toHaveAttribute("href","/legal/privacy.html");
+    await expect(legal.getByRole("link",{name:"Terms",exact:true})).toHaveAttribute("href","/legal/terms.html");
+    const legalBox=await legal.boundingBox();
+    expect(legalBox!.y).toBeGreaterThanOrEqual(layoutBox!.y+layoutBox!.height-1);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1)).toBe(true);
     await page.screenshot({path:testInfo.outputPath(`login-${viewport.width}.png`),fullPage:true});
     await page.getByLabel("Email",{exact:true}).fill(email);
     await page.locator('input[autocomplete="current-password"]').fill(password);

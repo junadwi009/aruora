@@ -2,10 +2,12 @@
 
 ## Release status
 
-Draft repair, not a production release. This document describes implementation,
-not a claim that tests or deployment have passed. Exact CI evidence is recorded
-in the PR handoff after validation. Do not merge while required security checks
-are red. Do not expose a production/UAT instance before the remaining gates close.
+Draft repair, not a production release. Exact CI evidence and the checked SHA
+are recorded in the PR handoff. Do not expose an external UAT instance before
+its deployment-specific gates close. NLTK remediation is described in
+`NLTK_REMEDIATION.md`; persistent-host preparation is in
+`STAGING_DEPLOYMENT_GATE.md`. Earlier validation notes are historical checkpoints,
+not the current status of a newer commit.
 
 ## Evaluation contract
 
@@ -37,7 +39,7 @@ Migration b26c20261005 adds job_dispatch, a durable dispatch intent created in t
 SAME transaction as its Job. It backfills queued jobs only. Publishers lease
 intents with a bounded delay; broker failures leave them eligible for recovery.
 The maintenance queue runs recovery separately from inference/ASR. Messages carry
-only the opaque job ID, not learner content. A compare-and-set queued→running
+only the opaque job ID, not learner content. A compare-and-set queued-to-running
 transition admits one execution despite duplicate deliveries. Completed scoring
 persists the learner Attempt and job result in one transaction and removes raw
 pending input. Pending authored evaluations are included in account export;
@@ -56,35 +58,45 @@ queued scoring rechecks account existence, email ownership and budget immediatel
 before inference. Queued replenishment rechecks on each retry. This is NOT an
 atomic global budget-reservation system: simultaneous calls may overshoot a
 threshold and pre-existing routes do not all record complete provider cost
-metadata. External provider spend limits remain necessary. No model ID, rubric,
-score normalization, or deterministic metrics algorithm was intentionally changed.
+metadata. External provider spend limits remain necessary.
+
+The NLTK removal replaces the used metric dependency subset with a frozen,
+licensed compatibility implementation. Its complete metric output must match the
+legacy baseline exactly in differential tests; judge model IDs, rubric/prompt
+code and score normalization are unchanged. Exact deterministic metrics do not
+guarantee identical stochastic provider output or establish live calibration.
 
 No production credentials, real learner fixtures, or provider keys are included.
 Tests use synthetic accounts and the offline stub. Security mail still uses the
 existing synchronous SMTP path; a reserved `mail` queue is not proof of async
 mail delivery.
 
-## Dependency findings
+## Dependency remediation and local preparation
 
-The candidate frontend lock was generated with npm 11 after npm 10's resolver
-failed with `edgesOut`. Vitest is upgraded from 3.x to 4.1.11, the patched version
-listed by the upstream advisory. Other direct dependency ranges were retained;
-the lock resolves fresh compatible releases. Re-run TypeScript, tests, build and
-npm audit on the committed lock, not only the candidate artifact.
+Vitest 4.1.11 and the committed frontend lock replace the previously vulnerable
+frontend dependency set. Rerun TypeScript, tests, build and npm audit on the
+committed lock; a candidate artifact alone is not acceptance.
 
-NLTK 3.10.3 remains a **blocking, unwaived** Python finding (PYSEC-2026-3740 /
-GHSA-8mgp-746c-j5xp). At investigation time the upstream advisory lists no patched
-release. The advisory concerns raw model import/export paths; this application
-uses linguistic-metric dependencies, not a user-selectable model-file API.
-That observation is not a complete transitive reachability proof. Do not claim
-NLTK is safe, remove it while silently degrading metrics, fake a version, or
-ignore the advisory to force a green workflow. A reviewed upstream fix or a
-calibration-preserving dependency replacement is still required.
+The previously blocking NLTK 3.10.3 finding (PYSEC-2026-3740 /
+GHSA-8mgp-746c-j5xp) is addressed by removing the distribution and the transitive
+textstat/LexicalRichness/TextBlob dependency paths from the production graph.
+No advisory exception or fake package version is used. The reference libraries
+exist only in the isolated differential CI test, not in the application image.
+See `NLTK_REMEDIATION.md` for the exact data profile, licenses, 309-case metric
+comparison and 123,455-entry first-pronunciation dictionary check.
 
-Primary references:
-- https://github.com/nltk/nltk/security/advisories/GHSA-8mgp-746c-j5xp
-- https://github.com/vitest-dev/vitest/security/advisories/GHSA-82fw-gwwq-j7x9
-- https://docs.celeryq.dev/en/stable/userguide/tasks.html
+Non-Docker development installs must explicitly prepare the immutable data:
+
+```sh
+pip install -r api/requirements.txt
+python api/app/services/metric_resources.py --prepare
+python -m spacy download en_core_web_sm
+```
+
+The complete Docker image bakes verified metric data, spaCy and Whisper base.
+Missing/tampered metric data fails scoring instead of silently fabricating zeros.
+No request-time corpus downloads are introduced. Generated metric caches and
+CI-only TLS material must stay out of Git and local Docker build contexts.
 
 ## Production-like UAT configuration and rollback
 
@@ -105,8 +117,14 @@ pending jobs, back up, then downgrade to a12c20260929. Dropping job_dispatch
 abandons automatic publication recovery. Never downgrade while new workers run.
 No migration or deployment has been executed against a user database here.
 
-Still required: full production-image build/smoke, live mail/Google login, TLS and
-proxy inspection, worker health/alerts, backup/restore, calibration/provider
-validation, capacity testing and real-device UAT. The new Redis/PostgreSQL canary
-uses the application routes and a separate Celery process, but not an external
-HTTPS deployment or a paid provider.
+The complete-image CI exercises an isolated localhost HTTPS deployment with real
+frontend/API/PostgreSQL/Redis/Celery, offline baked models, synthetic scoring,
+browser interactions and a separate synthetic restore target. Its results do
+not imply that a persistent staging host was deployed. Live mail/Google login,
+external TLS/proxy inspection, host backup scheduling, worker alerts, capacity,
+provider calibration and real-device acceptance remain target-specific gates.
+
+Primary references:
+- https://github.com/nltk/nltk/security/advisories/GHSA-8mgp-746c-j5xp
+- https://github.com/vitest-dev/vitest/security/advisories/GHSA-82fw-gwwq-j7x9
+- https://docs.celeryq.dev/en/stable/userguide/tasks.html
